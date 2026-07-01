@@ -43,12 +43,47 @@ def create_app(config_name="default"):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Create tables and seed default users on first run
+    # Register custom Jinja2 filters
+    import markupsafe
+
+    @app.template_filter("nl2br")
+    def nl2br_filter(value):
+        """Convert newlines to <br> tags, safely escaping HTML."""
+        if not value:
+            return ""
+        escaped = markupsafe.escape(value)
+        return markupsafe.Markup(str(escaped).replace("\n", "<br>\n"))
+
+    # Create tables, run safe migrations, and seed defaults on first run
     with app.app_context():
         db.create_all()
+        _run_migrations()
         _seed_defaults()
 
     return app
+
+
+def _run_migrations():
+    """
+    Safe, additive schema migrations.
+    Each statement uses IF NOT EXISTS / ALTER TABLE … ADD COLUMN IF NOT EXISTS
+    so it is harmless to run on every startup.
+    """
+    from sqlalchemy import text
+
+    migrations = [
+        # Add driver's licence column (added in v2 of the Driver model)
+        "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS license_number VARCHAR(50)",
+    ]
+
+    with db.engine.connect() as conn:
+        for stmt in migrations:
+            try:
+                conn.execute(text(stmt))
+            except Exception:
+                # Column may already exist on non-PostgreSQL engines
+                pass
+        conn.commit()
 
 
 def _seed_defaults():

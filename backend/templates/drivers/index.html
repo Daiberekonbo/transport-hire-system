@@ -3,82 +3,152 @@
 {% block page_title %}Driver Management{% endblock %}
 
 {% block content %}
+
+{# ── Page header ─────────────────────────────────────────────────────────── #}
 <div class="page-header">
   <div>
     <h1 class="page-header-title">Drivers</h1>
-    <div class="page-header-sub">Manage all hire-purchase drivers and their contracts.</div>
+    <div class="page-header-sub">
+      Manage hire-purchase drivers — add, edit, view profiles and archive records.
+    </div>
   </div>
-  <a href="{{ url_for('drivers.add') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+  <a href="{{ url_for('drivers.add') }}" class="btn btn-primary d-flex align-items-center gap-2">
     <i class="bi bi-person-plus-fill"></i> Add Driver
   </a>
 </div>
 
-<!-- Filters -->
+{# ── Status tab bar ──────────────────────────────────────────────────────── #}
+<div class="d-flex gap-2 flex-wrap mb-3">
+  {% set tabs = [
+    ('active',    'Active',    'status-active',    counts.active),
+    ('suspended', 'Suspended', 'status-suspended', counts.suspended),
+    ('archived',  'Archived',  'status-archived',  counts.archived),
+    ('all',       'All',       '',                 counts.active + counts.suspended + counts.archived),
+  ] %}
+  {% for val, label, pill_class, count in tabs %}
+  <a href="{{ url_for('drivers.index', status=val, q=search) }}"
+     class="btn btn-sm {{ 'btn-primary' if status == val else 'btn-outline-secondary' }} d-flex align-items-center gap-2">
+    {{ label }}
+    <span class="badge {{ 'bg-white text-primary' if status == val else 'bg-secondary bg-opacity-25 text-dark' }}
+                 rounded-pill" style="font-size:.7rem;">{{ count }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+{# ── Search bar ──────────────────────────────────────────────────────────── #}
 <div class="thms-card mb-3">
-  <div class="thms-card-body">
-    <form class="d-flex flex-wrap gap-2 align-items-center" method="GET">
-      <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
-             placeholder="Search by name…" style="max-width:240px;" />
-      <select name="status" class="form-select form-select-sm" style="max-width:150px;" onchange="this.form.submit()">
-        <option value="active"    {% if status == 'active' %}selected{% endif %}>Active</option>
-        <option value="suspended" {% if status == 'suspended' %}selected{% endif %}>Suspended</option>
-        <option value="archived"  {% if status == 'archived' %}selected{% endif %}>Archived</option>
-        <option value="all"       {% if status == 'all' %}selected{% endif %}>All</option>
-      </select>
-      <button type="submit" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-search"></i> Search
-      </button>
-      {% if search %}<a href="{{ url_for('drivers.index') }}" class="btn btn-sm btn-link text-muted">Clear</a>{% endif %}
+  <div class="thms-card-body py-3">
+    <form class="d-flex gap-2 align-items-center flex-wrap" method="GET">
+      <input type="hidden" name="status" value="{{ status }}" />
+      <div class="input-group" style="max-width:380px;">
+        <span class="input-group-text bg-transparent border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" name="q" value="{{ search }}"
+               class="form-control border-start-0 ps-0"
+               placeholder="Search by name or phone…"
+               autocomplete="off" />
+        {% if search %}
+        <a href="{{ url_for('drivers.index', status=status) }}"
+           class="btn btn-outline-secondary" title="Clear search">
+          <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn-outline-primary">Search</button>
     </form>
   </div>
 </div>
 
+{# ── Driver table ────────────────────────────────────────────────────────── #}
 <div class="thms-card">
+
   {% if drivers.items %}
+
   <div style="overflow-x:auto;">
     <table class="thms-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th style="width:32px;">#</th>
           <th>Driver</th>
           <th>Phone</th>
-          <th>Vehicle</th>
+          <th>Licence No.</th>
+          <th>National ID</th>
           <th>Status</th>
           <th>Registered</th>
-          <th></th>
+          <th style="width:130px;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for d in drivers.items %}
         <tr>
           <td class="text-muted small">{{ d.id }}</td>
+
+          {# Avatar + name #}
           <td>
             <div class="d-flex align-items-center gap-2">
-              <div class="user-avatar" style="width:34px;height:34px;font-size:0.8rem;flex-shrink:0;">
-                {{ d.full_name[0].upper() }}
+              <div class="user-avatar flex-shrink-0"
+                   style="width:36px;height:36px;font-size:.85rem;border-radius:50%;">
+                {{ d.initials }}
               </div>
               <div>
-                <div class="fw-600">{{ d.full_name }}</div>
-                {% if d.address %}<div class="text-muted small">{{ d.address[:40] }}</div>{% endif %}
+                <a href="{{ url_for('drivers.view', driver_id=d.id) }}"
+                   class="fw-600 text-decoration-none text-body">{{ d.full_name }}</a>
+                {% if d.address %}
+                <div class="text-muted" style="font-size:.72rem;">
+                  {{ d.address | truncate(45, True) }}
+                </div>
+                {% endif %}
               </div>
             </div>
           </td>
-          <td class="text-muted small">{{ d.phone }}</td>
+
+          <td class="small">{{ d.phone }}</td>
+          <td class="small text-muted">{{ d.license_number or '—' }}</td>
+          <td class="small text-muted">{{ d.national_id or '—' }}</td>
+
           <td>
-            {% set c = d.active_contract %}
-            {% if c %}
-              <span class="fw-600 small">{{ c.vehicle.vehicle_number }}</span>
-            {% else %}
-              <span class="text-muted small">—</span>
-            {% endif %}
+            <span class="status-pill status-{{ d.status }}">
+              {{ d.status | capitalize }}
+            </span>
           </td>
-          <td>
-            <span class="status-pill status-{{ d.status }}">{{ d.status | capitalize }}</span>
+
+          <td class="small text-muted no-wrap">
+            {{ d.date_registered.strftime('%d %b %Y') }}
           </td>
-          <td class="text-muted small no-wrap">{{ d.date_registered.strftime('%d %b %Y') }}</td>
+
+          {# Actions #}
           <td>
-            <a href="{{ url_for('drivers.view', driver_id=d.id) }}"
-               class="btn btn-sm btn-outline-secondary">View</a>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('drivers.view', driver_id=d.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="View profile">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if d.status != 'archived' %}
+              <a href="{{ url_for('drivers.edit', driver_id=d.id) }}"
+                 class="btn btn-sm btn-outline-primary" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {# Archive button — opens confirmation modal #}
+              <button type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      title="Archive driver"
+                      data-bs-toggle="modal"
+                      data-bs-target="#archiveModal"
+                      data-driver-id="{{ d.id }}"
+                      data-driver-name="{{ d.full_name }}">
+                <i class="bi bi-archive"></i>
+              </button>
+              {% else %}
+              {# Restore for archived drivers #}
+              <form method="POST"
+                    action="{{ url_for('drivers.restore', driver_id=d.id) }}">
+                <button type="submit" class="btn btn-sm btn-outline-success" title="Restore">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -86,38 +156,120 @@
     </table>
   </div>
 
-  <!-- Pagination -->
-  {% if drivers.pages > 1 %}
-  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top small text-muted">
-    <span>Showing {{ drivers.items | length }} of {{ drivers.total }} drivers</span>
+  {# ── Pagination ──────────────────────────────────────────────────────────── #}
+  <div class="d-flex justify-content-between align-items-center
+              px-4 py-3 border-top flex-wrap gap-2">
+    <div class="small text-muted">
+      Showing <strong>{{ ((drivers.page - 1) * drivers.per_page) + 1 }}</strong>
+      –
+      <strong>{{ [drivers.page * drivers.per_page, drivers.total] | min }}</strong>
+      of <strong>{{ drivers.total }}</strong> drivers
+    </div>
+    {% if drivers.pages > 1 %}
     <nav>
       <ul class="pagination pagination-sm mb-0">
-        {% if drivers.has_prev %}
-        <li class="page-item"><a class="page-link" href="?page={{ drivers.prev_num }}&q={{ search }}&status={{ status }}">‹</a></li>
-        {% endif %}
-        {% for pg in drivers.iter_pages() %}
+        {# Previous #}
+        <li class="page-item {{ 'disabled' if not drivers.has_prev }}">
+          <a class="page-link"
+             href="{{ url_for('drivers.index', page=drivers.prev_num, q=search, status=status) }}">
+            ‹
+          </a>
+        </li>
+
+        {% for pg in drivers.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
           {% if pg %}
-            <li class="page-item {% if pg == drivers.page %}active{% endif %}">
-              <a class="page-link" href="?page={{ pg }}&q={{ search }}&status={{ status }}">{{ pg }}</a>
-            </li>
+          <li class="page-item {{ 'active' if pg == drivers.page }}">
+            <a class="page-link"
+               href="{{ url_for('drivers.index', page=pg, q=search, status=status) }}">
+              {{ pg }}
+            </a>
+          </li>
           {% else %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
+          <li class="page-item disabled"><span class="page-link">…</span></li>
           {% endif %}
         {% endfor %}
-        {% if drivers.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ drivers.next_num }}&q={{ search }}&status={{ status }}">›</a></li>
-        {% endif %}
+
+        {# Next #}
+        <li class="page-item {{ 'disabled' if not drivers.has_next }}">
+          <a class="page-link"
+             href="{{ url_for('drivers.index', page=drivers.next_num, q=search, status=status) }}">
+            ›
+          </a>
+        </li>
       </ul>
     </nav>
+    {% endif %}
+  </div>
+
+  {% else %}
+  {# Empty state #}
+  <div class="empty-state py-5">
+    <i class="bi bi-people d-block mb-3" style="font-size:2.5rem;opacity:.25;"></i>
+    {% if search %}
+    <p class="mb-1">No drivers found matching <strong>"{{ search }}"</strong>.</p>
+    <a href="{{ url_for('drivers.index', status=status) }}" class="btn btn-sm btn-outline-secondary mt-2">
+      Clear search
+    </a>
+    {% else %}
+    <p class="mb-1">No {{ status }} drivers yet.</p>
+    <a href="{{ url_for('drivers.add') }}" class="btn btn-primary btn-sm mt-2">
+      <i class="bi bi-person-plus-fill me-1"></i> Add First Driver
+    </a>
+    {% endif %}
   </div>
   {% endif %}
 
-  {% else %}
-  <div class="empty-state">
-    <i class="bi bi-people d-block"></i>
-    <p>No drivers found{% if search %} matching "{{ search }}"{% endif %}.</p>
-    <a href="{{ url_for('drivers.add') }}" class="btn btn-primary btn-sm mt-3">Add First Driver</a>
+</div><!-- /.thms-card -->
+
+{# ── Archive confirmation modal ──────────────────────────────────────────── #}
+<div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <div class="d-flex align-items-center gap-2">
+          <div class="stat-icon red" style="width:40px;height:40px;font-size:1rem;">
+            <i class="bi bi-archive-fill"></i>
+          </div>
+          <h5 class="modal-title fw-700 mb-0" id="archiveModalLabel">Archive Driver?</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <p class="mb-1">
+          You are about to archive <strong id="archiveDriverName"></strong>.
+        </p>
+        <p class="text-muted small mb-0">
+          The driver's record, payments, and history will be permanently preserved in the
+          archive and will remain searchable. This action <strong>does not delete</strong>
+          any data. You can restore them later.
+        </p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <form method="POST" id="archiveForm">
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-archive-fill me-1"></i> Yes, Archive Driver
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
-  {% endif %}
 </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Populate archive modal with the correct driver name and form action
+document.getElementById("archiveModal").addEventListener("show.bs.modal", function (e) {
+  const btn = e.relatedTarget;
+  const driverId   = btn.getAttribute("data-driver-id");
+  const driverName = btn.getAttribute("data-driver-name");
+  document.getElementById("archiveDriverName").textContent = driverName;
+  document.getElementById("archiveForm").action =
+    "/drivers/" + driverId + "/archive";
+});
+</script>
 {% endblock %}

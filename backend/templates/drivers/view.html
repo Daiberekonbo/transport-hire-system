@@ -3,120 +3,145 @@
 {% block page_title %}Driver Profile{% endblock %}
 
 {% block content %}
+
+{# ── Page header ─────────────────────────────────────────────────────────── #}
 <div class="page-header">
-  <div>
-    <h1 class="page-header-title">{{ driver.full_name }}</h1>
-    <div class="page-header-sub">Driver profile and payment history.</div>
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('drivers.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-header-title mb-0">{{ driver.full_name }}</h1>
+      <div class="page-header-sub">Driver profile — registered {{ driver.date_registered.strftime('%d %b %Y') }}</div>
+    </div>
   </div>
-  <a href="{{ url_for('drivers.index') }}" class="btn btn-outline-secondary btn-sm">
-    <i class="bi bi-arrow-left"></i> Back to Drivers
-  </a>
+
+  <div class="d-flex gap-2 flex-wrap">
+    {% if driver.status != 'archived' %}
+    <a href="{{ url_for('drivers.edit', driver_id=driver.id) }}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-pencil me-1"></i> Edit
+    </a>
+    <button type="button" class="btn btn-outline-danger btn-sm"
+            data-bs-toggle="modal" data-bs-target="#archiveModal">
+      <i class="bi bi-archive me-1"></i> Archive
+    </button>
+    {% else %}
+    <form method="POST" action="{{ url_for('drivers.restore', driver_id=driver.id) }}">
+      <button type="submit" class="btn btn-outline-success btn-sm">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> Restore Driver
+      </button>
+    </form>
+    {% endif %}
+  </div>
 </div>
+
+{# ── Archived banner ──────────────────────────────────────────────────────── #}
+{% if driver.status == 'archived' %}
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-archive-fill fs-5"></i>
+  <span>
+    This driver was archived on
+    <strong>{{ driver.date_archived.strftime('%d %b %Y') if driver.date_archived else 'an unknown date' }}</strong>.
+    All records are preserved and the driver can be restored.
+  </span>
+</div>
+{% elif driver.status == 'suspended' %}
+<div class="alert alert-secondary d-flex align-items-center gap-2 mb-3">
+  <i class="bi bi-pause-circle-fill fs-5"></i>
+  <span>This driver's account is currently <strong>suspended</strong>.</span>
+</div>
+{% endif %}
 
 <div class="row g-3">
 
-  <!-- Profile Card -->
-  <div class="col-12 col-md-4">
+  {# ── Left: Identity card ───────────────────────────────────────────────── #}
+  <div class="col-12 col-md-4 col-xl-3">
+
     <div class="thms-card mb-3">
-      <div class="thms-card-body text-center">
-        <div class="user-avatar mx-auto mb-3" style="width:72px;height:72px;font-size:1.8rem;">
-          {{ driver.full_name[0].upper() }}
+      <div class="thms-card-body text-center py-4">
+        {# Avatar #}
+        <div class="user-avatar mx-auto mb-3"
+             style="width:80px;height:80px;font-size:2rem;border-radius:50%;">
+          {{ driver.initials }}
         </div>
-        <h5 class="mb-1">{{ driver.full_name }}</h5>
-        <div class="text-muted small mb-2">{{ driver.phone }}</div>
-        <span class="status-pill status-{{ driver.status }}">{{ driver.status | capitalize }}</span>
-        {% if driver.address %}
-        <div class="text-muted small mt-3">
-          <i class="bi bi-geo-alt me-1"></i>{{ driver.address }}
-        </div>
-        {% endif %}
+        <h5 class="fw-700 mb-1">{{ driver.full_name }}</h5>
+        <div class="text-muted small mb-3">{{ driver.phone }}</div>
+        <span class="status-pill status-{{ driver.status }}">
+          {{ driver.status | capitalize }}
+        </span>
       </div>
     </div>
 
-    <!-- Personal Details -->
-    <div class="thms-card mb-3">
+    {# Quick-reference details #}
+    <div class="thms-card">
       <div class="thms-card-header">
-        <h6 class="thms-card-title"><i class="bi bi-person-fill text-primary"></i> Personal Details</h6>
+        <h6 class="thms-card-title">
+          <i class="bi bi-card-text text-secondary"></i> ID Details
+        </h6>
       </div>
       <div class="thms-card-body">
-        <dl class="row small mb-0">
-          <dt class="col-5 text-muted">National ID</dt>
-          <dd class="col-7">{{ driver.national_id or '—' }}</dd>
-          <dt class="col-5 text-muted">Registered</dt>
-          <dd class="col-7">{{ driver.date_registered.strftime('%d %b %Y') }}</dd>
-          {% if driver.nok_name %}
-          <dt class="col-5 text-muted">Next of Kin</dt>
-          <dd class="col-7 fw-600">{{ driver.nok_name }}</dd>
-          <dt class="col-5 text-muted">NOK Phone</dt>
-          <dd class="col-7">{{ driver.nok_phone or '—' }}</dd>
-          <dt class="col-5 text-muted">Relationship</dt>
-          <dd class="col-7">{{ driver.nok_relationship or '—' }}</dd>
+        <dl class="mb-0" style="font-size:.84rem;">
+
+          <dt class="text-muted small mb-1">National ID (NIN)</dt>
+          <dd class="fw-600 mb-3">{{ driver.national_id or '—' }}</dd>
+
+          <dt class="text-muted small mb-1">Driver's Licence</dt>
+          <dd class="fw-600 mb-3">{{ driver.license_number or '—' }}</dd>
+
+          {% if driver.address %}
+          <dt class="text-muted small mb-1">Residential Address</dt>
+          <dd class="mb-3" style="line-height:1.4;">{{ driver.address }}</dd>
           {% endif %}
+
+          <dt class="text-muted small mb-1">Date Registered</dt>
+          <dd class="mb-0">{{ driver.date_registered.strftime('%d %b %Y') }}</dd>
+
         </dl>
       </div>
     </div>
 
-    {% if driver.notes %}
-    <div class="thms-card">
-      <div class="thms-card-header">
-        <h6 class="thms-card-title"><i class="bi bi-sticky-fill text-warning"></i> Notes</h6>
-      </div>
-      <div class="thms-card-body small text-muted">{{ driver.notes }}</div>
-    </div>
-    {% endif %}
-  </div>
+  </div>{# /col-md-4 #}
 
-  <!-- Right Column -->
-  <div class="col-12 col-md-8">
+  {# ── Right: Details ────────────────────────────────────────────────────── #}
+  <div class="col-12 col-md-8 col-xl-9">
 
-    <!-- Active Contract -->
-    {% if active_contract %}
+    {# Contract summary strip (only when contract module is active) #}
+    {% set c = driver.active_contract %}
+    {% if c %}
     <div class="thms-card mb-3">
       <div class="thms-card-header">
-        <h6 class="thms-card-title"><i class="bi bi-file-earmark-text-fill text-primary"></i> Active Contract</h6>
+        <h6 class="thms-card-title">
+          <i class="bi bi-file-earmark-text-fill text-primary"></i>
+          Active Hire-Purchase Contract
+        </h6>
         <span class="status-pill status-active">Active</span>
       </div>
       <div class="thms-card-body">
-        <div class="row g-3">
+        <div class="row g-3 small">
           <div class="col-6 col-md-3">
-            <div class="small text-muted">Vehicle</div>
-            <div class="fw-600">{{ active_contract.vehicle.vehicle_number }}</div>
+            <div class="text-muted">Vehicle</div>
+            <div class="fw-600">{{ c.vehicle.vehicle_number }}</div>
           </div>
           <div class="col-6 col-md-3">
-            <div class="small text-muted">Weekly Payment</div>
-            <div class="fw-600 text-success">₦{{ "{:,.0f}".format(active_contract.weekly_amount) }}</div>
+            <div class="text-muted">Weekly Amount</div>
+            <div class="fw-600 text-success">₦{{ "{:,.0f}".format(c.weekly_amount) }}</div>
           </div>
           <div class="col-6 col-md-3">
-            <div class="small text-muted">Total Payable</div>
-            <div class="fw-600">₦{{ "{:,.0f}".format(active_contract.total_payable) }}</div>
+            <div class="text-muted">Total Payable</div>
+            <div class="fw-600">₦{{ "{:,.0f}".format(c.total_payable) }}</div>
           </div>
           <div class="col-6 col-md-3">
-            <div class="small text-muted">Balance Due</div>
-            <div class="fw-600 text-danger">₦{{ "{:,.0f}".format(active_contract.outstanding_balance) }}</div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="small text-muted">Weeks Done</div>
-            <div class="fw-600">{{ active_contract.weeks_completed }}</div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="small text-muted">Weeks Left</div>
-            <div class="fw-600">{{ active_contract.weeks_remaining }}</div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="small text-muted">Total Weeks</div>
-            <div class="fw-600">{{ active_contract.total_weeks }}</div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="small text-muted">Progress</div>
-            <div class="fw-600">{{ active_contract.progress_percent }}%</div>
+            <div class="text-muted">Outstanding</div>
+            <div class="fw-600 text-danger">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</div>
           </div>
           <div class="col-12">
             <div class="d-flex justify-content-between small text-muted mb-1">
-              <span>Hire Purchase Progress</span>
-              <span>{{ active_contract.progress_percent }}%</span>
+              <span>Weeks: {{ c.weeks_completed }} done · {{ c.weeks_remaining }} remaining</span>
+              <span>{{ c.progress_percent }}%</span>
             </div>
             <div class="thms-progress">
-              <div class="thms-progress-bar" style="width:{{ active_contract.progress_percent }}%;"></div>
+              <div class="thms-progress-bar" style="width:{{ c.progress_percent }}%;"></div>
             </div>
           </div>
         </div>
@@ -124,54 +149,186 @@
     </div>
     {% endif %}
 
-    <!-- Recent Payments -->
+    {# ── Next of Kin, Guarantors, Witnesses ──────────────────────────────── #}
+    <div class="row g-3 mb-3">
+
+      {# Next of Kin #}
+      <div class="col-12 col-lg-4">
+        <div class="thms-card h-100">
+          <div class="thms-card-header">
+            <h6 class="thms-card-title">
+              <i class="bi bi-person-heart text-danger"></i> Next of Kin
+            </h6>
+          </div>
+          <div class="thms-card-body small">
+            {% if driver.nok_name %}
+            <div class="fw-600 mb-1">{{ driver.nok_name }}</div>
+            {% if driver.nok_relationship %}
+            <div class="text-muted mb-1">{{ driver.nok_relationship }}</div>
+            {% endif %}
+            {% if driver.nok_phone %}
+            <div class="mb-1">
+              <i class="bi bi-telephone text-muted me-1"></i>{{ driver.nok_phone }}
+            </div>
+            {% endif %}
+            {% if driver.nok_address %}
+            <div class="text-muted">
+              <i class="bi bi-geo-alt text-muted me-1"></i>{{ driver.nok_address }}
+            </div>
+            {% endif %}
+            {% else %}
+            <span class="text-muted">Not provided</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# Guarantor 1 #}
+      <div class="col-12 col-lg-4">
+        <div class="thms-card h-100">
+          <div class="thms-card-header">
+            <h6 class="thms-card-title">
+              <i class="bi bi-shield-check text-success"></i> Guarantor 1
+            </h6>
+          </div>
+          <div class="thms-card-body small">
+            {% if driver.guarantor1_name %}
+            <div class="fw-600 mb-1">{{ driver.guarantor1_name }}</div>
+            {% if driver.guarantor1_phone %}
+            <div class="mb-1">
+              <i class="bi bi-telephone text-muted me-1"></i>{{ driver.guarantor1_phone }}
+            </div>
+            {% endif %}
+            {% if driver.guarantor1_address %}
+            <div class="text-muted">
+              <i class="bi bi-geo-alt text-muted me-1"></i>{{ driver.guarantor1_address }}
+            </div>
+            {% endif %}
+            {% else %}
+            <span class="text-muted">Not provided</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# Guarantor 2 #}
+      <div class="col-12 col-lg-4">
+        <div class="thms-card h-100">
+          <div class="thms-card-header">
+            <h6 class="thms-card-title">
+              <i class="bi bi-shield-check text-success"></i> Guarantor 2
+            </h6>
+          </div>
+          <div class="thms-card-body small">
+            {% if driver.guarantor2_name %}
+            <div class="fw-600 mb-1">{{ driver.guarantor2_name }}</div>
+            {% if driver.guarantor2_phone %}
+            <div class="mb-1">
+              <i class="bi bi-telephone text-muted me-1"></i>{{ driver.guarantor2_phone }}
+            </div>
+            {% endif %}
+            {% if driver.guarantor2_address %}
+            <div class="text-muted">
+              <i class="bi bi-geo-alt text-muted me-1"></i>{{ driver.guarantor2_address }}
+            </div>
+            {% endif %}
+            {% else %}
+            <span class="text-muted">Not provided</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>{# /row guarantors #}
+
+    {# Witnesses #}
+    <div class="row g-3 mb-3">
+      {% for label, name, phone, address in [
+        ('Witness 1', driver.witness1_name, driver.witness1_phone, driver.witness1_address),
+        ('Witness 2', driver.witness2_name, driver.witness2_phone, driver.witness2_address),
+      ] %}
+      <div class="col-12 col-md-6">
+        <div class="thms-card h-100">
+          <div class="thms-card-header">
+            <h6 class="thms-card-title">
+              <i class="bi bi-eye-fill text-warning"></i> {{ label }}
+            </h6>
+          </div>
+          <div class="thms-card-body small">
+            {% if name %}
+            <div class="fw-600 mb-1">{{ name }}</div>
+            {% if phone %}
+            <div class="mb-1">
+              <i class="bi bi-telephone text-muted me-1"></i>{{ phone }}
+            </div>
+            {% endif %}
+            {% if address %}
+            <div class="text-muted">
+              <i class="bi bi-geo-alt text-muted me-1"></i>{{ address }}
+            </div>
+            {% endif %}
+            {% else %}
+            <span class="text-muted">Not provided</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# Notes #}
+    {% if driver.notes %}
     <div class="thms-card">
       <div class="thms-card-header">
         <h6 class="thms-card-title">
-          <i class="bi bi-clock-history text-primary"></i> Recent Payments
+          <i class="bi bi-sticky-fill text-warning"></i> Notes
         </h6>
-        <a href="{{ url_for('payments.record') }}" class="btn btn-sm btn-primary">
-          <i class="bi bi-plus-lg"></i> Record
-        </a>
       </div>
-      {% if recent_payments %}
-      <div style="overflow-x:auto;">
-        <table class="thms-table">
-          <thead>
-            <tr>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Method</th>
-              <th>Sender</th>
-              <th>Reference</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for p in recent_payments %}
-            <tr>
-              <td class="fw-600 text-success no-wrap">₦{{ "{:,.0f}".format(p.amount) }}</td>
-              <td class="text-muted small no-wrap">{{ p.payment_date.strftime('%d %b %Y') }}</td>
-              <td>
-                <span class="badge {% if p.payment_method == 'cash' %}bg-success{% elif p.payment_method == 'transfer' %}bg-primary{% else %}bg-info text-dark{% endif %} bg-opacity-10 text-capitalize small">
-                  {{ p.payment_method }}
-                </span>
-              </td>
-              <td class="text-muted small">{{ p.sender or '—' }}</td>
-              <td class="text-muted small">{{ p.reference or '—' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="thms-card-body small" style="line-height:1.7;">
+        {{ driver.notes | nl2br }}
       </div>
-      {% else %}
-      <div class="empty-state" style="padding:28px;">
-        <i class="bi bi-cash-coin d-block"></i>
-        <p>No payments recorded for this driver yet.</p>
-        <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm mt-2">Record First Payment</a>
-      </div>
-      {% endif %}
     </div>
+    {% endif %}
 
+  </div>{# /col-md-8 #}
+</div>{# /row #}
+
+{# ── Archive confirmation modal ──────────────────────────────────────────── #}
+{% if driver.status != 'archived' %}
+<div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <div class="d-flex align-items-center gap-2">
+          <div class="stat-icon red" style="width:40px;height:40px;font-size:1rem;">
+            <i class="bi bi-archive-fill"></i>
+          </div>
+          <h5 class="modal-title fw-700 mb-0" id="archiveModalLabel">Archive Driver?</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <p class="mb-1">
+          You are about to archive <strong>{{ driver.full_name }}</strong>.
+        </p>
+        <p class="text-muted small mb-0">
+          All records, payments, and history are permanently preserved.
+          This <strong>does not delete</strong> any data. You can restore the driver at any time.
+        </p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <form method="POST" action="{{ url_for('drivers.archive', driver_id=driver.id) }}">
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-archive-fill me-1"></i> Yes, Archive
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
+{% endif %}
+
 {% endblock %}

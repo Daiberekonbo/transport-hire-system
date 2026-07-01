@@ -28,12 +28,12 @@ def create_app(config_name="default"):
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(drivers_bp, url_prefix="/drivers")
+    app.register_blueprint(drivers_bp,  url_prefix="/drivers")
     app.register_blueprint(vehicles_bp, url_prefix="/vehicles")
     app.register_blueprint(payments_bp, url_prefix="/payments")
-    app.register_blueprint(reports_bp, url_prefix="/reports")
+    app.register_blueprint(reports_bp,  url_prefix="/reports")
     app.register_blueprint(archives_bp, url_prefix="/archives")
-    app.register_blueprint(developer_bp, url_prefix="/developer")
+    app.register_blueprint(developer_bp,url_prefix="/developer")
     app.register_blueprint(settings_bp, url_prefix="/settings")
 
     # User loader for Flask-Login
@@ -56,6 +56,8 @@ def create_app(config_name="default"):
 
     # Create tables, run safe migrations, and seed defaults on first run
     with app.app_context():
+        # Import all models so SQLAlchemy knows about them before create_all()
+        from backend.models import user, driver, vehicle, vehicle_event, contract, payment, expense, audit  # noqa: F401
         db.create_all()
         _run_migrations()
         _seed_defaults()
@@ -65,15 +67,22 @@ def create_app(config_name="default"):
 
 def _run_migrations():
     """
-    Safe, additive schema migrations.
-    Each statement uses IF NOT EXISTS / ALTER TABLE … ADD COLUMN IF NOT EXISTS
-    so it is harmless to run on every startup.
+    Safe, additive schema migrations executed on every startup.
+    Every statement uses IF NOT EXISTS so it is harmless to re-run.
     """
     from sqlalchemy import text
 
     migrations = [
-        # Add driver's licence column (added in v2 of the Driver model)
+        # ── drivers ──────────────────────────────────────────────────────────
         "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS license_number VARCHAR(50)",
+
+        # ── vehicles — new columns added in Vehicle Management v2 ────────────
+        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS color VARCHAR(50)",
+        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS current_mileage INTEGER",
+        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS insurance_expiry DATE",
+        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS road_worthiness_expiry DATE",
+        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS date_registered TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()",
+        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS date_archived TIMESTAMP WITHOUT TIME ZONE",
     ]
 
     with db.engine.connect() as conn:
@@ -81,8 +90,7 @@ def _run_migrations():
             try:
                 conn.execute(text(stmt))
             except Exception:
-                # Column may already exist on non-PostgreSQL engines
-                pass
+                pass          # column already exists on older engines
         conn.commit()
 
 

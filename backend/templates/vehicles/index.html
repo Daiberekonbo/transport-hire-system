@@ -3,87 +3,292 @@
 {% block page_title %}Vehicle Management{% endblock %}
 
 {% block content %}
+
+{# ── Page header ─────────────────────────────────────────────────────────── #}
 <div class="page-header">
   <div>
-    <h1 class="page-header-title">Vehicles</h1>
-    <div class="page-header-sub">Fleet inventory and assignment tracking.</div>
+    <h1 class="page-header-title">Fleet Vehicles</h1>
+    <div class="page-header-sub">
+      Manage your hire-purchase fleet — add vehicles, track status and view full histories.
+    </div>
   </div>
-  <a href="{{ url_for('vehicles.add') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
-    <i class="bi bi-plus-lg"></i> Add Vehicle
+  <a href="{{ url_for('vehicles.add') }}" class="btn btn-primary d-flex align-items-center gap-2">
+    <i class="bi bi-plus-circle-fill"></i> Add Vehicle
   </a>
 </div>
 
-<!-- Filters -->
+{# ── Status summary cards ─────────────────────────────────────────────────── #}
+<div class="row g-3 mb-3">
+  {% for val, label, icon, color_class, count in [
+    ('available',   'Available',   'bi-check-circle-fill', 'blue',   counts.available),
+    ('assigned',    'Assigned',    'bi-person-fill',       'green',  counts.assigned),
+    ('maintenance', 'Maintenance', 'bi-tools',             'orange', counts.maintenance),
+    ('archived',    'Archived',    'bi-archive-fill',      'gray',   counts.archived),
+  ] %}
+  <div class="col-6 col-md-3">
+    <a href="{{ url_for('vehicles.index', status=val) }}"
+       class="thms-card d-block text-decoration-none
+              {{ 'border border-primary border-opacity-50' if status == val else '' }}">
+      <div class="thms-card-body d-flex align-items-center gap-3 py-3">
+        <div class="stat-icon {{ color_class }}"
+             style="width:40px;height:40px;font-size:1rem;flex-shrink:0;">
+          <i class="bi {{ icon }}"></i>
+        </div>
+        <div>
+          <div class="fw-700" style="font-size:1.3rem;line-height:1;">{{ count }}</div>
+          <div class="text-muted small">{{ label }}</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Status tab bar ──────────────────────────────────────────────────────── #}
+<div class="d-flex gap-2 flex-wrap mb-3">
+  {% set total = counts.available + counts.assigned + counts.maintenance + counts.archived %}
+  {% for val, label, count in [
+    ('all',         'All',         total),
+    ('available',   'Available',   counts.available),
+    ('assigned',    'Assigned',    counts.assigned),
+    ('maintenance', 'Maintenance', counts.maintenance),
+    ('archived',    'Archived',    counts.archived),
+  ] %}
+  <a href="{{ url_for('vehicles.index', status=val, q=search) }}"
+     class="btn btn-sm {{ 'btn-primary' if status == val else 'btn-outline-secondary' }} d-flex align-items-center gap-2">
+    {{ label }}
+    <span class="badge {{ 'bg-white text-primary' if status == val else 'bg-secondary bg-opacity-25 text-dark' }}
+                 rounded-pill" style="font-size:.7rem;">{{ count }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+{# ── Search bar ──────────────────────────────────────────────────────────── #}
 <div class="thms-card mb-3">
-  <div class="thms-card-body">
-    <form class="d-flex flex-wrap gap-2" method="GET">
-      <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
-             placeholder="Search by number, reg or model…" style="max-width:260px;" />
-      <select name="status" class="form-select form-select-sm" style="max-width:150px;" onchange="this.form.submit()">
-        <option value="">All Status</option>
-        <option value="available"  {% if status == 'available' %}selected{% endif %}>Available</option>
-        <option value="assigned"   {% if status == 'assigned' %}selected{% endif %}>Assigned</option>
-        <option value="maintenance"{% if status == 'maintenance' %}selected{% endif %}>Maintenance</option>
-        <option value="archived"   {% if status == 'archived' %}selected{% endif %}>Archived</option>
-      </select>
-      <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i> Search</button>
+  <div class="thms-card-body py-3">
+    <form class="d-flex gap-2 align-items-center flex-wrap" method="GET">
+      <input type="hidden" name="status" value="{{ status }}" />
+      <div class="input-group" style="max-width:400px;">
+        <span class="input-group-text bg-transparent border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" name="q" value="{{ search }}"
+               class="form-control border-start-0 ps-0"
+               placeholder="Search plate, make, model, colour…"
+               autocomplete="off" />
+        {% if search %}
+        <a href="{{ url_for('vehicles.index', status=status) }}"
+           class="btn btn-outline-secondary" title="Clear search">
+          <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn-outline-primary">Search</button>
     </form>
   </div>
 </div>
 
+{# ── Vehicle table ───────────────────────────────────────────────────────── #}
 <div class="thms-card">
+
   {% if vehicles.items %}
   <div style="overflow-x:auto;">
     <table class="thms-table">
       <thead>
         <tr>
-          <th>Vehicle #</th>
-          <th>Reg. No.</th>
-          <th>Model</th>
+          <th style="width:32px;">#</th>
+          <th>Plate / Fleet No.</th>
+          <th>Make &amp; Model</th>
           <th>Year</th>
-          <th>Current Driver</th>
+          <th>Registration</th>
           <th>Status</th>
-          <th>Purchase Price</th>
-          <th></th>
+          <th>Current Driver</th>
+          <th>Registered</th>
+          <th style="width:120px;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for v in vehicles.items %}
         <tr>
-          <td class="fw-600">{{ v.vehicle_number }}</td>
-          <td class="text-muted small">{{ v.reg_number or '—' }}</td>
+          <td class="text-muted small">{{ v.id }}</td>
+
           <td>
-            <div>{{ v.model or '—' }}</div>
-            <div class="text-muted small">{{ v.manufacturer or '' }}</div>
+            <div class="d-flex align-items-center gap-2">
+              <div class="stat-icon blue flex-shrink-0"
+                   style="width:36px;height:36px;font-size:.9rem;border-radius:8px;">
+                <i class="bi bi-truck-front-fill"></i>
+              </div>
+              <div>
+                <a href="{{ url_for('vehicles.view', vehicle_id=v.id) }}"
+                   class="fw-600 text-decoration-none text-body">
+                  {{ v.vehicle_number }}
+                </a>
+                {% if v.color %}
+                <div class="text-muted" style="font-size:.72rem;">{{ v.color }}</div>
+                {% endif %}
+              </div>
+            </div>
           </td>
-          <td class="text-muted small">{{ v.year or '—' }}</td>
-          <td>
-            {% if v.current_driver %}
-              <div class="fw-600 small">{{ v.current_driver.full_name }}</div>
+
+          <td class="small">
+            {% if v.manufacturer or v.model %}
+              <span class="fw-500">{{ v.manufacturer or '' }}</span>
+              {% if v.model %} {{ v.model }}{% endif %}
             {% else %}
-              <span class="text-muted small">Unassigned</span>
+              <span class="text-muted">—</span>
             {% endif %}
           </td>
+
+          <td class="small text-muted">{{ v.year or '—' }}</td>
+          <td class="small text-muted">{{ v.reg_number or '—' }}</td>
+
           <td>
-            <span class="status-pill status-{{ v.status }}">{{ v.status | capitalize }}</span>
+            <span class="status-pill status-{{ v.status }}">
+              {{ v.status | capitalize }}
+            </span>
           </td>
-          <td class="text-muted small no-wrap">
-            {% if v.purchase_price %}₦{{ "{:,.0f}".format(v.purchase_price) }}{% else %}—{% endif %}
+
+          <td class="small">
+            {% set drv = v.current_driver %}
+            {% if drv %}
+              <a href="{{ url_for('drivers.view', driver_id=drv.id) }}"
+                 class="text-decoration-none fw-500">{{ drv.full_name }}</a>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
           </td>
+
+          <td class="small text-muted no-wrap">
+            {{ v.date_registered.strftime('%d %b %Y') if v.date_registered else '—' }}
+          </td>
+
           <td>
-            <a href="{{ url_for('vehicles.view', vehicle_id=v.id) }}" class="btn btn-sm btn-outline-secondary">View</a>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('vehicles.view', vehicle_id=v.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if v.status != 'archived' %}
+              <a href="{{ url_for('vehicles.edit', vehicle_id=v.id) }}"
+                 class="btn btn-sm btn-outline-primary" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger"
+                      title="Archive"
+                      data-bs-toggle="modal" data-bs-target="#archiveModal"
+                      data-vehicle-id="{{ v.id }}"
+                      data-vehicle-name="{{ v.vehicle_number }}">
+                <i class="bi bi-archive"></i>
+              </button>
+              {% else %}
+              <form method="POST" action="{{ url_for('vehicles.restore', vehicle_id=v.id) }}">
+                <button type="submit" class="btn btn-sm btn-outline-success" title="Restore">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  {# Pagination #}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2">
+    <div class="small text-muted">
+      Showing <strong>{{ ((vehicles.page - 1) * vehicles.per_page) + 1 }}</strong>
+      –
+      <strong>{{ [vehicles.page * vehicles.per_page, vehicles.total] | min }}</strong>
+      of <strong>{{ vehicles.total }}</strong> vehicles
+    </div>
+    {% if vehicles.pages > 1 %}
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not vehicles.has_prev }}">
+          <a class="page-link"
+             href="{{ url_for('vehicles.index', page=vehicles.prev_num, q=search, status=status) }}">‹</a>
+        </li>
+        {% for pg in vehicles.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if pg %}
+          <li class="page-item {{ 'active' if pg == vehicles.page }}">
+            <a class="page-link"
+               href="{{ url_for('vehicles.index', page=pg, q=search, status=status) }}">{{ pg }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not vehicles.has_next }}">
+          <a class="page-link"
+             href="{{ url_for('vehicles.index', page=vehicles.next_num, q=search, status=status) }}">›</a>
+        </li>
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+
   {% else %}
-  <div class="empty-state">
-    <i class="bi bi-truck-front d-block"></i>
-    <p>No vehicles found{% if search %} matching "{{ search }}"{% endif %}.</p>
-    <a href="{{ url_for('vehicles.add') }}" class="btn btn-primary btn-sm mt-3">Add First Vehicle</a>
+  <div class="empty-state py-5">
+    <i class="bi bi-truck-front d-block mb-3" style="font-size:2.5rem;opacity:.25;"></i>
+    {% if search %}
+    <p class="mb-1">No vehicles match <strong>"{{ search }}"</strong>.</p>
+    <a href="{{ url_for('vehicles.index', status=status) }}" class="btn btn-sm btn-outline-secondary mt-2">
+      Clear search
+    </a>
+    {% else %}
+    <p class="mb-1">No {{ status if status != 'all' else '' }} vehicles yet.</p>
+    <a href="{{ url_for('vehicles.add') }}" class="btn btn-primary btn-sm mt-2">
+      <i class="bi bi-plus-circle-fill me-1"></i> Add First Vehicle
+    </a>
+    {% endif %}
   </div>
   {% endif %}
+
 </div>
+
+{# ── Archive confirmation modal ──────────────────────────────────────────── #}
+<div class="modal fade" id="archiveModal" tabindex="-1" aria-labelledby="archiveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <div class="d-flex align-items-center gap-2">
+          <div class="stat-icon red" style="width:40px;height:40px;font-size:1rem;">
+            <i class="bi bi-archive-fill"></i>
+          </div>
+          <h5 class="modal-title fw-700 mb-0" id="archiveModalLabel">Archive Vehicle?</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body pt-3">
+        <p class="mb-1">You are about to archive <strong id="archiveVehicleName"></strong>.</p>
+        <p class="text-muted small mb-0">
+          The vehicle's full history and all records are permanently preserved.
+          This <strong>does not delete</strong> any data. You can restore it at any time.
+        </p>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form method="POST" id="archiveForm">
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-archive-fill me-1"></i> Yes, Archive Vehicle
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("archiveModal").addEventListener("show.bs.modal", function (e) {
+  const btn = e.relatedTarget;
+  document.getElementById("archiveVehicleName").textContent = btn.getAttribute("data-vehicle-name");
+  document.getElementById("archiveForm").action =
+    "/vehicles/" + btn.getAttribute("data-vehicle-id") + "/archive";
+});
+</script>
 {% endblock %}

@@ -1,25 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Add Vehicle{% endblock %}
-{% block page_title %}Add Vehicle{% endblock %}
+{% block title %}Edit — {{ vehicle.vehicle_number }}{% endblock %}
+{% block page_title %}Edit Vehicle{% endblock %}
 
 {% block content %}
 
 <div class="page-header">
-  <div>
-    <h1 class="page-header-title">Register New Vehicle</h1>
-    <div class="page-header-sub">
-      Fill in the vehicle's details. Fields marked <span class="text-danger">*</span> are required.
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('vehicles.view', vehicle_id=vehicle.id) }}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-header-title mb-0">Edit: {{ vehicle.vehicle_number }}</h1>
+      <div class="page-header-sub">Update vehicle information. Required fields are marked
+        <span class="text-danger">*</span>.</div>
     </div>
   </div>
-  <a href="{{ url_for('vehicles.index') }}" class="btn btn-outline-secondary">
-    <i class="bi bi-arrow-left me-1"></i> Back
-  </a>
 </div>
 
-<form method="POST" action="{{ url_for('vehicles.add') }}" novalidate>
+<form method="POST" action="{{ url_for('vehicles.edit', vehicle_id=vehicle.id) }}" novalidate>
   <div class="row g-3">
 
-    {# ── Left: Main fields ───────────────────────────────────────────────── #}
+    {# ── Left column ─────────────────────────────────────────────────────── #}
     <div class="col-12 col-xl-8">
 
       {# Identity #}
@@ -33,34 +35,28 @@
           <div class="row g-3">
 
             <div class="col-12 col-md-6">
-              <label class="thms-form-label">
-                Plate / Fleet Number <span class="text-danger">*</span>
-              </label>
+              <label class="thms-form-label">Plate / Fleet Number <span class="text-danger">*</span></label>
               <input type="text" name="vehicle_number" class="form-control"
-                     value="{{ form.get('vehicle_number', '') }}"
-                     placeholder="e.g. KJA-456-AA or VH-001" required autofocus />
-              <div class="form-text">Must be unique across the fleet.</div>
+                     value="{{ form.get('vehicle_number', vehicle.vehicle_number) }}"
+                     required />
             </div>
 
             <div class="col-12 col-md-6">
               <label class="thms-form-label">Registration Number (FRSC)</label>
               <input type="text" name="reg_number" class="form-control"
-                     value="{{ form.get('reg_number', '') }}"
-                     placeholder="e.g. FRSC-REG-123456" />
+                     value="{{ form.get('reg_number', vehicle.reg_number or '') }}" />
             </div>
 
             <div class="col-12 col-md-6">
               <label class="thms-form-label">Engine Number</label>
               <input type="text" name="engine_number" class="form-control"
-                     value="{{ form.get('engine_number', '') }}"
-                     placeholder="Engine serial number" />
+                     value="{{ form.get('engine_number', vehicle.engine_number or '') }}" />
             </div>
 
             <div class="col-12 col-md-6">
               <label class="thms-form-label">Chassis Number</label>
               <input type="text" name="chassis_number" class="form-control"
-                     value="{{ form.get('chassis_number', '') }}"
-                     placeholder="VIN / Chassis serial" />
+                     value="{{ form.get('chassis_number', vehicle.chassis_number or '') }}" />
             </div>
 
           </div>
@@ -80,9 +76,9 @@
             <div class="col-12 col-md-5">
               <label class="thms-form-label">Make (Manufacturer)</label>
               <input type="text" name="manufacturer" class="form-control"
-                     value="{{ form.get('manufacturer', '') }}"
+                     value="{{ form.get('manufacturer', vehicle.manufacturer or '') }}"
                      list="makes-list"
-                     placeholder="e.g. Toyota, Nissan, Honda" />
+                     placeholder="e.g. Toyota, Nissan" />
               <datalist id="makes-list">
                 <option value="Toyota"><option value="Nissan"><option value="Honda">
                 <option value="Mercedes-Benz"><option value="Mitsubishi">
@@ -94,22 +90,47 @@
             <div class="col-12 col-md-4">
               <label class="thms-form-label">Model</label>
               <input type="text" name="model" class="form-control"
-                     value="{{ form.get('model', '') }}"
-                     placeholder="e.g. Hiace, Corolla, Hilux" />
+                     value="{{ form.get('model', vehicle.model or '') }}"
+                     placeholder="e.g. Hiace, Corolla" />
             </div>
 
             <div class="col-12 col-md-3">
               <label class="thms-form-label">Year</label>
               <input type="number" name="year" class="form-control"
-                     value="{{ form.get('year', '') }}"
-                     placeholder="2020" min="1990" max="2035" />
+                     value="{{ form.get('year', vehicle.year or '') }}"
+                     min="1990" max="2035" />
             </div>
 
             <div class="col-12 col-md-4">
               <label class="thms-form-label">Colour</label>
               <input type="text" name="color" class="form-control"
-                     value="{{ form.get('color', '') }}"
-                     placeholder="e.g. White, Silver, Black" />
+                     value="{{ form.get('color', vehicle.color or '') }}"
+                     placeholder="e.g. White, Silver" />
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="thms-form-label">Status</label>
+              <select name="status" class="form-select">
+                {% for val, label in [
+                  ('available',   'Available'),
+                  ('assigned',    'Assigned'),
+                  ('maintenance', 'Maintenance'),
+                ] %}
+                <option value="{{ val }}"
+                        {{ 'selected' if form.get('status', vehicle.status) == val }}>
+                  {{ label }}
+                </option>
+                {% endfor %}
+              </select>
+              <div class="form-text">
+                Use the <strong>Archive</strong> button on the profile page to archive.
+                {% if vehicle.active_contract %}
+                <span class="text-warning">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                  This vehicle has an active contract — status cannot be changed.
+                </span>
+                {% endif %}
+              </div>
             </div>
 
           </div>
@@ -131,21 +152,20 @@
               <div class="input-group">
                 <span class="input-group-text">₦</span>
                 <input type="text" name="purchase_price" class="form-control"
-                       value="{{ form.get('purchase_price', '') }}"
-                       placeholder="0" />
+                       value="{{ form.get('purchase_price', vehicle.purchase_price or '') }}" />
               </div>
             </div>
 
             <div class="col-12 col-md-4">
               <label class="thms-form-label">Purchase Date</label>
               <input type="date" name="purchase_date" class="form-control"
-                     value="{{ form.get('purchase_date', '') }}" />
+                     value="{{ form.get('purchase_date', vehicle.purchase_date.strftime('%Y-%m-%d') if vehicle.purchase_date else '') }}" />
             </div>
 
             <div class="col-12 col-md-4">
               <label class="thms-form-label">Delivery Date</label>
               <input type="date" name="delivery_date" class="form-control"
-                     value="{{ form.get('delivery_date', '') }}" />
+                     value="{{ form.get('delivery_date', vehicle.delivery_date.strftime('%Y-%m-%d') if vehicle.delivery_date else '') }}" />
             </div>
 
           </div>
@@ -165,20 +185,20 @@
             <div class="col-12 col-md-4">
               <label class="thms-form-label">Current Mileage (km)</label>
               <input type="number" name="current_mileage" class="form-control"
-                     value="{{ form.get('current_mileage', '') }}"
-                     placeholder="e.g. 45000" min="0" />
+                     value="{{ form.get('current_mileage', vehicle.current_mileage or '') }}"
+                     min="0" />
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Insurance Expiry Date</label>
+              <label class="thms-form-label">Insurance Expiry</label>
               <input type="date" name="insurance_expiry" class="form-control"
-                     value="{{ form.get('insurance_expiry', '') }}" />
+                     value="{{ form.get('insurance_expiry', vehicle.insurance_expiry.strftime('%Y-%m-%d') if vehicle.insurance_expiry else '') }}" />
             </div>
 
             <div class="col-12 col-md-4">
               <label class="thms-form-label">Road Worthiness Expiry</label>
               <input type="date" name="road_worthiness_expiry" class="form-control"
-                     value="{{ form.get('road_worthiness_expiry', '') }}" />
+                     value="{{ form.get('road_worthiness_expiry', vehicle.road_worthiness_expiry.strftime('%Y-%m-%d') if vehicle.road_worthiness_expiry else '') }}" />
             </div>
 
           </div>
@@ -187,7 +207,7 @@
 
     </div>{# /col-xl-8 #}
 
-    {# ── Right: Notes + Submit ────────────────────────────────────────────── #}
+    {# ── Right column ─────────────────────────────────────────────────────── #}
     <div class="col-12 col-xl-4">
 
       <div class="thms-card mb-3">
@@ -197,17 +217,17 @@
           </h6>
         </div>
         <div class="thms-card-body">
-          <textarea name="notes" class="form-control" rows="7"
-                    placeholder="Any additional notes about this vehicle…">{{ form.get('notes', '') }}</textarea>
+          <textarea name="notes" class="form-control" rows="7">{{ form.get('notes', vehicle.notes or '') }}</textarea>
         </div>
       </div>
 
       <div class="thms-card" style="position:sticky;top:76px;">
         <div class="thms-card-body d-grid gap-2">
           <button type="submit" class="btn btn-primary">
-            <i class="bi bi-plus-circle-fill me-2"></i>Register Vehicle
+            <i class="bi bi-floppy-fill me-2"></i>Save Changes
           </button>
-          <a href="{{ url_for('vehicles.index') }}" class="btn btn-outline-secondary">
+          <a href="{{ url_for('vehicles.view', vehicle_id=vehicle.id) }}"
+             class="btn btn-outline-secondary">
             Cancel
           </a>
         </div>

@@ -1,19 +1,19 @@
 {
-  "name": "My App",
-  "short_name": "App",
+  "name": "Transport Hire Management System",
+  "short_name": "THMS",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
-  "description": "A progressive web application",
+  "background_color": "#0f1b35",
+  "theme_color": "#1a2341",
+  "description": "Transport Hire Management System — Hire purchase vehicle management for Nigerian transport businesses.",
   "icons": [
     {
-      "src": "/static/icon-192.png",
+      "src": "/static/img/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/static/icon-512.png",
+      "src": "/static/img/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

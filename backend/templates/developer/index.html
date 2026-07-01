@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Developer{% endblock %}
+{% block page_title %}Developer Mode{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Developer Mode</h1>
+    <div class="page-header-sub">System information, audit logs and diagnostics.</div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  {% for key, val in system_info.items() %}
+  <div class="col-12 col-md-4">
+    <div class="thms-card">
+      <div class="thms-card-body">
+        <div class="text-muted small mb-1">{{ key }}</div>
+        <div class="fw-600 small text-break">{{ val }}</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="thms-card">
+  <div class="thms-card-header">
+    <h6 class="thms-card-title"><i class="bi bi-journal-text text-primary"></i> Audit Log (last 100)</h6>
+  </div>
+  {% if logs %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table">
+      <thead><tr><th>ID</th><th>User</th><th>Action</th><th>Entity</th><th>Description</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="text-muted small">{{ log.id }}</td>
+          <td class="small">{{ log.user.username if log.user else '—' }}</td>
+          <td><span class="badge bg-secondary bg-opacity-10 small">{{ log.action }}</span></td>
+          <td class="small text-muted">{{ log.entity_type or '—' }}</td>
+          <td class="small text-muted">{{ log.description or '—' }}</td>
+          <td class="small text-muted no-wrap">{{ log.created_at.strftime('%d %b %Y %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><i class="bi bi-journal d-block"></i><p>No audit log entries yet.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

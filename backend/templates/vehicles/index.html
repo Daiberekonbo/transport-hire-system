@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Vehicles{% endblock %}
+{% block page_title %}Vehicle Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Vehicles</h1>
+    <div class="page-header-sub">Fleet inventory and assignment tracking.</div>
+  </div>
+  <a href="{{ url_for('vehicles.add') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+    <i class="bi bi-plus-lg"></i> Add Vehicle
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="thms-card mb-3">
+  <div class="thms-card-body">
+    <form class="d-flex flex-wrap gap-2" method="GET">
+      <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
+             placeholder="Search by number, reg or model…" style="max-width:260px;" />
+      <select name="status" class="form-select form-select-sm" style="max-width:150px;" onchange="this.form.submit()">
+        <option value="">All Status</option>
+        <option value="available"  {% if status == 'available' %}selected{% endif %}>Available</option>
+        <option value="assigned"   {% if status == 'assigned' %}selected{% endif %}>Assigned</option>
+        <option value="maintenance"{% if status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+        <option value="archived"   {% if status == 'archived' %}selected{% endif %}>Archived</option>
+      </select>
+      <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i> Search</button>
+    </form>
+  </div>
+</div>
+
+<div class="thms-card">
+  {% if vehicles.items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table">
+      <thead>
+        <tr>
+          <th>Vehicle #</th>
+          <th>Reg. No.</th>
+          <th>Model</th>
+          <th>Year</th>
+          <th>Current Driver</th>
+          <th>Status</th>
+          <th>Purchase Price</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vehicles.items %}
+        <tr>
+          <td class="fw-600">{{ v.vehicle_number }}</td>
+          <td class="text-muted small">{{ v.reg_number or '—' }}</td>
+          <td>
+            <div>{{ v.model or '—' }}</div>
+            <div class="text-muted small">{{ v.manufacturer or '' }}</div>
+          </td>
+          <td class="text-muted small">{{ v.year or '—' }}</td>
+          <td>
+            {% if v.current_driver %}
+              <div class="fw-600 small">{{ v.current_driver.full_name }}</div>
+            {% else %}
+              <span class="text-muted small">Unassigned</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="status-pill status-{{ v.status }}">{{ v.status | capitalize }}</span>
+          </td>
+          <td class="text-muted small no-wrap">
+            {% if v.purchase_price %}₦{{ "{:,.0f}".format(v.purchase_price) }}{% else %}—{% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('vehicles.view', vehicle_id=v.id) }}" class="btn btn-sm btn-outline-secondary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-truck-front d-block"></i>
+    <p>No vehicles found{% if search %} matching "{{ search }}"{% endif %}.</p>
+    <a href="{{ url_for('vehicles.add') }}" class="btn btn-primary btn-sm mt-3">Add First Vehicle</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

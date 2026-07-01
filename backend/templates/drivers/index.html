@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Drivers{% endblock %}
+{% block page_title %}Driver Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Drivers</h1>
+    <div class="page-header-sub">Manage all hire-purchase drivers and their contracts.</div>
+  </div>
+  <a href="{{ url_for('drivers.add') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+    <i class="bi bi-person-plus-fill"></i> Add Driver
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="thms-card mb-3">
+  <div class="thms-card-body">
+    <form class="d-flex flex-wrap gap-2 align-items-center" method="GET">
+      <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
+             placeholder="Search by name…" style="max-width:240px;" />
+      <select name="status" class="form-select form-select-sm" style="max-width:150px;" onchange="this.form.submit()">
+        <option value="active"    {% if status == 'active' %}selected{% endif %}>Active</option>
+        <option value="suspended" {% if status == 'suspended' %}selected{% endif %}>Suspended</option>
+        <option value="archived"  {% if status == 'archived' %}selected{% endif %}>Archived</option>
+        <option value="all"       {% if status == 'all' %}selected{% endif %}>All</option>
+      </select>
+      <button type="submit" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-search"></i> Search
+      </button>
+      {% if search %}<a href="{{ url_for('drivers.index') }}" class="btn btn-sm btn-link text-muted">Clear</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="thms-card">
+  {% if drivers.items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Driver</th>
+          <th>Phone</th>
+          <th>Vehicle</th>
+          <th>Status</th>
+          <th>Registered</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in drivers.items %}
+        <tr>
+          <td class="text-muted small">{{ d.id }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="user-avatar" style="width:34px;height:34px;font-size:0.8rem;flex-shrink:0;">
+                {{ d.full_name[0].upper() }}
+              </div>
+              <div>
+                <div class="fw-600">{{ d.full_name }}</div>
+                {% if d.address %}<div class="text-muted small">{{ d.address[:40] }}</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td class="text-muted small">{{ d.phone }}</td>
+          <td>
+            {% set c = d.active_contract %}
+            {% if c %}
+              <span class="fw-600 small">{{ c.vehicle.vehicle_number }}</span>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="status-pill status-{{ d.status }}">{{ d.status | capitalize }}</span>
+          </td>
+          <td class="text-muted small no-wrap">{{ d.date_registered.strftime('%d %b %Y') }}</td>
+          <td>
+            <a href="{{ url_for('drivers.view', driver_id=d.id) }}"
+               class="btn btn-sm btn-outline-secondary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if drivers.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top small text-muted">
+    <span>Showing {{ drivers.items | length }} of {{ drivers.total }} drivers</span>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if drivers.has_prev %}
+        <li class="page-item"><a class="page-link" href="?page={{ drivers.prev_num }}&q={{ search }}&status={{ status }}">‹</a></li>
+        {% endif %}
+        {% for pg in drivers.iter_pages() %}
+          {% if pg %}
+            <li class="page-item {% if pg == drivers.page %}active{% endif %}">
+              <a class="page-link" href="?page={{ pg }}&q={{ search }}&status={{ status }}">{{ pg }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if drivers.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ drivers.next_num }}&q={{ search }}&status={{ status }}">›</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-people d-block"></i>
+    <p>No drivers found{% if search %} matching "{{ search }}"{% endif %}.</p>
+    <a href="{{ url_for('drivers.add') }}" class="btn btn-primary btn-sm mt-3">Add First Driver</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

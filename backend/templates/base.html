@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}THMS{% endblock %} — Transport Hire Management</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a2341" />
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Custom CSS -->
+  <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-truck-front-fill"></i></div>
+    <div class="brand-text">
+      <span class="brand-name">THMS</span>
+      <span class="brand-sub">Transport Hire</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main Menu</div>
+
+    <a href="{{ url_for('dashboard.index') }}"
+       class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span>Dashboard</span>
+    </a>
+
+    <a href="{{ url_for('drivers.index') }}"
+       class="nav-item {% if request.blueprint == 'drivers' %}active{% endif %}">
+      <i class="bi bi-people-fill"></i>
+      <span>Drivers</span>
+    </a>
+
+    <a href="{{ url_for('vehicles.index') }}"
+       class="nav-item {% if request.blueprint == 'vehicles' %}active{% endif %}">
+      <i class="bi bi-truck-front"></i>
+      <span>Vehicles</span>
+    </a>
+
+    <a href="{{ url_for('payments.index') }}"
+       class="nav-item {% if request.blueprint == 'payments' %}active{% endif %}">
+      <i class="bi bi-cash-stack"></i>
+      <span>Payments</span>
+    </a>
+
+    <div class="nav-section-label mt-3">Finance</div>
+
+    <a href="#" class="nav-item">
+      <i class="bi bi-bar-chart-fill"></i>
+      <span>Capital</span>
+      <span class="badge-soon">Soon</span>
+    </a>
+
+    <a href="#" class="nav-item">
+      <i class="bi bi-credit-card-2-back-fill"></i>
+      <span>Loans</span>
+      <span class="badge-soon">Soon</span>
+    </a>
+
+    <div class="nav-section-label mt-3">Records</div>
+
+    <a href="{{ url_for('reports.index') }}"
+       class="nav-item {% if request.blueprint == 'reports' %}active{% endif %}">
+      <i class="bi bi-file-earmark-bar-graph-fill"></i>
+      <span>Reports</span>
+    </a>
+
+    <a href="{{ url_for('archives.index') }}"
+       class="nav-item {% if request.blueprint == 'archives' %}active{% endif %}">
+      <i class="bi bi-archive-fill"></i>
+      <span>Archives</span>
+    </a>
+
+    <div class="nav-section-label mt-3">System</div>
+
+    <a href="{{ url_for('settings.index') }}"
+       class="nav-item {% if request.blueprint == 'settings' %}active{% endif %}">
+      <i class="bi bi-gear-fill"></i>
+      <span>Settings</span>
+    </a>
+
+    {% if current_user.role == 'developer' %}
+    <a href="{{ url_for('developer.index') }}"
+       class="nav-item {% if request.blueprint == 'developer' %}active{% endif %}">
+      <i class="bi bi-terminal-fill"></i>
+      <span>Developer</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+      <div class="user-details">
+        <span class="user-name">{{ current_user.username }}</span>
+        <span class="user-role">{{ current_user.role | capitalize }}</span>
+      </div>
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Logout">
+      <i class="bi bi-box-arrow-right"></i>
+    </a>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main-wrapper" id="mainWrapper">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <button class="topbar-toggle" id="sidebarToggle" title="Toggle sidebar">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <div class="topbar-title">{% block page_title %}{% endblock %}</div>
+
+    <div class="topbar-actions">
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+      </button>
+      <div class="topbar-date">
+        <i class="bi bi-calendar3"></i>
+        <span id="currentDate"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page content -->
+  <div class="page-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}-fill me-2"></i>
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

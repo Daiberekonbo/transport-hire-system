@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ vehicle.vehicle_number }}{% endblock %}
+{% block page_title %}Vehicle Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">{{ vehicle.vehicle_number }}</h1>
+    <div class="page-header-sub">{{ vehicle.model or '' }} {{ vehicle.manufacturer or '' }} {{ vehicle.year or '' }}</div>
+  </div>
+  <a href="{{ url_for('vehicles.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-md-5">
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-truck-front text-primary"></i> Vehicle Info</h6>
+        <span class="status-pill status-{{ vehicle.status }}">{{ vehicle.status | capitalize }}</span>
+      </div>
+      <div class="thms-card-body">
+        <dl class="row small mb-0">
+          <dt class="col-5 text-muted">Vehicle #</dt><dd class="col-7 fw-600">{{ vehicle.vehicle_number }}</dd>
+          <dt class="col-5 text-muted">Reg. No.</dt><dd class="col-7">{{ vehicle.reg_number or '—' }}</dd>
+          <dt class="col-5 text-muted">Engine No.</dt><dd class="col-7">{{ vehicle.engine_number or '—' }}</dd>
+          <dt class="col-5 text-muted">Chassis No.</dt><dd class="col-7">{{ vehicle.chassis_number or '—' }}</dd>
+          <dt class="col-5 text-muted">Model</dt><dd class="col-7">{{ vehicle.model or '—' }}</dd>
+          <dt class="col-5 text-muted">Manufacturer</dt><dd class="col-7">{{ vehicle.manufacturer or '—' }}</dd>
+          <dt class="col-5 text-muted">Year</dt><dd class="col-7">{{ vehicle.year or '—' }}</dd>
+          <dt class="col-5 text-muted">Purchase Price</dt>
+          <dd class="col-7 fw-600">{% if vehicle.purchase_price %}₦{{ "{:,.0f}".format(vehicle.purchase_price) }}{% else %}—{% endif %}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-7">
+    {% set c = vehicle.active_contract %}
+    {% if c %}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-file-earmark-text-fill text-primary"></i> Current Contract</h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-2 small">
+          <div class="col-6"><span class="text-muted">Driver</span><div class="fw-600">{{ c.driver.full_name }}</div></div>
+          <div class="col-6"><span class="text-muted">Weekly Amt</span><div class="fw-600 text-success">₦{{ "{:,.0f}".format(c.weekly_amount) }}</div></div>
+          <div class="col-6"><span class="text-muted">Total Payable</span><div class="fw-600">₦{{ "{:,.0f}".format(c.total_payable) }}</div></div>
+          <div class="col-6"><span class="text-muted">Outstanding</span><div class="fw-600 text-danger">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</div></div>
+          <div class="col-12 mt-2">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>Hire Progress</span><span>{{ c.progress_percent }}%</span>
+            </div>
+            <div class="thms-progress">
+              <div class="thms-progress-bar" style="width:{{ c.progress_percent }}%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="thms-card mb-3">
+      <div class="empty-state"><i class="bi bi-file-earmark d-block"></i><p>No active contract for this vehicle.</p></div>
+    </div>
+    {% endif %}
+
+    {% if vehicle.notes %}
+    <div class="thms-card">
+      <div class="thms-card-header"><h6 class="thms-card-title"><i class="bi bi-sticky-fill text-warning"></i> Notes</h6></div>
+      <div class="thms-card-body small text-muted">{{ vehicle.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

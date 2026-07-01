@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Good {{ 'morning' if today.strftime('%H') | int < 12 else ('afternoon' if today.strftime('%H') | int < 17 else 'evening') }}, {{ current_user.username | capitalize }} 👋</h1>
+    <div class="page-header-sub">Here's what's happening in your business today.</div>
+  </div>
+  <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+    <i class="bi bi-plus-lg"></i> Record Payment
+  </a>
+</div>
+
+<!-- ---- Stat Cards Row 1 ---- -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6 col-xl-3">
+    <a href="{{ url_for('drivers.index') }}" class="text-decoration-none">
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+        <div class="stat-info">
+          <div class="stat-label">Active Drivers</div>
+          <div class="stat-value">{{ total_drivers }}</div>
+          <div class="stat-sub">Currently assigned</div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-3">
+    <a href="{{ url_for('vehicles.index') }}" class="text-decoration-none">
+      <div class="stat-card">
+        <div class="stat-icon cyan"><i class="bi bi-truck-front"></i></div>
+        <div class="stat-info">
+          <div class="stat-label">Total Vehicles</div>
+          <div class="stat-value">{{ total_vehicles }}</div>
+          <div class="stat-sub">
+            {{ vehicles_assigned }} assigned &middot; {{ vehicles_available }} available
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-cash-stack"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">This Week</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(weekly_payments) }}</div>
+        <div class="stat-sub">Payments received</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="bi bi-calendar-month"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">This Month</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(monthly_payments) }}</div>
+        <div class="stat-sub">Total collected</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- Stat Cards Row 2 ---- -->
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Outstanding Balance</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(total_outstanding) }}</div>
+        <div class="stat-sub">Across {{ active_contracts }} contracts</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="bi bi-credit-card-2-back-fill"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Outstanding Loans</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(outstanding_loans) }}</div>
+        <div class="stat-sub">Unpaid driver loans</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-file-earmark-text-fill"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Active Contracts</div>
+        <div class="stat-value">{{ active_contracts }}</div>
+        <div class="stat-sub">Hire purchase agreements</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon{% if expiring_contracts %} red{% else %} green{% endif %}">
+        <i class="bi bi-alarm-fill"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Expiring Soon</div>
+        <div class="stat-value">{{ expiring_contracts | length }}</div>
+        <div class="stat-sub">Contracts ending within 4 weeks</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- Bottom Section ---- -->
+<div class="row g-3">
+
+  <!-- Recent Payments -->
+  <div class="col-12 col-xl-7">
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title">
+          <i class="bi bi-clock-history text-primary"></i>
+          Recent Payments
+        </h6>
+        <a href="{{ url_for('payments.index') }}" class="btn btn-sm btn-outline-secondary">
+          View All
+        </a>
+      </div>
+
+      {% if recent_payments %}
+      <div style="overflow-x: auto;">
+        <table class="thms-table">
+          <thead>
+            <tr>
+              <th>Driver</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Date</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_payments %}
+            <tr>
+              <td>
+                <div class="fw-600">{{ p.driver.full_name }}</div>
+                <div class="small text-muted">{{ p.driver.phone }}</div>
+              </td>
+              <td class="fw-600 text-success no-wrap">₦{{ "{:,.0f}".format(p.amount) }}</td>
+              <td>
+                <span class="badge {% if p.payment_method == 'cash' %}bg-success{% elif p.payment_method == 'transfer' %}bg-primary{% else %}bg-info text-dark{% endif %} bg-opacity-10 text-capitalize" style="font-size:0.72rem;">
+                  <i class="bi bi-{% if p.payment_method == 'cash' %}cash{% elif p.payment_method == 'transfer' %}bank{% else %}credit-card{% endif %} me-1"></i>
+                  {{ p.payment_method }}
+                </span>
+              </td>
+              <td class="text-muted small no-wrap">{{ p.payment_date.strftime('%d %b %Y') }}</td>
+              <td class="text-muted small">{{ p.reference or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-cash-coin d-block"></i>
+        <p>No payments recorded yet.</p>
+        <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm mt-3">Record First Payment</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div class="col-12 col-xl-5 d-flex flex-column gap-3">
+
+    <!-- Expiring Contracts -->
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title">
+          <i class="bi bi-alarm text-danger"></i>
+          Contracts Expiring Soon
+        </h6>
+      </div>
+      {% if expiring_contracts %}
+        <div class="thms-card-body p-0">
+          {% for c in expiring_contracts %}
+          <div class="d-flex align-items-center gap-3 px-4 py-3 border-bottom">
+            <div class="user-avatar flex-shrink-0" style="width:36px;height:36px;font-size:0.85rem;">
+              {{ c.driver.full_name[0].upper() }}
+            </div>
+            <div class="flex-1">
+              <div class="fw-600 small">{{ c.driver.full_name }}</div>
+              <div class="text-muted" style="font-size:0.72rem;">
+                {{ c.vehicle.vehicle_number }} &middot; {{ c.weeks_remaining }} weeks left
+              </div>
+              <div class="thms-progress mt-1" style="width:140px;">
+                <div class="thms-progress-bar" style="width:{{ c.progress_percent }}%;background:{% if c.weeks_remaining <= 2 %}#dc2626{% elif c.weeks_remaining <= 8 %}#d97706{% else %}#2563eb{% endif %};"></div>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="small fw-600">{{ c.progress_percent }}%</div>
+              <div class="text-muted" style="font-size:0.7rem;">Done</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding: 28px;">
+          <i class="bi bi-check-circle d-block text-success" style="opacity:0.6;"></i>
+          <p>No contracts expiring soon.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title">
+          <i class="bi bi-lightning-charge-fill text-warning"></i>
+          Quick Actions
+        </h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm text-start">
+            <i class="bi bi-plus-circle-fill me-2"></i>Record a Payment
+          </a>
+          <a href="{{ url_for('drivers.add') }}" class="btn btn-outline-secondary btn-sm text-start">
+            <i class="bi bi-person-plus-fill me-2"></i>Add New Driver
+          </a>
+          <a href="{{ url_for('vehicles.add') }}" class="btn btn-outline-secondary btn-sm text-start">
+            <i class="bi bi-truck-front me-2"></i>Add New Vehicle
+          </a>
+          <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm text-start">
+            <i class="bi bi-file-earmark-bar-graph-fill me-2"></i>Generate Report
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

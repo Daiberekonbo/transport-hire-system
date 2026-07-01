@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Add Vehicle{% endblock %}
+{% block page_title %}Add New Vehicle{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Add New Vehicle</h1>
+    <div class="page-header-sub">Register a new vehicle in the fleet.</div>
+  </div>
+  <a href="{{ url_for('vehicles.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+</div>
+
+<form method="POST">
+  <div class="row g-3">
+    <div class="col-12 col-lg-8">
+      <div class="thms-card mb-3">
+        <div class="thms-card-header">
+          <h6 class="thms-card-title"><i class="bi bi-truck-front text-primary"></i> Vehicle Details</h6>
+        </div>
+        <div class="thms-card-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Vehicle Number *</label>
+              <input type="text" name="vehicle_number" class="form-control" required placeholder="e.g. VH-001" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Registration Number</label>
+              <input type="text" name="reg_number" class="form-control" placeholder="e.g. KJA-123-AA" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Engine Number</label>
+              <input type="text" name="engine_number" class="form-control" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Chassis Number</label>
+              <input type="text" name="chassis_number" class="form-control" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Manufacturer</label>
+              <input type="text" name="manufacturer" class="form-control" placeholder="e.g. Toyota, Sienna" />
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="thms-form-label">Model</label>
+              <input type="text" name="model" class="form-control" placeholder="e.g. Hiace" />
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="thms-form-label">Year</label>
+              <input type="number" name="year" class="form-control" placeholder="2020" min="1990" max="2030" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Purchase Price (₦)</label>
+              <input type="number" name="purchase_price" class="form-control" step="0.01" placeholder="0.00" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="thms-card mb-3">
+        <div class="thms-card-header">
+          <h6 class="thms-card-title"><i class="bi bi-sticky-fill text-warning"></i> Notes</h6>
+        </div>
+        <div class="thms-card-body">
+          <textarea name="notes" class="form-control" rows="5" placeholder="Additional notes…"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">
+        <i class="bi bi-plus-circle-fill me-2"></i>Add Vehicle
+      </button>
+      <a href="{{ url_for('vehicles.index') }}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

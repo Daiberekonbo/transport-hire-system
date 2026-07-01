@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Settings</h1>
+    <div class="page-header-sub">Account and system configuration.</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-md-6">
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-shield-lock-fill text-primary"></i> Change Password</h6>
+      </div>
+      <div class="thms-card-body">
+        <form method="POST" action="{{ url_for('settings.change_password') }}">
+          <div class="mb-3">
+            <label class="thms-form-label">Current Password</label>
+            <input type="password" name="current_password" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="thms-form-label">New Password</label>
+            <input type="password" name="new_password" class="form-control" required minlength="6" />
+          </div>
+          <div class="mb-4">
+            <label class="thms-form-label">Confirm New Password</label>
+            <input type="password" name="confirm_password" class="form-control" required minlength="6" />
+          </div>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6">
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-person-circle text-secondary"></i> Account Info</h6>
+      </div>
+      <div class="thms-card-body">
+        <dl class="row small mb-0">
+          <dt class="col-4 text-muted">Username</dt><dd class="col-8 fw-600">{{ current_user.username }}</dd>
+          <dt class="col-4 text-muted">Role</dt><dd class="col-8">{{ current_user.role | capitalize }}</dd>
+          <dt class="col-4 text-muted">Last Login</dt>
+          <dd class="col-8 text-muted">
+            {{ current_user.last_login.strftime('%d %b %Y %H:%M') if current_user.last_login else 'N/A' }}
+          </dd>
+          <dt class="col-4 text-muted">Member Since</dt>
+          <dd class="col-8 text-muted">{{ current_user.created_at.strftime('%d %b %Y') }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

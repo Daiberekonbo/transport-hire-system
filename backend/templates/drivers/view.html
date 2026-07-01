@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}{{ driver.full_name }}{% endblock %}
+{% block page_title %}Driver Profile{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">{{ driver.full_name }}</h1>
+    <div class="page-header-sub">Driver profile and payment history.</div>
+  </div>
+  <a href="{{ url_for('drivers.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back to Drivers
+  </a>
+</div>
+
+<div class="row g-3">
+
+  <!-- Profile Card -->
+  <div class="col-12 col-md-4">
+    <div class="thms-card mb-3">
+      <div class="thms-card-body text-center">
+        <div class="user-avatar mx-auto mb-3" style="width:72px;height:72px;font-size:1.8rem;">
+          {{ driver.full_name[0].upper() }}
+        </div>
+        <h5 class="mb-1">{{ driver.full_name }}</h5>
+        <div class="text-muted small mb-2">{{ driver.phone }}</div>
+        <span class="status-pill status-{{ driver.status }}">{{ driver.status | capitalize }}</span>
+        {% if driver.address %}
+        <div class="text-muted small mt-3">
+          <i class="bi bi-geo-alt me-1"></i>{{ driver.address }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Personal Details -->
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-person-fill text-primary"></i> Personal Details</h6>
+      </div>
+      <div class="thms-card-body">
+        <dl class="row small mb-0">
+          <dt class="col-5 text-muted">National ID</dt>
+          <dd class="col-7">{{ driver.national_id or '—' }}</dd>
+          <dt class="col-5 text-muted">Registered</dt>
+          <dd class="col-7">{{ driver.date_registered.strftime('%d %b %Y') }}</dd>
+          {% if driver.nok_name %}
+          <dt class="col-5 text-muted">Next of Kin</dt>
+          <dd class="col-7 fw-600">{{ driver.nok_name }}</dd>
+          <dt class="col-5 text-muted">NOK Phone</dt>
+          <dd class="col-7">{{ driver.nok_phone or '—' }}</dd>
+          <dt class="col-5 text-muted">Relationship</dt>
+          <dd class="col-7">{{ driver.nok_relationship or '—' }}</dd>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    {% if driver.notes %}
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-sticky-fill text-warning"></i> Notes</h6>
+      </div>
+      <div class="thms-card-body small text-muted">{{ driver.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Column -->
+  <div class="col-12 col-md-8">
+
+    <!-- Active Contract -->
+    {% if active_contract %}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-file-earmark-text-fill text-primary"></i> Active Contract</h6>
+        <span class="status-pill status-active">Active</span>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-3">
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Vehicle</div>
+            <div class="fw-600">{{ active_contract.vehicle.vehicle_number }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Weekly Payment</div>
+            <div class="fw-600 text-success">₦{{ "{:,.0f}".format(active_contract.weekly_amount) }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Total Payable</div>
+            <div class="fw-600">₦{{ "{:,.0f}".format(active_contract.total_payable) }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Balance Due</div>
+            <div class="fw-600 text-danger">₦{{ "{:,.0f}".format(active_contract.outstanding_balance) }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Weeks Done</div>
+            <div class="fw-600">{{ active_contract.weeks_completed }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Weeks Left</div>
+            <div class="fw-600">{{ active_contract.weeks_remaining }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Total Weeks</div>
+            <div class="fw-600">{{ active_contract.total_weeks }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted">Progress</div>
+            <div class="fw-600">{{ active_contract.progress_percent }}%</div>
+          </div>
+          <div class="col-12">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>Hire Purchase Progress</span>
+              <span>{{ active_contract.progress_percent }}%</span>
+            </div>
+            <div class="thms-progress">
+              <div class="thms-progress-bar" style="width:{{ active_contract.progress_percent }}%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Payments -->
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title">
+          <i class="bi bi-clock-history text-primary"></i> Recent Payments
+        </h6>
+        <a href="{{ url_for('payments.record') }}" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus-lg"></i> Record
+        </a>
+      </div>
+      {% if recent_payments %}
+      <div style="overflow-x:auto;">
+        <table class="thms-table">
+          <thead>
+            <tr>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Method</th>
+              <th>Sender</th>
+              <th>Reference</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_payments %}
+            <tr>
+              <td class="fw-600 text-success no-wrap">₦{{ "{:,.0f}".format(p.amount) }}</td>
+              <td class="text-muted small no-wrap">{{ p.payment_date.strftime('%d %b %Y') }}</td>
+              <td>
+                <span class="badge {% if p.payment_method == 'cash' %}bg-success{% elif p.payment_method == 'transfer' %}bg-primary{% else %}bg-info text-dark{% endif %} bg-opacity-10 text-capitalize small">
+                  {{ p.payment_method }}
+                </span>
+              </td>
+              <td class="text-muted small">{{ p.sender or '—' }}</td>
+              <td class="text-muted small">{{ p.reference or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:28px;">
+        <i class="bi bi-cash-coin d-block"></i>
+        <p>No payments recorded for this driver yet.</p>
+        <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm mt-2">Record First Payment</a>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Record Payment{% endblock %}
+{% block page_title %}Record a Payment{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Record Payment</h1>
+    <div class="page-header-sub">Enter the weekly hire-purchase payment details.</div>
+  </div>
+  <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+</div>
+
+<form method="POST" id="paymentForm">
+  <div class="row g-3">
+    <div class="col-12 col-lg-7">
+      <div class="thms-card mb-3">
+        <div class="thms-card-header">
+          <h6 class="thms-card-title"><i class="bi bi-cash-stack text-success"></i> Payment Details</h6>
+        </div>
+        <div class="thms-card-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="thms-form-label">Driver *</label>
+              <select name="driver_id" class="form-select" required id="driverSelect">
+                <option value="">— Select driver —</option>
+                {% for d in drivers %}
+                <option value="{{ d.id }}">{{ d.full_name }} ({{ d.phone }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Amount (₦) *</label>
+              <input type="number" name="amount" class="form-control" step="0.01" min="1" required placeholder="0.00" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Payment Date *</label>
+              <input type="date" name="payment_date" class="form-control" value="{{ today }}" required />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Payment Method</label>
+              <select name="payment_method" class="form-select" id="methodSelect">
+                <option value="cash">Cash</option>
+                <option value="transfer">Bank Transfer</option>
+                <option value="pos">POS</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6" id="bankField" style="display:none;">
+              <label class="thms-form-label">Bank Name</label>
+              <input type="text" name="bank_name" class="form-control" placeholder="e.g. GTBank" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Sender (Payer)</label>
+              <input type="text" name="sender" class="form-control" placeholder="Name of person who paid" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Receiver (Collector)</label>
+              <input type="text" name="receiver" class="form-control" placeholder="Name of person who collected" />
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="thms-form-label">Reference / Receipt No.</label>
+              <input type="text" name="reference" class="form-control" placeholder="Optional reference" />
+            </div>
+            <div class="col-12">
+              <label class="thms-form-label">Notes</label>
+              <textarea name="notes" class="form-control" rows="2" placeholder="Any notes about this payment…"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+      <div class="thms-card mb-3" id="contractSummary" style="display:none;">
+        <div class="thms-card-header">
+          <h6 class="thms-card-title"><i class="bi bi-info-circle text-info"></i> Contract Summary</h6>
+        </div>
+        <div class="thms-card-body" id="contractDetails">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <div class="thms-card">
+        <div class="thms-card-body">
+          <button type="submit" class="btn btn-success w-100 fw-600">
+            <i class="bi bi-check-circle-fill me-2"></i>Save Payment
+          </button>
+          <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show bank field when transfer or POS is selected
+document.getElementById("methodSelect").addEventListener("change", function() {
+  document.getElementById("bankField").style.display =
+    (this.value === "transfer" || this.value === "pos") ? "block" : "none";
+});
+</script>
+{% endblock %}

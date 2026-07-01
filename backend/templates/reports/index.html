@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Reports</h1>
+    <div class="page-header-sub">Generate and export business reports.</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% set report_types = [
+    ('driver', 'bi-people-fill', 'blue', 'Driver Report', 'Summary of all drivers, their contracts and payment status.'),
+    ('vehicle', 'bi-truck-front', 'cyan', 'Vehicle Report', 'Fleet inventory, assignment and utilisation overview.'),
+    ('payment', 'bi-cash-stack', 'green', 'Payment Report', 'All payment transactions filtered by date range.'),
+    ('weekly', 'bi-calendar-week', 'purple', 'Weekly Report', 'Collections and outstanding for the current week.'),
+    ('monthly', 'bi-calendar-month', 'amber', 'Monthly Report', 'Monthly summary of all income and outstanding balances.'),
+    ('loan', 'bi-credit-card-2-back-fill', 'red', 'Loan Report', 'Driver loans and extra expenditures outstanding.'),
+  ] %}
+  {% for slug, icon, color, title, desc in report_types %}
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="thms-card h-100">
+      <div class="thms-card-body d-flex flex-column gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon {{ color }}"><i class="bi {{ icon }}"></i></div>
+          <div>
+            <div class="fw-600">{{ title }}</div>
+            <div class="text-muted small">{{ desc }}</div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-auto">
+          <button class="btn btn-sm btn-outline-secondary flex-1" disabled>
+            <i class="bi bi-filetype-pdf me-1"></i>PDF
+          </button>
+          <button class="btn btn-sm btn-outline-secondary flex-1" disabled>
+            <i class="bi bi-filetype-xlsx me-1"></i>Excel
+          </button>
+          <button class="btn btn-sm btn-outline-secondary flex-1" disabled>
+            <i class="bi bi-filetype-csv me-1"></i>CSV
+          </button>
+        </div>
+        <div class="text-muted small text-center"><i class="bi bi-hourglass-split me-1"></i>Export coming soon</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

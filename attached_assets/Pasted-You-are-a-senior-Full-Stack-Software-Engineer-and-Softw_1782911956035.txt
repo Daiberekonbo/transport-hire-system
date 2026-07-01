@@ -1,0 +1,440 @@
+You are a senior Full Stack Software Engineer and Software Architect.
+
+I am building a real-world production-quality application called "Transport Hire Management System" for a Nigerian transport business that operates on a hire purchase / lease-to-own vehicle model.
+
+IMPORTANT:
+Do NOT redesign the project structure unless absolutely necessary.
+Use the existing project files and folder structure already in this repository.
+Only improve and extend the current project.
+
+===========================================================
+PROJECT OVERVIEW
+===========================================================
+
+The system will be used by only two business owners initially.
+
+It should eventually become a Progressive Web App (PWA) that works on desktop, tablets and mobile devices.
+
+The backend uses:
+- Python
+- Flask
+- SQLAlchemy
+- SQLite initially (easy migration to PostgreSQL later)
+
+Frontend:
+- HTML
+- CSS
+- Vanilla JavaScript
+(Jinja templates)
+
+The application must be clean, modular, scalable and production-ready.
+
+===========================================================
+BUSINESS DESCRIPTION
+===========================================================
+
+The company owns multiple commercial vehicles.
+
+Each vehicle is assigned to one driver.
+
+Drivers make WEEKLY payments.
+
+Vehicles are returned after the agreed payment period instead of becoming the driver's permanent property.
+
+Every payment, expense and transaction must remain permanently stored for future investigations.
+
+Nothing should ever be permanently deleted.
+
+Everything should be archived instead.
+
+===========================================================
+CORE MODULES
+===========================================================
+
+Dashboard
+
+Drivers
+
+Vehicles
+
+Payments
+
+Capital Management
+
+Extra Expenditure (Loans)
+
+Archives
+
+Reports
+
+Developer Mode
+
+Settings
+
+===========================================================
+DRIVER MANAGEMENT
+===========================================================
+
+Store:
+
+Full name
+
+Phone number
+
+Address
+
+Photo
+
+National ID
+
+Next of kin
+
+Witnesses
+
+Guarantors
+
+Status
+
+Date registered
+
+Date archived
+
+Notes
+
+Assigned vehicle
+
+===========================================================
+VEHICLE MANAGEMENT
+===========================================================
+
+Store:
+
+Vehicle number
+
+Registration number
+
+Engine number
+
+Chassis number
+
+Vehicle model
+
+Manufacturer
+
+Year
+
+Purchase date
+
+Delivery date
+
+Purchase price
+
+Current status
+
+Driver assigned
+
+Documents
+
+Notes
+
+===========================================================
+HIRE PURCHASE DETAILS
+===========================================================
+
+Each contract stores:
+
+Vehicle assigned
+
+Driver assigned
+
+Capital
+
+Vehicle cost
+
+Extra expenses
+
+Service costs
+
+Total amount payable
+
+Weekly payment amount
+
+Number of years agreed
+
+Automatically convert years into weeks.
+
+Example:
+
+3 years
+
+↓
+
+156 weeks
+
+Track:
+
+Weeks completed
+
+Weeks remaining
+
+Expected completion date
+
+===========================================================
+PAYMENT SYSTEM
+===========================================================
+
+Drivers pay WEEKLY.
+
+However:
+
+A week's payment may be split into multiple smaller payments.
+
+Example:
+
+Monday ₦20,000
+
+Wednesday ₦30,000
+
+Friday ₦15,000
+
+System combines them into one week's payment.
+
+A driver may also pay multiple weeks in advance.
+
+Example:
+
+Pays 2 weeks today.
+
+Next week automatically shows as paid.
+
+Store every payment:
+
+Amount
+
+Date
+
+Time
+
+Sender
+
+Receiver
+
+Payment method
+
+POS
+
+Bank
+
+Reference
+
+Notes
+
+Automatically calculate:
+
+Remaining balance
+
+Completed weeks
+
+Missed weeks
+
+Outstanding amount
+
+===========================================================
+EXTRA EXPENDITURE
+===========================================================
+
+Sometimes owners repair vehicles because drivers cannot afford repairs.
+
+Those expenses become loans.
+
+Store:
+
+Amount
+
+Reason
+
+Date
+
+Owner
+
+Driver
+
+Status
+
+Automatically add loan to driver's outstanding balance.
+
+===========================================================
+ARCHIVES
+===========================================================
+
+When contract ends:
+
+Move driver
+
+Vehicle history
+
+Payments
+
+Expenses
+
+Documents
+
+Timeline
+
+to archive.
+
+Archived records remain searchable forever.
+
+Nothing is permanently deleted.
+
+===========================================================
+REPORTS
+===========================================================
+
+Generate:
+
+Driver report
+
+Vehicle report
+
+Payment report
+
+Loan report
+
+Weekly report
+
+Monthly report
+
+Yearly report
+
+Business summary
+
+Export to:
+
+PDF
+
+Excel
+
+CSV
+
+===========================================================
+AUDIT LOG
+===========================================================
+
+Every action should be recorded.
+
+Store:
+
+User
+
+Action
+
+Old value
+
+New value
+
+Date
+
+Time
+
+IP (future)
+
+Device (future)
+
+===========================================================
+SECURITY
+===========================================================
+
+Two user accounts initially.
+
+Password hashing
+
+Role-based authentication
+
+Session management
+
+Automatic backups
+
+===========================================================
+DEVELOPER MODE
+===========================================================
+
+Developer Mode should include:
+
+Database viewer
+
+Log viewer
+
+Backup manager
+
+System information
+
+Error logs
+
+Developer console
+
+===========================================================
+UI REQUIREMENTS
+===========================================================
+
+Modern professional admin dashboard.
+
+Clean interface.
+
+Responsive.
+
+Sidebar navigation.
+
+Cards.
+
+Tables.
+
+Forms.
+
+Search.
+
+Pagination.
+
+Dark mode support.
+
+Use Bootstrap 5 if appropriate.
+
+===========================================================
+PROJECT GOALS
+===========================================================
+
+Do NOT generate everything at once.
+
+Instead:
+
+1. Analyze the existing repository.
+
+2. Explain what currently exists.
+
+3. Suggest improvements.
+
+4. Build one feature at a time.
+
+5. Never overwrite existing code unnecessarily.
+
+6. Keep code modular.
+
+7. Comment important code.
+
+8. Follow Flask best practices.
+
+9. Explain every major change before implementing it.
+
+10. Preserve compatibility with future PostgreSQL migration.
+
+===========================================================
+FIRST TASK
+===========================================================
+
+Inspect the current repository.
+
+Explain what already exists.
+
+Identify missing components.
+
+Then begin by building a professional dashboard homepage while preserving the current project structure.

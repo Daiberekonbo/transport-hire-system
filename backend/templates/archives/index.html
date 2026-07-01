@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Archives{% endblock %}
+{% block page_title %}Archives{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Archives</h1>
+    <div class="page-header-sub">Permanently stored records — nothing is ever deleted.</div>
+  </div>
+</div>
+
+<div class="thms-card mb-3">
+  <div class="thms-card-body">
+    <form class="d-flex gap-2" method="GET">
+      <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
+             placeholder="Search archived drivers…" style="max-width:260px;" />
+      <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i> Search</button>
+    </form>
+  </div>
+</div>
+
+<div class="thms-card">
+  {% if drivers.items %}
+  <table class="thms-table">
+    <thead>
+      <tr><th>Driver</th><th>Phone</th><th>Date Archived</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      {% for d in drivers.items %}
+      <tr>
+        <td class="fw-600">{{ d.full_name }}</td>
+        <td class="text-muted small">{{ d.phone }}</td>
+        <td class="text-muted small">{{ d.date_archived.strftime('%d %b %Y') if d.date_archived else '—' }}</td>
+        <td class="text-muted small">{{ d.notes[:60] + '…' if d.notes and d.notes|length > 60 else (d.notes or '—') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <i class="bi bi-archive d-block"></i>
+    <p>No archived records{% if search %} matching "{{ search }}"{% endif %}.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

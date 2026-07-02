@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Edit Contract #{{ contract.id }}{% endblock %}
+{% block page_title %}Edit Contract{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('contracts.view', contract_id=contract.id) }}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-header-title mb-0">Edit Contract #{{ contract.id }}</h1>
+      <div class="page-header-sub">
+        {{ contract.driver.full_name }} · {{ contract.vehicle.vehicle_number }}
+        — required fields marked <span class="text-danger">*</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('contracts.edit', contract_id=contract.id) }}" novalidate id="contractForm">
+<div class="row g-3">
+
+  <div class="col-12 col-xl-8">
+
+    {# Parties (read-only on edit) #}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-people-fill text-primary"></i> Parties (read-only)</h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="thms-form-label">Driver</label>
+            <input type="text" class="form-control bg-body-secondary"
+                   value="{{ contract.driver.full_name }}" readonly />
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="thms-form-label">Vehicle</label>
+            <input type="text" class="form-control bg-body-secondary"
+                   value="{{ contract.vehicle.vehicle_number }} — {{ [contract.vehicle.manufacturer, contract.vehicle.model] | select | join(' ') }}"
+                   readonly />
+          </div>
+        </div>
+        <div class="form-text mt-2">
+          <i class="bi bi-info-circle me-1"></i>
+          Driver and vehicle cannot be changed after a contract is created.
+          Archive this contract and create a new one if needed.
+        </div>
+      </div>
+    </div>
+
+    {# Dates #}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-calendar3 text-info"></i> Key Dates</h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Purchase Date</label>
+            <input type="date" name="purchase_date" class="form-control"
+                   value="{{ form.get('purchase_date', contract.purchase_date.strftime('%Y-%m-%d') if contract.purchase_date else '') }}" />
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Delivery Date</label>
+            <input type="date" name="delivery_date" class="form-control"
+                   value="{{ form.get('delivery_date', contract.delivery_date.strftime('%Y-%m-%d') if contract.delivery_date else '') }}" />
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Contract Start Date <span class="text-danger">*</span></label>
+            <input type="date" name="start_date" class="form-control calc-input" id="startDate"
+                   value="{{ form.get('start_date', contract.start_date.strftime('%Y-%m-%d') if contract.start_date else '') }}"
+                   required />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Capital breakdown #}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-cash-stack text-success"></i> Capital Breakdown</h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Cost of Vehicle (₦)</label>
+            <div class="input-group">
+              <span class="input-group-text">₦</span>
+              <input type="text" name="vehicle_cost" class="form-control calc-input" id="vehicleCost"
+                     value="{{ form.get('vehicle_cost', contract.vehicle_cost or '') }}" />
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Initial Servicing (₦)</label>
+            <div class="input-group">
+              <span class="input-group-text">₦</span>
+              <input type="text" name="service_costs" class="form-control calc-input" id="serviceCosts"
+                     value="{{ form.get('service_costs', contract.service_costs or '') }}" />
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Startup Expenses (₦)</label>
+            <div class="input-group">
+              <span class="input-group-text">₦</span>
+              <input type="text" name="extra_expenses" class="form-control calc-input" id="extraExpenses"
+                     value="{{ form.get('extra_expenses', contract.extra_expenses or '') }}" />
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="thms-form-label">Total Capital (₦)</label>
+            <div class="input-group">
+              <span class="input-group-text">₦</span>
+              <input type="text" name="capital" class="form-control" id="capital"
+                     value="{{ form.get('capital', contract.capital or '') }}" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Payment terms #}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-calendar-week-fill text-warning"></i> Payment Terms</h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-5">
+            <label class="thms-form-label">Total Amount Payable (₦) <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">₦</span>
+              <input type="text" name="total_payable" class="form-control calc-input" id="totalPayable"
+                     value="{{ form.get('total_payable', contract.total_payable or '') }}" required />
+            </div>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="thms-form-label">Number of Years <span class="text-danger">*</span></label>
+            <select name="years_agreed" class="form-select calc-input" id="yearsAgreed">
+              {% for y in range(1, 11) %}
+              <option value="{{ y }}"
+                      {{ 'selected' if (form.get('years_agreed', contract.years_agreed|string))|int == y }}>
+                {{ y }} year{{ 's' if y > 1 }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="thms-card h-100" style="background:var(--bg-secondary,#f8fafc);">
+              <div class="thms-card-body py-2 px-3 small">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-muted">Total weeks</span>
+                  <strong id="totalWeeksDisplay">{{ contract.total_weeks }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-muted">Weekly payment</span>
+                  <strong id="weeklyAmountDisplay" class="text-success">
+                    ₦{{ "{:,.2f}".format(contract.weekly_amount | float) }}
+                  </strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted">Expected end</span>
+                  <strong id="expectedEndDisplay">
+                    {{ contract.expected_end_date.strftime('%d %b %Y') if contract.expected_end_date else '—' }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Status #}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-toggle-on text-secondary"></i> Status</h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Contract Status</label>
+            <select name="status" class="form-select">
+              {% for val, label in [
+                ('active',    'Active'),
+                ('suspended', 'Suspended'),
+                ('inactive',  'Inactive'),
+              ] %}
+              <option value="{{ val }}"
+                      {{ 'selected' if form.get('status', contract.status) == val }}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Use the Complete / Archive buttons to finalize a contract.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>{# /col-xl-8 #}
+
+  <div class="col-12 col-xl-4">
+
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-sticky-fill text-warning"></i> Notes</h6>
+      </div>
+      <div class="thms-card-body">
+        <textarea name="notes" class="form-control" rows="7">{{ form.get('notes', contract.notes or '') }}</textarea>
+      </div>
+    </div>
+
+    <div class="thms-card" style="position:sticky;top:76px;">
+      <div class="thms-card-body d-grid gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-floppy-fill me-2"></i>Save Changes
+        </button>
+        <a href="{{ url_for('contracts.view', contract_id=contract.id) }}"
+           class="btn btn-outline-secondary">
+          Cancel
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function parseNum(id) {
+  return parseFloat((document.getElementById(id)?.value || "0").replace(/,/g, "")) || 0;
+}
+function fmt(n) {
+  return "₦" + n.toLocaleString("en-NG", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+function addWeeks(dateStr, weeks) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr); d.setDate(d.getDate() + weeks * 7); return d;
+}
+function fmtDate(d) {
+  if (!d) return "—";
+  return d.toLocaleDateString("en-GB", {day:"2-digit", month:"short", year:"numeric"});
+}
+function recalculate() {
+  const vc = parseNum("vehicleCost");
+  const sc = parseNum("serviceCosts");
+  const ex = parseNum("extraExpenses");
+  const capField = document.getElementById("capital");
+  if (!capField.dataset.manualOverride) capField.value = (vc + sc + ex).toFixed(2);
+  const total  = parseNum("totalPayable");
+  const years  = parseInt(document.getElementById("yearsAgreed")?.value) || 3;
+  const weeks  = years * 52;
+  const weekly = weeks > 0 ? total / weeks : 0;
+  const start  = document.getElementById("startDate")?.value;
+  document.getElementById("totalWeeksDisplay").textContent   = weeks + " weeks";
+  document.getElementById("weeklyAmountDisplay").textContent = fmt(weekly);
+  document.getElementById("expectedEndDisplay").textContent  = fmtDate(addWeeks(start, weeks));
+}
+document.getElementById("capital")?.addEventListener("input", function() {
+  this.dataset.manualOverride = "1";
+});
+document.querySelectorAll(".calc-input").forEach(el => {
+  el.addEventListener("input", recalculate);
+  el.addEventListener("change", recalculate);
+});
+document.getElementById("startDate")?.addEventListener("change", recalculate);
+recalculate();
+</script>
+{% endblock %}

@@ -48,6 +48,12 @@
       <span>Vehicles</span>
     </a>
 
+    <a href="{{ url_for('contracts.index') }}"
+       class="nav-item {% if request.blueprint == 'contracts' %}active{% endif %}">
+      <i class="bi bi-file-earmark-text-fill"></i>
+      <span>Contracts</span>
+    </a>
+
     <a href="{{ url_for('payments.index') }}"
        class="nav-item {% if request.blueprint == 'payments' %}active{% endif %}">
       <i class="bi bi-cash-stack"></i>

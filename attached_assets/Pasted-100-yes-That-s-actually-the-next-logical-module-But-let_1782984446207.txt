@@ -1,0 +1,157 @@
+100% yes. That's actually the next logical module.
+
+But let's make the prompt much more detailed than what Replit suggested so it builds it closer to your mum's real business instead of a generic hire-purchase system.
+
+Send this:
+
+---
+
+Build the complete Hire-Purchase Contract Management module.
+
+Requirements:
+
+A contract must permanently link one driver to one vehicle.
+
+### Create Contract
+
+When creating a contract, the owner should enter:
+
+* Driver
+* Vehicle
+* Purchase date
+* Delivery date
+* Cost of vehicle
+* Initial servicing cost
+* Any additional startup expenses
+* Total capital (automatically calculated from all expenses but editable if needed)
+* Total amount the driver is expected to pay
+* Number of years agreed
+
+The system should automatically calculate:
+
+* Total number of weeks
+* Weekly payment amount
+* Expected contract end date
+* Remaining balance
+* Remaining weeks
+
+### Contract Rules
+
+A vehicle can only have one active contract at a time.
+
+A driver can only have one active contract at a time unless the owner deliberately overrides this.
+
+Contracts can be:
+
+* Active
+* Completed
+* Inactive
+* Suspended
+
+Completed contracts must automatically move to archive but remain permanently accessible.
+
+Nothing should ever be permanently deleted.
+
+### Dashboard
+
+Each contract should display:
+
+* Driver name
+* Vehicle details
+* Weekly payment
+* Amount paid
+* Amount remaining
+* Weeks completed
+* Weeks remaining
+* Contract progress percentage
+* Current status
+
+Show a coloured progress bar.
+
+### Automatic Progress
+
+Whenever a payment is recorded:
+
+* Remaining balance updates automatically.
+* Weeks paid updates automatically.
+* Progress percentage updates automatically.
+* Outstanding balance updates automatically.
+
+### Extra Expenditure Integration
+
+Extra expenditures (loans for repairs or damages) must automatically increase the driver's outstanding balance.
+
+The contract should display:
+
+Original Capital
+
+Extra Expenditure
+
+Total Debt
+
+Amount Paid
+
+Outstanding Balance
+
+### Timeline
+
+Display a complete timeline:
+
+Purchase Date
+
+Delivery Date
+
+Every payment date
+
+Every extra expenditure
+
+Contract completion date
+
+Everything should be timestamped using the device's real date and time.
+
+### Audit
+
+Every creation, edit, suspension, completion or archive action must create a permanent audit log entry.
+
+No records should ever be lost.
+
+### User Interface
+
+Provide:
+
+Create Contract page
+
+Edit Contract page
+
+Contract Details page
+
+Active Contracts page
+
+Archived Contracts page
+
+Search and filter by driver, vehicle and status.
+
+Use responsive Bootstrap cards and tables matching the rest of the application.
+
+---
+
+After it finishes that, **don't let it jump to payments immediately**.
+
+Our roadmap should be:
+
+1. ✅ Login/Auth
+2. ✅ Dashboard
+3. ✅ Drivers
+4. ✅ Vehicles
+5. ✅ Hire Purchase Contracts ← current
+6. **Payments** (the biggest module)
+7. **Extra Expenditure/Loans**
+8. Reports
+9. Archive
+10. Audit Log
+11. Settings
+12. PWA & offline support
+13. Polish/UI
+14. Testing
+
+The reason is that **Payments** are the heart of your mum's business. That's where all the tricky logic lives: partial weekly payments, paying multiple weeks at once, overdue tracking, balances, receipts, and automatic calculations. We'll want to spend the most time getting that module right.

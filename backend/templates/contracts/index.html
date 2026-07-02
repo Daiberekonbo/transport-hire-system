@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Contracts{% endblock %}
+{% block page_title %}Hire-Purchase Contracts{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Hire-Purchase Contracts</h1>
+    <div class="page-header-sub">
+      All hire-purchase agreements between drivers and vehicles.
+    </div>
+  </div>
+  <a href="{{ url_for('contracts.add') }}" class="btn btn-primary d-flex align-items-center gap-2">
+    <i class="bi bi-plus-circle-fill"></i> New Contract
+  </a>
+</div>
+
+{# ── Summary stat cards ───────────────────────────────────────────────────── #}
+<div class="row g-3 mb-3">
+  {% for val, label, icon, color, count in [
+    ('active',    'Active',    'bi-file-earmark-check-fill', 'green',  counts.active),
+    ('suspended', 'Suspended', 'bi-pause-circle-fill',       'amber',  counts.suspended),
+    ('inactive',  'Inactive',  'bi-dash-circle-fill',        'gray',   counts.inactive),
+    ('completed', 'Completed', 'bi-trophy-fill',             'blue',   counts.completed),
+    ('archived',  'Archived',  'bi-archive-fill',            'gray',   counts.archived),
+  ] %}
+  <div class="col-6 col-md-4 col-lg-2d4">
+    <a href="{{ url_for('contracts.index', status=val) }}"
+       class="thms-card d-block text-decoration-none
+              {{ 'border border-primary border-opacity-50' if status == val else '' }}">
+      <div class="thms-card-body d-flex align-items-center gap-3 py-3">
+        <div class="stat-icon {{ color }}" style="width:40px;height:40px;font-size:.95rem;flex-shrink:0;">
+          <i class="bi {{ icon }}"></i>
+        </div>
+        <div>
+          <div class="fw-700" style="font-size:1.25rem;line-height:1;">{{ count }}</div>
+          <div class="text-muted small">{{ label }}</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Status tab bar ──────────────────────────────────────────────────────── #}
+<div class="d-flex gap-2 flex-wrap mb-3">
+  {% set total = counts.active + counts.suspended + counts.inactive + counts.completed + counts.archived %}
+  {% for val, label, count in [
+    ('all',       'All',       total),
+    ('active',    'Active',    counts.active),
+    ('suspended', 'Suspended', counts.suspended),
+    ('inactive',  'Inactive',  counts.inactive),
+    ('completed', 'Completed', counts.completed),
+    ('archived',  'Archived',  counts.archived),
+  ] %}
+  <a href="{{ url_for('contracts.index', status=val, q=search) }}"
+     class="btn btn-sm {{ 'btn-primary' if status == val else 'btn-outline-secondary' }} d-flex align-items-center gap-2">
+    {{ label }}
+    <span class="badge {{ 'bg-white text-primary' if status == val else 'bg-secondary bg-opacity-25 text-dark' }}
+                 rounded-pill" style="font-size:.7rem;">{{ count }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+{# ── Search ──────────────────────────────────────────────────────────────── #}
+<div class="thms-card mb-3">
+  <div class="thms-card-body py-3">
+    <form class="d-flex gap-2 align-items-center flex-wrap" method="GET">
+      <input type="hidden" name="status" value="{{ status }}" />
+      <div class="input-group" style="max-width:400px;">
+        <span class="input-group-text bg-transparent border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" name="q" value="{{ search }}"
+               class="form-control border-start-0 ps-0"
+               placeholder="Search driver, vehicle, model…"
+               autocomplete="off" />
+        {% if search %}
+        <a href="{{ url_for('contracts.index', status=status) }}"
+           class="btn btn-outline-secondary" title="Clear">
+          <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn-outline-primary">Search</button>
+    </form>
+  </div>
+</div>
+
+{# ── Contracts table ─────────────────────────────────────────────────────── #}
+<div class="thms-card">
+
+  {% if contracts.items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table">
+      <thead>
+        <tr>
+          <th style="width:40px;">#</th>
+          <th>Driver</th>
+          <th>Vehicle</th>
+          <th>Weekly</th>
+          <th>Paid / Total</th>
+          <th style="min-width:160px;">Progress</th>
+          <th>Status</th>
+          <th>Start Date</th>
+          <th style="width:100px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contracts.items %}
+        <tr>
+          <td class="text-muted small">{{ c.id }}</td>
+
+          <td>
+            <a href="{{ url_for('drivers.view', driver_id=c.driver.id) }}"
+               class="fw-600 text-decoration-none text-body small">
+              {{ c.driver.full_name }}
+            </a>
+            <div class="text-muted" style="font-size:.72rem;">{{ c.driver.phone }}</div>
+          </td>
+
+          <td>
+            <a href="{{ url_for('vehicles.view', vehicle_id=c.vehicle.id) }}"
+               class="fw-500 text-decoration-none text-body small">
+              {{ c.vehicle.vehicle_number }}
+            </a>
+            {% if c.vehicle.manufacturer or c.vehicle.model %}
+            <div class="text-muted" style="font-size:.72rem;">
+              {{ [c.vehicle.manufacturer, c.vehicle.model] | select | join(' ') }}
+            </div>
+            {% endif %}
+          </td>
+
+          <td class="small fw-600 text-success no-wrap">
+            ₦{{ "{:,.0f}".format(c.weekly_amount) }}
+          </td>
+
+          <td class="small no-wrap">
+            <span class="text-success fw-600">₦{{ "{:,.0f}".format(c.total_paid) }}</span>
+            <span class="text-muted"> / ₦{{ "{:,.0f}".format(c.total_payable) }}</span>
+          </td>
+
+          <td style="min-width:160px;">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>{{ c.weeks_completed }}w / {{ c.total_weeks }}w</span>
+              <span>{{ c.progress_percent }}%</span>
+            </div>
+            <div class="thms-progress">
+              <div class="thms-progress-bar" style="width:{{ c.progress_percent }}%;"></div>
+            </div>
+          </td>
+
+          <td>
+            <span class="status-pill status-{{ c.status }}">
+              {{ c.status | capitalize }}
+            </span>
+          </td>
+
+          <td class="small text-muted no-wrap">
+            {{ c.start_date.strftime('%d %b %Y') if c.start_date else '—' }}
+          </td>
+
+          <td>
+            <a href="{{ url_for('contracts.view', contract_id=c.id) }}"
+               class="btn btn-sm btn-outline-secondary" title="View">
+              <i class="bi bi-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2">
+    <div class="small text-muted">
+      Showing <strong>{{ ((contracts.page - 1) * contracts.per_page) + 1 }}</strong>–<strong>{{ [contracts.page * contracts.per_page, contracts.total] | min }}</strong>
+      of <strong>{{ contracts.total }}</strong> contracts
+    </div>
+    {% if contracts.pages > 1 %}
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not contracts.has_prev }}">
+          <a class="page-link" href="{{ url_for('contracts.index', page=contracts.prev_num, q=search, status=status) }}">‹</a>
+        </li>
+        {% for pg in contracts.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if pg %}
+          <li class="page-item {{ 'active' if pg == contracts.page }}">
+            <a class="page-link" href="{{ url_for('contracts.index', page=pg, q=search, status=status) }}">{{ pg }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not contracts.has_next }}">
+          <a class="page-link" href="{{ url_for('contracts.index', page=contracts.next_num, q=search, status=status) }}">›</a>
+        </li>
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-file-earmark-text d-block mb-3" style="font-size:2.5rem;opacity:.25;"></i>
+    {% if search %}
+    <p class="mb-1">No contracts match <strong>"{{ search }}"</strong>.</p>
+    <a href="{{ url_for('contracts.index', status=status) }}" class="btn btn-sm btn-outline-secondary mt-2">Clear search</a>
+    {% else %}
+    <p class="mb-1">No {{ status if status != 'all' else '' }} contracts yet.</p>
+    <a href="{{ url_for('contracts.add') }}" class="btn btn-primary btn-sm mt-2">
+      <i class="bi bi-plus-circle-fill me-1"></i> Create First Contract
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

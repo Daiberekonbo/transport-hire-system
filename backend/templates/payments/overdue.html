@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Overdue Payments{% endblock %}
+{% block page_title %}Overdue Payments{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title">Overdue Payments</h1>
+    <div class="page-header-sub">
+      Contracts where weekly payments are behind schedule.
+    </div>
+  </div>
+  <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back to Payments
+  </a>
+</div>
+
+{% if overdue_list %}
+
+{# Summary banner #}
+<div class="alert alert-danger d-flex align-items-center gap-3 mb-3">
+  <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+  <div>
+    <div class="fw-700">
+      {{ overdue_list | length }} contract{{ 's' if overdue_list|length != 1 }}
+      with overdue payments
+    </div>
+    <div class="small opacity-85">
+      Total overdue: <strong>₦{{ "{:,.0f}".format(total_overdue_amount) }}</strong>
+    </div>
+  </div>
+</div>
+
+<div class="thms-card">
+  <div style="overflow-x:auto;">
+    <table class="thms-table">
+      <thead>
+        <tr>
+          <th>Driver</th>
+          <th>Vehicle</th>
+          <th>Weeks Overdue</th>
+          <th>Overdue Amount</th>
+          <th>Weekly Rate</th>
+          <th>Last Payment</th>
+          <th>Progress</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contract, ow, oa in overdue_list %}
+        {% set last_payment = contract.payments.filter_by(is_archived=False).order_by('payment_date desc').first() %}
+        <tr>
+          <td>
+            <div class="fw-600">{{ contract.driver.full_name }}</div>
+            <div class="text-muted small">{{ contract.driver.phone }}</div>
+          </td>
+          <td class="small">
+            <div class="fw-600">{{ contract.vehicle.vehicle_number }}</div>
+            {% if contract.vehicle.manufacturer or contract.vehicle.model %}
+            <div class="text-muted">{{ [contract.vehicle.manufacturer, contract.vehicle.model]|select|join(' ') }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge bg-danger" style="font-size:.8rem;">
+              {{ ow }} week{{ 's' if ow != 1 }}
+            </span>
+          </td>
+          <td class="fw-700 text-danger no-wrap">₦{{ "{:,.0f}".format(oa) }}</td>
+          <td class="small text-muted no-wrap">₦{{ "{:,.0f}".format(contract.weekly_amount | float) }}</td>
+          <td class="small text-muted">
+            {% if last_payment %}
+            {{ last_payment.payment_date.strftime('%d %b %Y') }}
+            {% else %}
+            <span class="text-danger">No payments yet</span>
+            {% endif %}
+          </td>
+          <td style="min-width:130px;">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>{{ contract.weeks_completed }}w / {{ contract.total_weeks }}w</span>
+              <span>{{ contract.progress_percent }}%</span>
+            </div>
+            <div class="thms-progress">
+              <div class="thms-progress-bar" style="width:{{ contract.progress_percent }}%;"></div>
+            </div>
+          </td>
+          <td>
+            <a href="{{ url_for('payments.record', contract_id=contract.id) }}"
+               class="btn btn-sm btn-primary">
+              <i class="bi bi-cash-coin me-1"></i> Collect
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% else %}
+<div class="thms-card">
+  <div class="empty-state py-5">
+    <i class="bi bi-check-circle-fill d-block mb-3 text-success" style="font-size:2.5rem;opacity:.5;"></i>
+    <p class="mb-1 fw-600">No overdue payments!</p>
+    <p class="text-muted small">All active contracts are up to date.</p>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

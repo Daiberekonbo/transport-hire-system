@@ -1,106 +1,438 @@
 {% extends "base.html" %}
 {% block title %}Record Payment{% endblock %}
-{% block page_title %}Record a Payment{% endblock %}
+{% block page_title %}Record Payment{% endblock %}
 
 {% block content %}
+
 <div class="page-header">
   <div>
     <h1 class="page-header-title">Record Payment</h1>
-    <div class="page-header-sub">Enter the weekly hire-purchase payment details.</div>
+    <div class="page-header-sub">
+      Select a contract, enter the amount, and confirm all payment details.
+    </div>
   </div>
   <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-arrow-left"></i> Back
   </a>
 </div>
 
-<form method="POST" id="paymentForm">
-  <div class="row g-3">
-    <div class="col-12 col-lg-7">
-      <div class="thms-card mb-3">
-        <div class="thms-card-header">
-          <h6 class="thms-card-title"><i class="bi bi-cash-stack text-success"></i> Payment Details</h6>
-        </div>
-        <div class="thms-card-body">
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="thms-form-label">Driver *</label>
-              <select name="driver_id" class="form-select" required id="driverSelect">
-                <option value="">— Select driver —</option>
-                {% for d in drivers %}
-                <option value="{{ d.id }}">{{ d.full_name }} ({{ d.phone }})</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="thms-form-label">Amount (₦) *</label>
-              <input type="number" name="amount" class="form-control" step="0.01" min="1" required placeholder="0.00" />
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="thms-form-label">Payment Date *</label>
-              <input type="date" name="payment_date" class="form-control" value="{{ today }}" required />
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="thms-form-label">Payment Method</label>
-              <select name="payment_method" class="form-select" id="methodSelect">
-                <option value="cash">Cash</option>
-                <option value="transfer">Bank Transfer</option>
-                <option value="pos">POS</option>
-              </select>
-            </div>
-            <div class="col-12 col-md-6" id="bankField" style="display:none;">
-              <label class="thms-form-label">Bank Name</label>
-              <input type="text" name="bank_name" class="form-control" placeholder="e.g. GTBank" />
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="thms-form-label">Sender (Payer)</label>
-              <input type="text" name="sender" class="form-control" placeholder="Name of person who paid" />
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="thms-form-label">Receiver (Collector)</label>
-              <input type="text" name="receiver" class="form-control" placeholder="Name of person who collected" />
-            </div>
-            <div class="col-12 col-md-6">
-              <label class="thms-form-label">Reference / Receipt No.</label>
-              <input type="text" name="reference" class="form-control" placeholder="Optional reference" />
-            </div>
-            <div class="col-12">
-              <label class="thms-form-label">Notes</label>
-              <textarea name="notes" class="form-control" rows="2" placeholder="Any notes about this payment…"></textarea>
+<form method="POST" action="{{ url_for('payments.record') }}" id="paymentForm" novalidate>
+<div class="row g-3">
+
+  {# ── Left column ─────────────────────────────────────────────────────── #}
+  <div class="col-12 col-xl-8">
+
+    {# Contract selection #}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title">
+          <i class="bi bi-file-earmark-text-fill text-primary"></i> Select Contract
+        </h6>
+      </div>
+      <div class="thms-card-body">
+
+        <input type="hidden" name="contract_id" id="contractIdInput"
+               value="{{ form.get('contract_id', preselect_contract_id or '') }}" />
+
+        {% if active_contracts %}
+        <div class="row g-2" id="contractCards">
+          {% for c in active_contracts %}
+          <div class="col-12 col-md-6">
+            <div class="contract-card rounded-3 border p-3 cursor-pointer"
+                 data-contract-id="{{ c.id }}"
+                 style="cursor:pointer;transition:.15s;">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-700">{{ c.driver.full_name }}</div>
+                  <div class="text-muted small">{{ c.vehicle.vehicle_number }}
+                    {% if c.vehicle.manufacturer or c.vehicle.model %}
+                    · {{ [c.vehicle.manufacturer, c.vehicle.model]|select|join(' ') }}
+                    {% endif %}
+                  </div>
+                </div>
+                <span class="status-pill status-active ms-2 flex-shrink-0">Active</span>
+              </div>
+              <div class="d-flex gap-3 mt-2 small">
+                <div>
+                  <div class="text-muted" style="font-size:.7rem;">Weekly</div>
+                  <div class="fw-600 text-primary">₦{{ "{:,.0f}".format(c.weekly_amount) }}</div>
+                </div>
+                <div>
+                  <div class="text-muted" style="font-size:.7rem;">Balance</div>
+                  <div class="fw-600 text-danger">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</div>
+                </div>
+                <div>
+                  <div class="text-muted" style="font-size:.7rem;">Progress</div>
+                  <div class="fw-600">{{ c.weeks_completed }}/{{ c.total_weeks }}w</div>
+                </div>
+              </div>
             </div>
           </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+          <i class="bi bi-info-circle me-2"></i>
+          There are no active contracts. <a href="{{ url_for('contracts.add') }}">Create a contract first.</a>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    {# ── Contract status panel (shown after selection) ─────────────────── #}
+    <div class="thms-card mb-3" id="contractStatus" style="display:none;">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title">
+          <i class="bi bi-activity text-success"></i>
+          <span id="statusTitle">Contract Status</span>
+        </h6>
+      </div>
+      <div class="thms-card-body">
+
+        {# Overdue warning — hidden by default #}
+        <div id="overdueWarning" class="alert alert-danger d-flex gap-2 align-items-center mb-3 d-none">
+          <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+          <span id="overdueText"></span>
+        </div>
+
+        <div class="row g-3">
+          {% for id, label, color in [
+            ('statTotalPayable', 'Total Agreed', 'text-body'),
+            ('statTotalPaid',    'Amount Paid',  'text-success'),
+            ('statOutstanding',  'Outstanding',  'text-danger'),
+            ('statWeekly',       'Weekly',       'text-primary'),
+          ] %}
+          <div class="col-6 col-md-3">
+            <div class="rounded-3 p-3 text-center" style="background:var(--bg-secondary,#f8fafc);">
+              <div class="text-muted" style="font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;">{{ label }}</div>
+              <div class="fw-700 {{ color }}" id="{{ id }}" style="font-size:1rem;">—</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="mt-3">
+          <div class="d-flex justify-content-between small mb-1">
+            <span id="statProgress">0 weeks paid of 0</span>
+            <span id="statPercent" class="fw-700 text-primary">0%</span>
+          </div>
+          <div class="thms-progress">
+            <div class="thms-progress-bar" id="progressBar" style="width:0%;transition:width .4s ease;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {# Payment details #}
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title">
+          <i class="bi bi-cash-stack text-success"></i> Payment Details
+        </h6>
+      </div>
+      <div class="thms-card-body">
+        <div class="row g-3">
+
+          <div class="col-12 col-md-5">
+            <label class="thms-form-label">
+              Amount (₦) <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text">₦</span>
+              <input type="text" name="amount" id="amountInput"
+                     class="form-control"
+                     value="{{ form.get('amount', '') }}"
+                     placeholder="0.00" required
+                     autocomplete="off" />
+            </div>
+            {# Week coverage preview #}
+            <div id="weekCoverage" class="form-text mt-2 d-none">
+              <span class="badge bg-primary bg-opacity-10 text-primary" id="weekCoverageText"></span>
+            </div>
+            {# Quick fill buttons #}
+            <div id="quickFill" class="d-flex gap-1 flex-wrap mt-2 d-none">
+              <button type="button" class="btn btn-outline-secondary btn-sm quick-weeks" data-weeks="1">1 week</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm quick-weeks" data-weeks="2">2 weeks</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm quick-weeks" data-weeks="4">4 weeks</button>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Payment Date <span class="text-danger">*</span></label>
+            <input type="date" name="payment_date" class="form-control"
+                   value="{{ form.get('payment_date', today.strftime('%Y-%m-%d')) }}" required />
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="thms-form-label">Time</label>
+            <input type="time" name="payment_time" class="form-control"
+                   value="{{ form.get('payment_time', '') }}" />
+            <div class="form-text">Optional</div>
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="thms-form-label">Payment Method <span class="text-danger">*</span></label>
+            <select name="payment_method" class="form-select" id="methodSelect">
+              {% for val, label in [('cash','Cash'),('transfer','Bank Transfer'),('pos','POS Terminal')] %}
+              <option value="{{ val }}"
+                      {{ 'selected' if form.get('payment_method','cash') == val }}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 col-md-4" id="bankField"
+               style="{{ '' if form.get('payment_method') in ('transfer','pos') else 'display:none;' }}">
+            <label class="thms-form-label">Bank Name</label>
+            <input type="text" name="bank_name" class="form-control"
+                   value="{{ form.get('bank_name','') }}"
+                   list="bankList" placeholder="e.g. GTBank" />
+            <datalist id="bankList">
+              {% for b in ['GTBank','First Bank','Zenith Bank','Access Bank','UBA','Fidelity Bank','Union Bank','Sterling Bank','Polaris Bank','Keystone Bank'] %}
+              <option value="{{ b }}">
+              {% endfor %}
+            </datalist>
+          </div>
+
+          <div class="col-12 col-md-4" id="posField"
+               style="{{ '' if form.get('payment_method') == 'pos' else 'display:none;' }}">
+            <label class="thms-form-label">POS Terminal ID</label>
+            <input type="text" name="pos_terminal" class="form-control"
+                   value="{{ form.get('pos_terminal','') }}" placeholder="Optional" />
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="thms-form-label">Sender (Payer)</label>
+            <input type="text" name="sender" class="form-control"
+                   value="{{ form.get('sender','') }}"
+                   placeholder="Name of person who paid" id="senderInput" />
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="thms-form-label">Receiver (Collector)</label>
+            <input type="text" name="receiver" class="form-control"
+                   value="{{ form.get('receiver','') }}"
+                   placeholder="Name of person who collected" />
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="thms-form-label">External Reference</label>
+            <input type="text" name="reference" class="form-control"
+                   value="{{ form.get('reference','') }}"
+                   placeholder="Bank ref, POS receipt, etc." />
+          </div>
+
+          <div class="col-12">
+            <label class="thms-form-label">Notes</label>
+            <textarea name="notes" class="form-control" rows="2"
+                      placeholder="Any additional notes…">{{ form.get('notes','') }}</textarea>
+          </div>
+
         </div>
       </div>
     </div>
 
-    <div class="col-12 col-lg-5">
-      <div class="thms-card mb-3" id="contractSummary" style="display:none;">
-        <div class="thms-card-header">
-          <h6 class="thms-card-title"><i class="bi bi-info-circle text-info"></i> Contract Summary</h6>
-        </div>
-        <div class="thms-card-body" id="contractDetails">
-          <!-- Filled by JS -->
-        </div>
-      </div>
+  </div>{# /col-xl-8 #}
 
-      <div class="thms-card">
-        <div class="thms-card-body">
-          <button type="submit" class="btn btn-success w-100 fw-600">
-            <i class="bi bi-check-circle-fill me-2"></i>Save Payment
-          </button>
-          <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary w-100 mt-2">Cancel</a>
+  {# ── Right column ──────────────────────────────────────────────────────── #}
+  <div class="col-12 col-xl-4">
+
+    {# Submit card — sticky #}
+    <div class="thms-card" style="position:sticky;top:76px;">
+      <div class="thms-card-body">
+
+        {# Selected contract quick summary #}
+        <div id="submitSummary" class="mb-3 p-3 rounded-3 d-none"
+             style="background:var(--bg-secondary,#f8fafc);font-size:.84rem;">
+          <div class="text-muted small mb-1">Recording for</div>
+          <div class="fw-700" id="summaryDriver">—</div>
+          <div class="text-muted" id="summaryVehicle">—</div>
+          <hr class="my-2" />
+          <div class="d-flex justify-content-between">
+            <span class="text-muted">Amount</span>
+            <span class="fw-700 text-success" id="summaryAmount">₦0</span>
+          </div>
+          <div class="d-flex justify-content-between mt-1">
+            <span class="text-muted">Weeks</span>
+            <span class="fw-600 text-primary" id="summaryWeeks">—</span>
+          </div>
+          <div class="d-flex justify-content-between mt-1">
+            <span class="text-muted">After payment</span>
+            <span class="fw-600" id="summaryAfter">—</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 fw-600 mb-2" id="submitBtn" disabled>
+          <i class="bi bi-check-circle-fill me-2"></i>Save Payment
+        </button>
+        <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary w-100">Cancel</a>
+
+        <div class="form-text text-center mt-2">
+          A receipt will be generated automatically.
         </div>
       </div>
     </div>
-  </div>
+
+  </div>{# /col-xl-4 #}
+
+</div>
 </form>
+
+{# Embedded contract data for JS #}
+<script id="contractsData" type="application/json">{{ contracts_json | safe }}</script>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Show bank field when transfer or POS is selected
-document.getElementById("methodSelect").addEventListener("change", function() {
-  document.getElementById("bankField").style.display =
-    (this.value === "transfer" || this.value === "pos") ? "block" : "none";
+const CONTRACTS = JSON.parse(document.getElementById("contractsData").textContent || "{}");
+let selectedContractId = null;
+let selectedContract   = null;
+
+// ── Format helpers ────────────────────────────────────────────────────────
+function fmt(n) {
+  return "₦" + (parseFloat(n)||0).toLocaleString("en-NG", {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+function parseAmt(s) {
+  return parseFloat((s||"0").replace(/,/g,"")) || 0;
+}
+
+// ── Select a contract ─────────────────────────────────────────────────────
+function selectContract(id) {
+  selectedContractId = id;
+  selectedContract   = CONTRACTS[String(id)];
+  document.getElementById("contractIdInput").value = id;
+
+  // Highlight selected card
+  document.querySelectorAll(".contract-card").forEach(el => {
+    const active = String(el.dataset.contractId) === String(id);
+    el.style.borderColor = active ? "var(--color-primary, #2563eb)" : "";
+    el.style.background  = active ? "rgba(37,99,235,.06)" : "";
+  });
+
+  // Show status panel
+  if (selectedContract) {
+    const c = selectedContract;
+    document.getElementById("contractStatus").style.display = "block";
+    document.getElementById("statusTitle").textContent =
+      `${c.driver_name} · ${c.vehicle}`;
+    document.getElementById("statTotalPayable").textContent = fmt(c.total_payable);
+    document.getElementById("statTotalPaid").textContent    = fmt(c.total_paid);
+    document.getElementById("statOutstanding").textContent  = fmt(c.outstanding);
+    document.getElementById("statWeekly").textContent       = fmt(c.weekly_amount);
+    updateProgress(c.weeks_completed, c.total_weeks);
+
+    // Overdue warning
+    const ow = document.getElementById("overdueWarning");
+    if (c.overdue_weeks > 0) {
+      document.getElementById("overdueText").textContent =
+        `${c.overdue_weeks} week${c.overdue_weeks !== 1 ? 's' : ''} overdue — ₦${(c.overdue_amount).toLocaleString()} owed`;
+      ow.classList.remove("d-none");
+    } else {
+      ow.classList.add("d-none");
+    }
+
+    // Auto-fill sender (driver name)
+    const senderInput = document.getElementById("senderInput");
+    if (!senderInput.value) senderInput.value = c.driver_name;
+
+    // Show quick fill buttons
+    document.getElementById("quickFill").classList.remove("d-none");
+
+    // Show submit summary
+    document.getElementById("submitSummary").classList.remove("d-none");
+    document.getElementById("summaryDriver").textContent  = c.driver_name;
+    document.getElementById("summaryVehicle").textContent = c.vehicle;
+
+    recalcCoverage();
+    document.getElementById("submitBtn").disabled = false;
+  }
+}
+
+function updateProgress(done, total) {
+  const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  document.getElementById("statProgress").textContent = `${done} weeks paid of ${total}`;
+  document.getElementById("statPercent").textContent  = `${pct}%`;
+  document.getElementById("progressBar").style.width  = `${pct}%`;
+}
+
+// ── Week coverage calculator ──────────────────────────────────────────────
+function recalcCoverage() {
+  if (!selectedContract) return;
+  const c      = selectedContract;
+  const weekly = c.weekly_amount;
+  const amount = parseAmt(document.getElementById("amountInput").value);
+
+  if (weekly <= 0 || amount <= 0) {
+    document.getElementById("weekCoverage").classList.add("d-none");
+    return;
+  }
+
+  const paidBefore = c.total_paid;
+  const weekFrom   = Math.floor(paidBefore / weekly) + 1;
+  const paidAfter  = paidBefore + amount;
+  const weekTo     = Math.floor(paidAfter / weekly);
+  const partial    = weekTo < weekFrom;
+
+  let coverageText;
+  if (partial) {
+    const fracPaid = ((paidBefore % weekly) + amount) / weekly;
+    const pct      = Math.round(fracPaid * 100);
+    coverageText   = `Part-payment toward Week ${weekFrom} (${pct}% complete)`;
+  } else if (weekTo === weekFrom) {
+    coverageText = `Fully pays Week ${weekFrom}`;
+  } else {
+    coverageText = `Pays Weeks ${weekFrom}–${weekTo} (${weekTo - weekFrom + 1} weeks)`;
+  }
+
+  document.getElementById("weekCoverageText").textContent = coverageText;
+  document.getElementById("weekCoverage").classList.remove("d-none");
+
+  // Update submit summary
+  document.getElementById("summaryAmount").textContent = fmt(amount);
+  document.getElementById("summaryWeeks").textContent  = partial
+    ? `Part of Week ${weekFrom}` : weekTo === weekFrom
+    ? `Week ${weekFrom}` : `Weeks ${weekFrom}–${weekTo}`;
+  const balAfter = Math.max(0, c.outstanding - amount);
+  document.getElementById("summaryAfter").textContent  = `₦${balAfter.toLocaleString()} remaining`;
+}
+
+// ── Quick-fill buttons ────────────────────────────────────────────────────
+document.querySelectorAll(".quick-weeks").forEach(btn => {
+  btn.addEventListener("click", function() {
+    if (!selectedContract) return;
+    const weeks  = parseInt(this.dataset.weeks);
+    const amount = weeks * selectedContract.weekly_amount;
+    document.getElementById("amountInput").value = amount.toFixed(2);
+    recalcCoverage();
+  });
 });
+
+// ── Payment method conditional fields ─────────────────────────────────────
+document.getElementById("methodSelect").addEventListener("change", function() {
+  const m = this.value;
+  document.getElementById("bankField").style.display = (m === "transfer" || m === "pos") ? "" : "none";
+  document.getElementById("posField").style.display  = m === "pos" ? "" : "none";
+});
+
+// ── Contract card clicks ──────────────────────────────────────────────────
+document.querySelectorAll(".contract-card").forEach(card => {
+  card.addEventListener("click", () => selectContract(card.dataset.contractId));
+});
+
+// ── Amount input listener ─────────────────────────────────────────────────
+document.getElementById("amountInput").addEventListener("input", recalcCoverage);
+
+// ── Auto-select on load (from URL ?contract_id=) ──────────────────────────
+const preselect = "{{ preselect_contract_id or '' }}";
+if (preselect && CONTRACTS[preselect]) {
+  selectContract(preselect);
+} else if (Object.keys(CONTRACTS).length === 1) {
+  // Only one active contract — auto-select it
+  selectContract(Object.keys(CONTRACTS)[0]);
+}
 </script>
 {% endblock %}

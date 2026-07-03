@@ -1,0 +1,76 @@
+100%.
+
+This is exactly the next module we planned for your mum's system.
+
+But I'd make Replit build **more than what it suggested** so you don't have to keep going back to add forgotten features.
+
+Paste this instead:
+
+> Build the complete Payments Management Module.
+>
+> Requirements:
+>
+> * Record weekly payments for every active contract.
+> * Allow a driver to pay in installments within the same week until that week's payment is complete.
+> * Allow payment for multiple weeks at once (example: paying 2 or 3 weeks together).
+> * Automatically determine which week(s) each payment belongs to.
+> * Automatically update:
+>
+>   * Total amount paid
+>   * Remaining balance
+>   * Weeks completed
+>   * Weeks remaining
+>   * Contract completion percentage
+> * Generate a unique receipt number for every payment.
+> * Record:
+>
+>   * Amount paid
+>   * Date
+>   * Time
+>   * Payment method (Cash, POS, Bank Transfer)
+>   * Bank name (if applicable)
+>   * Sender (driver)
+>   * Receiver (owner)
+>   * Notes
+> * Automatically detect overdue weekly payments.
+> * Show overdue weeks and total overdue amount.
+> * Allow late payments while keeping a complete payment history.
+> * Never delete payment records.
+> * Every payment must create an Audit Log entry.
+> * Add a Payment History page for every contract.
+> * Add filters by:
+>
+>   * Driver
+>   * Vehicle
+>   * Date range
+>   * Payment method
+>   * Contract status
+> * Generate printable receipts.
+> * Generate printable payment history.
+> * Make all calculations automatic.
+> * Ensure every payment updates the dashboard statistics instantly.
+> * Follow the existing project structure, models, routes, templates, and authentication system already implemented.
+
+---
+
+After this module is finished, our roadmap becomes:
+
+✅ Authentication
+✅ Dashboard
+✅ Drivers
+✅ Vehicles
+✅ Hire Purchase Contracts
+✅ Payments
+
+Then we'll tackle the really interesting parts:
+
+1. 💰 Extra Expenditure (driver loans/damages)
+2. 📦 Archive System (completed contracts)
+3. 📊 Reports & Analytics
+4. 📄 PDF generation
+5. 🔍 Smart Search
+6. 🔔 Notifications & reminders
+7. 📱 PWA/offline features
+8. 🎨 UI polishing and animations
+
+Bro... this thing is becoming a proper commercial software now. By the time we're done, it'll genuinely look like something a transport company would pay for, not just a school project.

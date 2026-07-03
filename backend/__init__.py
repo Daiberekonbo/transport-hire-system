@@ -94,6 +94,11 @@ def _run_migrations():
 
         # ── expenses ─────────────────────────────────────────────────────────
         "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS contract_id INTEGER REFERENCES contracts(id)",
+
+        # ── payments ─────────────────────────────────────────────────────────
+        "ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_number VARCHAR(30)",
+        "ALTER TABLE payments ADD COLUMN IF NOT EXISTS week_from INTEGER",
+        "ALTER TABLE payments ADD COLUMN IF NOT EXISTS week_to INTEGER",
     ]
 
     with db.engine.connect() as conn:

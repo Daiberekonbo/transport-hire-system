@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}Payment History — Contract #{{ contract.id }}{% endblock %}
+{% block page_title %}Payment History{% endblock %}
+
+{% block content %}
+
+{% if not printable %}
+{# ── Screen header ──────────────────────────────────────────────────────── #}
+<div class="page-header d-print-none">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('contracts.view', contract_id=contract.id) }}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-header-title mb-0">Payment History</h1>
+      <div class="page-header-sub">
+        Contract #{{ contract.id }} — {{ contract.driver.full_name }} · {{ contract.vehicle.vehicle_number }}
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('payments.record', contract_id=contract.id) }}"
+       class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-circle-fill me-1"></i> Record Payment
+    </a>
+    <a href="{{ url_for('payments.history', contract_id=contract.id, print=1) }}"
+       class="btn btn-outline-secondary btn-sm" target="_blank">
+      <i class="bi bi-printer me-1"></i> Print Statement
+    </a>
+  </div>
+</div>
+{% else %}
+{# ── Print header ───────────────────────────────────────────────────────── #}
+<div class="text-center mb-4" id="printHeader">
+  <div class="fw-700" style="font-size:1.4rem;">TRANSPORT HIRE MANAGEMENT</div>
+  <div class="text-muted">Payment Statement — Contract #{{ contract.id }}</div>
+  <div class="text-muted small">Printed: {{ printed_at.strftime('%d %B %Y %H:%M') if printed_at else '' }}</div>
+</div>
+<div class="mb-3 d-print-none">
+  <button onclick="window.print()" class="btn btn-primary btn-sm me-2">
+    <i class="bi bi-printer me-1"></i> Print
+  </button>
+  <a href="{{ url_for('payments.history', contract_id=contract.id) }}"
+     class="btn btn-outline-secondary btn-sm">← Back</a>
+</div>
+{% endif %}
+
+{# ── Contract summary ─────────────────────────────────────────────────────── #}
+<div class="thms-card mb-3">
+  <div class="thms-card-body">
+    <div class="row g-3">
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="text-muted small mb-1">Driver</div>
+        <div class="fw-700">{{ contract.driver.full_name }}</div>
+        <div class="text-muted small">{{ contract.driver.phone }}</div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="text-muted small mb-1">Vehicle</div>
+        <div class="fw-700">{{ contract.vehicle.vehicle_number }}</div>
+        <div class="text-muted small">
+          {{ [contract.vehicle.manufacturer, contract.vehicle.model]|select|join(' ') }}
+        </div>
+      </div>
+      <div class="col-6 col-md-3 col-lg-1d5">
+        <div class="text-muted small mb-1">Weekly</div>
+        <div class="fw-700 text-primary">₦{{ "{:,.0f}".format(contract.weekly_amount | float) }}</div>
+      </div>
+      <div class="col-6 col-md-3 col-lg-1d5">
+        <div class="text-muted small mb-1">Total Paid</div>
+        <div class="fw-700 text-success">₦{{ "{:,.0f}".format(contract.total_paid) }}</div>
+      </div>
+      <div class="col-6 col-md-3 col-lg-1d5">
+        <div class="text-muted small mb-1">Outstanding</div>
+        <div class="fw-700 text-danger">₦{{ "{:,.0f}".format(contract.outstanding_balance) }}</div>
+      </div>
+      <div class="col-6 col-md-3 col-lg-1d5">
+        <div class="text-muted small mb-1">Progress</div>
+        <div class="fw-700">{{ contract.weeks_completed }}/{{ contract.total_weeks }}w</div>
+        <div class="thms-progress mt-1" style="height:6px;">
+          <div class="thms-progress-bar" style="width:{{ contract.financial_progress_percent }}%;"></div>
+        </div>
+      </div>
+    </div>
+
+    {% if overdue_weeks > 0 %}
+    <div class="alert alert-danger mt-3 mb-0 d-flex gap-2 align-items-center small">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>
+        <strong>{{ overdue_weeks }} week{{ 's' if overdue_weeks != 1 }} overdue</strong>
+        — ₦{{ "{:,.0f}".format(overdue_amount) }} behind schedule.
+        {% if not printable %}
+        <a href="{{ url_for('payments.record', contract_id=contract.id) }}"
+           class="alert-link ms-2">Collect now →</a>
+        {% endif %}
+      </span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Payment table ────────────────────────────────────────────────────────── #}
+<div class="thms-card">
+  <div class="thms-card-header d-flex justify-content-between align-items-center">
+    <h6 class="thms-card-title mb-0">
+      <i class="bi bi-list-columns-reverse text-secondary"></i> Payments
+    </h6>
+    {% if printable %}
+    <span class="text-muted small">{{ payments | length }} record{{ 's' if payments|length != 1 }}</span>
+    {% else %}
+    <span class="text-muted small">{{ payments.total }} total</span>
+    {% endif %}
+  </div>
+
+  {% set items = payments if printable else payments.items %}
+
+  {% if items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.84rem;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Receipt</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Weeks</th>
+          <th>Method</th>
+          <th>Sender</th>
+          <th>Running Total</th>
+          {% if not printable %}<th>Actions</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% set running = namespace(total=0) %}
+        {% for p in items %}
+        {% set running.total = running.total + p.amount|float %}
+        <tr>
+          <td class="text-muted small">{{ loop.index }}</td>
+          <td>
+            {% if not printable %}
+            <a href="{{ url_for('payments.view', payment_id=p.id) }}"
+               class="text-decoration-none text-primary small fw-600">
+              {{ p.receipt_number or ('#' ~ p.id) }}
+            </a>
+            {% else %}
+            <span class="small fw-600">{{ p.receipt_number or ('#' ~ p.id) }}</span>
+            {% endif %}
+          </td>
+          <td class="no-wrap">
+            {{ p.payment_date.strftime('%d %b %Y') if p.payment_date else '—' }}
+            {% if p.payment_time %}
+            <div class="text-muted" style="font-size:.7rem;">{{ p.payment_time.strftime('%H:%M') }}</div>
+            {% endif %}
+          </td>
+          <td class="fw-700 text-success no-wrap">₦{{ "{:,.0f}".format(p.amount) }}</td>
+          <td class="text-muted small">{{ p.week_range_display }}</td>
+          <td>
+            <span class="badge bg-{{ p.method_color }} bg-opacity-15 text-{{ p.method_color }}"
+                  style="font-size:.7rem;">{{ p.method_label }}</span>
+          </td>
+          <td class="text-muted small">{{ p.sender or '—' }}</td>
+          <td class="fw-600 text-body no-wrap">₦{{ "{:,.0f}".format(running.total) }}</td>
+          {% if not printable %}
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('payments.receipt', payment_id=p.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="Print" target="_blank">
+                <i class="bi bi-printer"></i>
+              </a>
+            </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:var(--bg-secondary,#f8fafc);">
+          <td colspan="3" class="fw-700 small">Total</td>
+          <td class="fw-700 text-success">₦{{ "{:,.0f}".format(contract.total_paid) }}</td>
+          <td colspan="{{ '4' if printable else '5' }}"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {# Pagination (screen only) #}
+  {% if not printable and payments.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2 d-print-none">
+    <div class="small text-muted">
+      Showing {{ ((payments.page-1)*payments.per_page)+1 }}–{{ [payments.page*payments.per_page, payments.total]|min }}
+      of {{ payments.total }}
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not payments.has_prev }}">
+          <a class="page-link" href="?page={{ payments.prev_num }}">‹</a>
+        </li>
+        {% for pg in payments.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if pg %}
+          <li class="page-item {{ 'active' if pg == payments.page }}">
+            <a class="page-link" href="?page={{ pg }}">{{ pg }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not payments.has_next }}">
+          <a class="page-link" href="?page={{ payments.next_num }}">›</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-cash-coin d-block mb-3" style="font-size:2.5rem;opacity:.25;"></i>
+    <p class="mb-1">No payments recorded yet for this contract.</p>
+    {% if not printable %}
+    <a href="{{ url_for('payments.record', contract_id=contract.id) }}"
+       class="btn btn-primary btn-sm mt-2">
+      <i class="bi bi-plus-circle-fill me-1"></i> Record First Payment
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if printable %}
+<style>
+@media print {
+  .thms-sidebar, .thms-topbar, .d-print-none, .page-header { display: none !important; }
+  .thms-main { margin-left: 0 !important; padding: 8px !important; }
+  body { background: white !important; font-size: 11px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+}
+</style>
+<script>
+window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+</script>
+{% endif %}
+{% endblock %}

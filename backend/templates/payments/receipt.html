@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Receipt {{ payment.receipt_number }}{% endblock %}
+{% block page_title %}Receipt{% endblock %}
+
+{% block content %}
+<div class="d-print-none mb-3 d-flex gap-2">
+  <button onclick="window.print()" class="btn btn-primary">
+    <i class="bi bi-printer me-2"></i>Print Receipt
+  </button>
+  <a href="{{ url_for('payments.view', payment_id=payment.id) }}"
+     class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back
+  </a>
+</div>
+
+{# ── Printable receipt card ───────────────────────────────────────────────── #}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+
+    <div class="thms-card" id="receiptCard" style="border:2px solid var(--border-color,#e2e8f0);">
+      <div class="thms-card-body p-4">
+
+        {# Header #}
+        <div class="text-center mb-4">
+          <div class="fw-700 mb-1" style="font-size:1.4rem;letter-spacing:.02em;">
+            TRANSPORT HIRE MANAGEMENT
+          </div>
+          <div class="text-muted small">Official Payment Receipt</div>
+          <div class="mt-2 mx-auto" style="width:60px;height:3px;background:var(--color-primary,#2563eb);border-radius:2px;"></div>
+        </div>
+
+        {# Receipt number banner #}
+        <div class="text-center mb-4 p-3 rounded-3"
+             style="background:rgba(37,99,235,.08);">
+          <div class="text-muted small mb-1">Receipt Number</div>
+          <div class="fw-700 text-primary" style="font-size:1.25rem;letter-spacing:.05em;">
+            {{ payment.receipt_number or ('#' ~ payment.id) }}
+          </div>
+        </div>
+
+        {# Amount #}
+        <div class="text-center mb-4">
+          <div class="text-muted small mb-1">Amount Paid</div>
+          <div class="fw-700 text-success" style="font-size:2rem;">
+            ₦{{ "{:,.2f}".format(payment.amount) }}
+          </div>
+          <div class="text-muted small">{{ payment.method_label }}</div>
+        </div>
+
+        <hr />
+
+        {# Details grid #}
+        <div class="mb-3" style="font-size:.875rem;">
+
+          {% macro drow(label, value, important=false) %}
+          {% if value %}
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span class="text-muted">{{ label }}</span>
+            <span class="{{ 'fw-700' if important else 'fw-600' }} text-end" style="max-width:60%;">{{ value }}</span>
+          </div>
+          {% endif %}
+          {% endmacro %}
+
+          {{ drow('Driver',          payment.driver.full_name,    important=true) }}
+          {{ drow('Vehicle',         contract.vehicle.vehicle_number) }}
+          {{ drow('Contract',        '#' ~ contract.id) }}
+          {{ drow('Payment Date',    payment.payment_date.strftime('%A, %d %B %Y') if payment.payment_date else '—') }}
+          {% if payment.payment_time %}
+          {{ drow('Payment Time',    payment.payment_time.strftime('%H:%M')) }}
+          {% endif %}
+          {{ drow('Week(s) Covered', payment.week_range_display) }}
+          {% if payment.bank_name %}
+          {{ drow('Bank',            payment.bank_name) }}
+          {% endif %}
+          {% if payment.reference %}
+          {{ drow('Bank Reference',  payment.reference) }}
+          {% endif %}
+          {% if payment.sender %}
+          {{ drow('Paid By',         payment.sender) }}
+          {% endif %}
+          {% if payment.receiver %}
+          {{ drow('Received By',     payment.receiver) }}
+          {% endif %}
+          {% if payment.notes %}
+          {{ drow('Notes',           payment.notes) }}
+          {% endif %}
+        </div>
+
+        <hr />
+
+        {# Contract summary #}
+        <div class="mb-3" style="font-size:.84rem;">
+          <div class="text-muted small mb-2 fw-600" style="text-transform:uppercase;letter-spacing:.04em;">
+            Contract Balance After This Payment
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <div class="text-muted" style="font-size:.72rem;">Total Agreed</div>
+              <div class="fw-600">₦{{ "{:,.0f}".format(contract.total_payable | float) }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted" style="font-size:.72rem;">Weeks Progress</div>
+              <div class="fw-600">{{ contract.weeks_completed }}/{{ contract.total_weeks }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted" style="font-size:.72rem;">Total Paid</div>
+              <div class="fw-600 text-success">₦{{ "{:,.0f}".format(contract.total_paid) }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted" style="font-size:.72rem;">Outstanding</div>
+              <div class="fw-600 text-danger">₦{{ "{:,.0f}".format(contract.outstanding_balance) }}</div>
+            </div>
+          </div>
+        </div>
+
+        <hr />
+
+        {# Footer #}
+        <div class="text-center text-muted" style="font-size:.72rem;">
+          <div>Printed: {{ printed_at.strftime('%d %B %Y %H:%M') if printed_at else '' }}</div>
+          <div class="mt-1">This receipt is computer-generated and is valid without a signature.</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+@media print {
+  .thms-sidebar, .thms-topbar, .d-print-none, .breadcrumb, .page-header { display: none !important; }
+  .thms-main { margin-left: 0 !important; padding: 0 !important; }
+  #receiptCard { border: 1px solid #ccc !important; max-width: 500px; margin: 0 auto; }
+  body { background: white !important; }
+}
+</style>
+{% endblock %}

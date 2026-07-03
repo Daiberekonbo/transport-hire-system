@@ -1,91 +1,255 @@
 {% extends "base.html" %}
 {% block title %}Payments{% endblock %}
-{% block page_title %}Payment Records{% endblock %}
+{% block page_title %}Payments{% endblock %}
 
 {% block content %}
+
 <div class="page-header">
   <div>
-    <h1 class="page-header-title">Payments</h1>
-    <div class="page-header-sub">All hire-purchase payment records.</div>
+    <h1 class="page-header-title">Payment Records</h1>
+    <div class="page-header-sub">All hire-purchase payment transactions.</div>
   </div>
-  <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
-    <i class="bi bi-plus-lg"></i> Record Payment
+  <a href="{{ url_for('payments.record') }}" class="btn btn-primary d-flex align-items-center gap-2">
+    <i class="bi bi-plus-circle-fill"></i> Record Payment
   </a>
 </div>
 
+{# ── Overdue banner ──────────────────────────────────────────────────────── #}
+{% if overdue_list %}
+<div class="alert alert-danger d-flex align-items-start gap-3 mb-3" role="alert">
+  <i class="bi bi-exclamation-triangle-fill fs-4 flex-shrink-0 mt-1"></i>
+  <div class="w-100">
+    <div class="fw-700 mb-2">
+      {{ overdue_list | length }} contract{{ 's' if overdue_list|length != 1 }} with overdue payments
+    </div>
+    <div class="row g-2">
+      {% for contract, ow, oa in overdue_list[:6] %}
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="d-flex justify-content-between align-items-center rounded-2 p-2"
+             style="background:rgba(255,255,255,.12);">
+          <div>
+            <div class="fw-600 small">{{ contract.driver.full_name }}</div>
+            <div style="font-size:.75rem;opacity:.85;">
+              {{ contract.vehicle.vehicle_number }} · {{ ow }} week{{ 's' if ow != 1 }} overdue
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="fw-700 small">₦{{ "{:,.0f}".format(oa) }}</div>
+            <a href="{{ url_for('payments.record', contract_id=contract.id) }}"
+               class="badge bg-white text-danger text-decoration-none"
+               style="font-size:.7rem;">Collect</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if overdue_list | length > 6 %}
+    <div class="mt-2">
+      <a href="{{ url_for('payments.overdue') }}" class="text-white fw-600 small">
+        View all {{ overdue_list | length }} overdue contracts →
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{# ── Filters ─────────────────────────────────────────────────────────────── #}
 <div class="thms-card mb-3">
-  <div class="thms-card-body">
-    <form class="d-flex gap-2" method="GET">
-      <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
-             placeholder="Search by driver name…" style="max-width:260px;" />
-      <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i> Search</button>
-      {% if search %}<a href="{{ url_for('payments.index') }}" class="btn btn-sm btn-link text-muted">Clear</a>{% endif %}
+  <div class="thms-card-body py-3">
+    <form method="GET" class="d-flex flex-wrap align-items-end gap-2">
+
+      <div class="flex-grow-1" style="min-width:200px;max-width:340px;">
+        <label class="thms-form-label small">Search</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-transparent border-end-0">
+            <i class="bi bi-search text-muted"></i>
+          </span>
+          <input type="text" name="q" value="{{ search }}"
+                 class="form-control form-control-sm border-start-0 ps-0"
+                 placeholder="Driver, receipt, reference…" autocomplete="off" />
+        </div>
+      </div>
+
+      <div style="min-width:140px;">
+        <label class="thms-form-label small">Method</label>
+        <select name="method" class="form-select form-select-sm">
+          <option value="">All methods</option>
+          {% for val, label in [('cash','Cash'),('transfer','Transfer'),('pos','POS')] %}
+          <option value="{{ val }}" {{ 'selected' if method_filter == val }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="min-width:130px;">
+        <label class="thms-form-label small">From</label>
+        <input type="date" name="date_from" class="form-control form-control-sm"
+               value="{{ date_from_str }}" />
+      </div>
+
+      <div style="min-width:130px;">
+        <label class="thms-form-label small">To</label>
+        <input type="date" name="date_to" class="form-control form-control-sm"
+               value="{{ date_to_str }}" />
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary btn-sm">Filter</button>
+        {% if search or method_filter or date_from_str or date_to_str %}
+        <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
+        {% endif %}
+      </div>
+
     </form>
   </div>
 </div>
 
+{# ── Summary strip ───────────────────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-center mb-2 px-1">
+  <span class="text-muted small">
+    <strong>{{ payments.total }}</strong> payment{{ 's' if payments.total != 1 }} found
+    {% if search or method_filter or date_from_str or date_to_str %}
+    (filtered)
+    {% endif %}
+  </span>
+  <span class="fw-700 text-success small">
+    Page total: ₦{{ "{:,.0f}".format(total_amount) }}
+  </span>
+</div>
+
+{# ── Table ───────────────────────────────────────────────────────────────── #}
 <div class="thms-card">
+
   {% if payments.items %}
   <div style="overflow-x:auto;">
     <table class="thms-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th style="min-width:130px;">Receipt</th>
           <th>Driver</th>
+          <th>Vehicle</th>
           <th>Amount</th>
+          <th style="min-width:80px;">Weeks</th>
           <th>Method</th>
-          <th>Date</th>
+          <th style="min-width:110px;">Date</th>
           <th>Sender</th>
-          <th>Reference</th>
-          <th>Notes</th>
+          <th style="width:80px;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for p in payments.items %}
         <tr>
-          <td class="text-muted small">{{ p.id }}</td>
           <td>
-            <div class="fw-600">{{ p.driver.full_name }}</div>
-            <div class="text-muted small">{{ p.driver.phone }}</div>
+            <a href="{{ url_for('payments.view', payment_id=p.id) }}"
+               class="fw-600 text-decoration-none text-primary small">
+              {{ p.receipt_number or ('#' ~ p.id) }}
+            </a>
           </td>
-          <td class="fw-600 text-success no-wrap">₦{{ "{:,.0f}".format(p.amount) }}</td>
+
           <td>
-            <span class="badge {% if p.payment_method == 'cash' %}bg-success{% elif p.payment_method == 'transfer' %}bg-primary{% else %}bg-info text-dark{% endif %} bg-opacity-10 text-capitalize" style="font-size:0.72rem;">
-              {{ p.payment_method }}
+            <div class="fw-600 small">{{ p.driver.full_name }}</div>
+            <div class="text-muted" style="font-size:.72rem;">
+              Contract #{{ p.contract_id }}
+            </div>
+          </td>
+
+          <td class="small text-muted">
+            {{ p.contract.vehicle.vehicle_number if p.contract and p.contract.vehicle else '—' }}
+          </td>
+
+          <td class="fw-700 text-success no-wrap">
+            ₦{{ "{:,.0f}".format(p.amount) }}
+          </td>
+
+          <td class="small text-muted">
+            {% if p.week_from %}
+              {% if p.is_partial %}
+                Part of Wk {{ p.week_from }}
+              {% elif p.week_to and p.week_to > p.week_from %}
+                Wk {{ p.week_from }}–{{ p.week_to }}
+              {% else %}
+                Wk {{ p.week_from }}
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+
+          <td>
+            <span class="badge bg-{{ p.method_color }} bg-opacity-15 text-{{ p.method_color }}"
+                  style="font-size:.72rem;">
+              {{ p.method_label }}
             </span>
           </td>
-          <td class="text-muted small no-wrap">{{ p.payment_date.strftime('%d %b %Y') }}</td>
-          <td class="text-muted small">{{ p.sender or '—' }}</td>
-          <td class="text-muted small">{{ p.reference or '—' }}</td>
-          <td class="text-muted small">{{ p.notes[:40] + '…' if p.notes and p.notes|length > 40 else (p.notes or '—') }}</td>
+
+          <td class="small text-muted no-wrap">
+            {{ p.payment_date.strftime('%d %b %Y') if p.payment_date else '—' }}
+            {% if p.payment_time %}
+            <div style="font-size:.7rem;">{{ p.payment_time.strftime('%H:%M') }}</div>
+            {% endif %}
+          </td>
+
+          <td class="small text-muted">{{ p.sender or '—' }}</td>
+
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('payments.view', payment_id=p.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('payments.receipt', payment_id=p.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="Print Receipt" target="_blank">
+                <i class="bi bi-printer"></i>
+              </a>
+            </div>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
-  {% if payments.pages > 1 %}
-  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top small text-muted">
-    <span>Showing {{ payments.items | length }} of {{ payments.total }} payments</span>
+  {# Pagination #}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2">
+    <div class="small text-muted">
+      Showing <strong>{{ ((payments.page-1)*payments.per_page)+1 }}</strong>–<strong>{{ [payments.page*payments.per_page, payments.total]|min }}</strong>
+      of <strong>{{ payments.total }}</strong>
+    </div>
+    {% if payments.pages > 1 %}
     <nav>
       <ul class="pagination pagination-sm mb-0">
-        {% if payments.has_prev %}<li class="page-item"><a class="page-link" href="?page={{ payments.prev_num }}&q={{ search }}">‹</a></li>{% endif %}
-        {% for pg in payments.iter_pages() %}
-          {% if pg %}<li class="page-item {% if pg == payments.page %}active{% endif %}"><a class="page-link" href="?page={{ pg }}&q={{ search }}">{{ pg }}</a></li>
-          {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+        <li class="page-item {{ 'disabled' if not payments.has_prev }}">
+          <a class="page-link" href="?page={{ payments.prev_num }}&q={{ search }}&method={{ method_filter }}&date_from={{ date_from_str }}&date_to={{ date_to_str }}">‹</a>
+        </li>
+        {% for pg in payments.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if pg %}
+          <li class="page-item {{ 'active' if pg == payments.page }}">
+            <a class="page-link" href="?page={{ pg }}&q={{ search }}&method={{ method_filter }}&date_from={{ date_from_str }}&date_to={{ date_to_str }}">{{ pg }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
         {% endfor %}
-        {% if payments.has_next %}<li class="page-item"><a class="page-link" href="?page={{ payments.next_num }}&q={{ search }}">›</a></li>{% endif %}
+        <li class="page-item {{ 'disabled' if not payments.has_next }}">
+          <a class="page-link" href="?page={{ payments.next_num }}&q={{ search }}&method={{ method_filter }}&date_from={{ date_from_str }}&date_to={{ date_to_str }}">›</a>
+        </li>
       </ul>
     </nav>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-cash-coin d-block mb-3" style="font-size:2.5rem;opacity:.25;"></i>
+    {% if search or method_filter or date_from_str or date_to_str %}
+    <p class="mb-1">No payments match the current filters.</p>
+    <a href="{{ url_for('payments.index') }}" class="btn btn-sm btn-outline-secondary mt-2">Clear filters</a>
+    {% else %}
+    <p class="mb-1">No payments recorded yet.</p>
+    <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm mt-2">
+      <i class="bi bi-plus-circle-fill me-1"></i> Record First Payment
+    </a>
+    {% endif %}
   </div>
   {% endif %}
 
-  {% else %}
-  <div class="empty-state">
-    <i class="bi bi-cash-coin d-block"></i>
-    <p>No payments recorded yet{% if search %} matching "{{ search }}"{% endif %}.</p>
-    <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm mt-3">Record First Payment</a>
-  </div>
-  {% endif %}
 </div>
 {% endblock %}

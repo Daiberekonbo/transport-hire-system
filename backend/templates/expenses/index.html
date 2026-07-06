@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% block title %}Extra Expenditures{% endblock %}
+{% block page_title %}Extra Expenditures{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title mb-0">Extra Expenditures</h1>
+    <div class="page-header-sub">All post-contract costs: repairs, loans, advances, fines</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('expenses.report') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-file-earmark-bar-graph me-1"></i> Report
+    </a>
+    <a href="{{ url_for('expenses.add') }}" class="btn btn-danger btn-sm">
+      <i class="bi bi-plus-lg me-1"></i> Add Expenditure
+    </a>
+  </div>
+</div>
+
+{# ── Summary stats ──────────────────────────────────────────────────────────── #}
+{% if cat_totals %}
+<div class="row g-3 mb-4">
+  {% for cat_key, cat_amt in cat_totals.items() | sort(attribute='1', reverse=True) | list %}
+  {% set cat_label = categories.get(cat_key, cat_key) %}
+  <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+    <div class="thms-card p-3 text-center">
+      <div class="text-muted small mb-1" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;">{{ cat_label }}</div>
+      <div class="fw-700 text-danger" style="font-size:1rem;">₦{{ "{:,.0f}".format(cat_amt) }}</div>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+    <div class="thms-card p-3 text-center" style="border-left:3px solid var(--danger);">
+      <div class="text-muted small mb-1" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;">Grand Total</div>
+      <div class="fw-700 text-danger" style="font-size:1.1rem;">₦{{ "{:,.0f}".format(grand_total) }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Filters ────────────────────────────────────────────────────────────────── #}
+<div class="thms-card mb-4">
+  <div class="thms-card-body py-3">
+    <form method="GET" action="{{ url_for('expenses.index') }}" class="row g-2 align-items-end">
+      <div class="col-12 col-sm-6 col-md-3">
+        <label class="form-label small text-muted mb-1">Search</label>
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="Driver, title, reference…" value="{{ search }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Category</label>
+        <select name="category" class="form-select form-select-sm">
+          <option value="">All categories</option>
+          {% for key, label in categories.items() %}
+          <option value="{{ key }}" {{ 'selected' if cat_filter == key }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Driver</label>
+        <select name="driver_id" class="form-select form-select-sm">
+          <option value="">All drivers</option>
+          {% for d in drivers %}
+          <option value="{{ d.id }}" {{ 'selected' if driver_f == d.id|string }}>{{ d.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">From</label>
+        <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from_s }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">To</label>
+        <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to_s }}">
+      </div>
+      <div class="col-6 col-md-1 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-fill">
+          <i class="bi bi-search"></i>
+        </button>
+        <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Table ──────────────────────────────────────────────────────────────────── #}
+<div class="thms-card">
+  <div class="thms-card-header">
+    <h6 class="thms-card-title">
+      <i class="bi bi-receipt text-danger"></i>
+      Expenditure Records
+    </h6>
+    <span class="text-muted small">
+      {{ expenses.total if expenses.total is defined else expenses | length }} record{{ 's' if (expenses.total if expenses.total is defined else expenses | length) != 1 }}
+      &nbsp;·&nbsp; ₦{{ "{:,.0f}".format(total_amount) }} this page
+    </span>
+  </div>
+  <div class="thms-card-body p-0">
+    {% if expenses.items is defined and expenses.items %}
+    {% set rows = expenses.items %}
+    {% elif expenses is iterable and expenses is not mapping %}
+    {% set rows = expenses %}
+    {% else %}
+    {% set rows = [] %}
+    {% endif %}
+
+    {% if rows %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle" style="font-size:.875rem;">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4" style="width:130px;">Reference</th>
+            <th>Driver</th>
+            <th>Vehicle</th>
+            <th>Title / Category</th>
+            <th class="text-end">Amount</th>
+            <th>Date</th>
+            <th>Approved By</th>
+            <th class="text-center">Receipt</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in rows %}
+          <tr>
+            <td class="ps-4">
+              <span class="badge bg-danger-subtle text-danger fw-600" style="font-size:.75rem;letter-spacing:.02em;">
+                {{ e.expense_number or ('#' ~ e.id) }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('drivers.view', driver_id=e.driver.id) }}"
+                 class="fw-600 text-decoration-none text-body">
+                {{ e.driver.full_name }}
+              </a>
+            </td>
+            <td>
+              {% if e.vehicle %}
+              <span class="text-muted small">{{ e.vehicle.vehicle_number }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <div class="fw-600">{{ e.display_title }}</div>
+              <div class="d-flex align-items-center gap-1 mt-1">
+                <i class="bi {{ e.category_icon }} text-{{ e.category_color }}" style="font-size:.8rem;"></i>
+                <span class="text-muted small">{{ e.category_label }}</span>
+              </div>
+            </td>
+            <td class="text-end fw-700 text-danger">₦{{ "{:,.0f}".format(e.amount | float) }}</td>
+            <td class="text-muted small">
+              {{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}
+            </td>
+            <td class="text-muted small">{{ e.approved_by or '—' }}</td>
+            <td class="text-center">
+              {% if e.receipt_file %}
+              <a href="{{ url_for('static', filename='uploads/expenses/' ~ e.receipt_file) }}"
+                 target="_blank" class="btn btn-outline-secondary btn-sm py-0 px-2" title="View receipt">
+                <i class="bi bi-paperclip"></i>
+              </a>
+              {% else %}
+              <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td class="pe-4">
+              <a href="{{ url_for('expenses.view', expense_id=e.id) }}"
+                 class="btn btn-outline-primary btn-sm py-0 px-2">
+                <i class="bi bi-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <td colspan="4" class="ps-4 fw-700 small">Page Total</td>
+            <td class="text-end fw-700 text-danger">₦{{ "{:,.0f}".format(total_amount) }}</td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    {# Pagination #}
+    {% if expenses.pages is defined and expenses.pages > 1 %}
+    <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top small">
+      <span class="text-muted">
+        Page {{ expenses.page }} of {{ expenses.pages }}
+        &nbsp;·&nbsp; {{ expenses.total }} total records
+      </span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if expenses.has_prev %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('expenses.index', page=expenses.prev_num, q=search, category=cat_filter, driver_id=driver_f, date_from=date_from_s, date_to=date_to_s) }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
+          {% for p in expenses.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {{ 'active' if p == expenses.page }}">
+              <a class="page-link" href="{{ url_for('expenses.index', page=p, q=search, category=cat_filter, driver_id=driver_f, date_from=date_from_s, date_to=date_to_s) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+          {% if expenses.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('expenses.index', page=expenses.next_num, q=search, category=cat_filter, driver_id=driver_f, date_from=date_from_s, date_to=date_to_s) }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-receipt d-block mb-3" style="font-size:2.5rem;opacity:.15;"></i>
+      <p class="mb-2">No expenditures found.</p>
+      <a href="{{ url_for('expenses.add') }}" class="btn btn-danger btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Add First Expenditure
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

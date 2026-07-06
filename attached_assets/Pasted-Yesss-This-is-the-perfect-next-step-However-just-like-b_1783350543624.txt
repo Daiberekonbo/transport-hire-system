@@ -1,0 +1,79 @@
+Yesss. This is the perfect next step.
+
+However, just like before, let's make it build the **complete business-grade version**, not just the basic one.
+
+Paste this:
+
+> Build the complete **Extra Expenditure Management Module**.
+>
+> Requirements:
+>
+> * Extra expenditure represents money paid by the owners on behalf of a driver (vehicle repairs, accident repairs, emergency loans, fines, replacement parts, servicing, fuel advances, or any approved expense).
+> * Every expenditure must be permanently linked to the driver's active contract.
+> * Automatically increase the driver's outstanding balance whenever an expenditure is added.
+> * Automatically recalculate:
+>
+>   * Outstanding balance
+>   * Amount remaining
+>   * Weekly progress
+>   * Contract completion percentage
+> * Record:
+>
+>   * Expense title
+>   * Expense category
+>   * Description
+>   * Amount
+>   * Date
+>   * Time
+>   * Person who approved it
+>   * Person who entered it
+>   * Supporting notes
+> * Support categories including:
+>
+>   * Vehicle Repairs
+>   * Accident Repairs
+>   * Servicing
+>   * Fuel Advance
+>   * Driver Loan
+>   * Spare Parts
+>   * Insurance
+>   * Other
+> * Display a complete expenditure history for every contract.
+> * Add expenditures to the driver's contract timeline alongside payments.
+> * Show the total amount spent on each driver.
+> * Show the total amount spent on each vehicle.
+> * Prevent editing or deleting expenditure records without Developer privileges.
+> * Every creation, update or deletion attempt must be recorded in the Audit Log.
+> * Allow uploading receipts or supporting documents for each expenditure.
+> * Generate printable expenditure reports.
+> * Include filters by:
+>
+>   * Driver
+>   * Vehicle
+>   * Category
+>   * Date range
+>   * Amount range
+> * Update dashboard statistics automatically whenever an expenditure is added.
+> * Follow the existing project structure, authentication system, models, routes and templates.
+
+---
+
+After this, the project will have the **entire financial engine** of the application completed.
+
+Our remaining roadmap will be:
+
+* 📦 Archive completed contracts
+* 📄 PDF reports & printable documents
+* 📊 Dashboard analytics and charts
+* 🔍 Smart search across the entire system
+* 🔔 Notifications and reminders
+* 📁 Backup & restore
+* 📱 PWA/offline support
+* ⚙️ Developer tools
+* 🎨 UI/UX polish
+
+Bro, something else just crossed my mind that would make your mum's business much safer.
+
+Right now, the app keeps a record of **payments** and **extra expenditures**, but it doesn't explain **why** money changed. I think every financial action should also have a **reason code** (e.g., "Engine Repair", "Tyre Replacement", "Accident Damage", "Fuel Advance") and an optional note. If, three years from now, your mum asks, *"Why did we spend ₦185,000 on this driver?"* the system should answer immediately instead of just showing a number.
+
+That's the kind of feature people usually only think about after they've been using a system for a while. Since we're building from scratch, we can get it right the first time.

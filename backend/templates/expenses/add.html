@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}Add Expenditure{% endblock %}
+{% block page_title %}Add Expenditure{% endblock %}
+
+{% block head %}
+<style>
+.contract-card {
+  border: 2px solid var(--card-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--card-bg);
+  margin-bottom: 8px;
+}
+.contract-card:hover { border-color: #dc2626; background: rgba(220,38,38,.04); }
+.contract-card.selected { border-color: #dc2626; background: rgba(220,38,38,.07); }
+.contract-card .vehicle-num { font-size:.78rem; color:var(--text-secondary); }
+
+.summary-box {
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 1rem;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .82rem;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--card-border);
+}
+.summary-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-header-title mb-0">Add Extra Expenditure</h1>
+      <div class="page-header-sub">Record a cost paid on behalf of a driver</div>
+    </div>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('expenses.add') }}" enctype="multipart/form-data">
+<input type="hidden" name="contract_id" id="contractIdInput" value="{{ preselect_contract_id or '' }}">
+
+<div class="row g-4">
+
+  {# ── Left: Contract selection ─────────────────────────────────────────── #}
+  <div class="col-12 col-md-5 col-lg-4">
+    <div class="thms-card mb-3">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-file-earmark-text text-primary"></i> Select Contract</h6>
+      </div>
+      <div class="thms-card-body" style="max-height:380px;overflow-y:auto;">
+        {% if active_contracts %}
+          {% for c in active_contracts %}
+          <div class="contract-card {{ 'selected' if preselect_contract_id == c.id }}"
+               id="cc-{{ c.id }}"
+               onclick="selectContract({{ c.id }}, '{{ c.driver.full_name }}', {{ c.vehicle_id }}, '{{ c.vehicle.vehicle_number }}', {{ c.total_paid }}, {{ c.outstanding_balance }}, {{ c.weekly_amount | float }})">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-600" style="font-size:.9rem;">{{ c.driver.full_name }}</div>
+                <div class="vehicle-num">{{ c.vehicle.vehicle_number }}
+                  {% if c.vehicle.manufacturer or c.vehicle.model %}
+                  · {{ [c.vehicle.manufacturer, c.vehicle.model] | select | join(' ') }}
+                  {% endif %}
+                </div>
+              </div>
+              <span class="badge bg-success-subtle text-success" style="font-size:.7rem;">Active</span>
+            </div>
+            <div class="d-flex gap-3 mt-2" style="font-size:.78rem;">
+              <span class="text-muted">Paid: <strong class="text-success">₦{{ "{:,.0f}".format(c.total_paid) }}</strong></span>
+              <span class="text-muted">Owed: <strong class="text-danger">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</strong></span>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state py-4">
+            <i class="bi bi-file-earmark-x d-block mb-2" style="font-size:2rem;opacity:.2;"></i>
+            <p class="small mb-0">No active contracts found.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Contract snapshot (shown after selection) #}
+    <div class="thms-card" id="contractSnapshot" style="display:none;">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-info-circle text-info"></i> Contract Summary</h6>
+      </div>
+      <div class="thms-card-body p-0">
+        <div class="summary-box m-3">
+          <div class="summary-row">
+            <span class="text-muted">Driver</span>
+            <span class="fw-600" id="snapDriver">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="text-muted">Vehicle</span>
+            <span class="fw-600" id="snapVehicle">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="text-muted">Total Paid</span>
+            <span class="fw-600 text-success" id="snapPaid">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="text-muted">Outstanding Balance</span>
+            <span class="fw-600 text-danger" id="snapOutstanding">—</span>
+          </div>
+          <div class="summary-row">
+            <span class="text-muted">After This Expense</span>
+            <span class="fw-700 text-danger" id="snapAfter">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Right: Expense form ──────────────────────────────────────────────── #}
+  <div class="col-12 col-md-7 col-lg-8">
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-receipt text-danger"></i> Expenditure Details</h6>
+      </div>
+      <div class="thms-card-body">
+
+        <div class="row g-3">
+
+          {# Title #}
+          <div class="col-12">
+            <label class="form-label fw-600">Expenditure Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control"
+                   placeholder="e.g. Engine Replacement, Tyre Blowout, Emergency Loan"
+                   value="{{ form.get('title','') }}" required>
+            <div class="form-text">A clear, specific title that will make sense three years from now.</div>
+          </div>
+
+          {# Category #}
+          <div class="col-12 col-sm-6">
+            <label class="form-label fw-600">Category <span class="text-danger">*</span></label>
+            <select name="category" class="form-select" required>
+              {% for key, label in categories.items() %}
+              <option value="{{ key }}" {{ 'selected' if form.get('category','') == key or (not form.get('category') and key == 'other') }}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          {# Amount #}
+          <div class="col-12 col-sm-6">
+            <label class="form-label fw-600">Amount (₦) <span class="text-danger">*</span></label>
+            <input type="text" name="amount" id="amountInput" class="form-control fw-700"
+                   inputmode="numeric" placeholder="0"
+                   value="{{ form.get('amount','') }}" required
+                   oninput="updateAfterBalance()">
+          </div>
+
+          {# Date + Time #}
+          <div class="col-12 col-sm-6">
+            <label class="form-label fw-600">Date <span class="text-danger">*</span></label>
+            <input type="date" name="expense_date" class="form-control"
+                   value="{{ form.get('expense_date', today.strftime('%Y-%m-%d')) }}" required>
+          </div>
+          <div class="col-12 col-sm-6">
+            <label class="form-label fw-600">Time</label>
+            <input type="time" name="expense_time" class="form-control"
+                   value="{{ form.get('expense_time','') }}">
+          </div>
+
+          {# Approved by #}
+          <div class="col-12 col-sm-6">
+            <label class="form-label fw-600">Approved By <span class="text-danger">*</span></label>
+            <input type="text" name="approved_by" class="form-control"
+                   placeholder="Name of person who authorised this"
+                   value="{{ form.get('approved_by','') }}" required>
+          </div>
+
+          {# Entered by (auto-filled, read-only display) #}
+          <div class="col-12 col-sm-6">
+            <label class="form-label fw-600">Entered By</label>
+            <input type="text" class="form-control bg-light" readonly
+                   value="{{ current_user.username }}">
+            <div class="form-text">Automatically recorded.</div>
+          </div>
+
+          {# Description #}
+          <div class="col-12">
+            <label class="form-label fw-600">Description / Reason</label>
+            <textarea name="description" class="form-control" rows="3"
+                      placeholder="Detailed description: what happened, what was done, why this expense was necessary…">{{ form.get('description','') }}</textarea>
+            <div class="form-text">
+              <i class="bi bi-lightbulb text-warning"></i>
+              Be specific — e.g. "Right front tyre blew on Lagos-Ibadan expressway, replaced with Apollo 195/65R15."
+              This detail will be invaluable for future reference.
+            </div>
+          </div>
+
+          {# Supporting notes #}
+          <div class="col-12">
+            <label class="form-label fw-600">Supporting Notes</label>
+            <textarea name="notes" class="form-control" rows="2"
+                      placeholder="Any additional internal notes (optional)">{{ form.get('notes','') }}</textarea>
+          </div>
+
+          {# Receipt upload #}
+          <div class="col-12">
+            <label class="form-label fw-600">
+              <i class="bi bi-paperclip me-1 text-secondary"></i> Attach Receipt / Document
+            </label>
+            <input type="file" name="receipt_file" class="form-control"
+                   accept=".pdf,.png,.jpg,.jpeg,.gif,.webp">
+            <div class="form-text">PDF, PNG, JPG, JPEG (max recommended 5 MB). Stored securely.</div>
+          </div>
+
+        </div>{# /row #}
+
+        <hr class="my-3">
+
+        <div class="d-flex gap-2 justify-content-end">
+          <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-danger px-4">
+            <i class="bi bi-plus-circle-fill me-2"></i>
+            Record Expenditure
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentOutstanding = 0;
+
+function selectContract(id, driverName, vehicleId, vehicleNum, paid, outstanding, weekly) {
+  document.getElementById('contractIdInput').value = id;
+  currentOutstanding = outstanding;
+
+  document.querySelectorAll('.contract-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('cc-' + id).classList.add('selected');
+
+  document.getElementById('snapDriver').textContent    = driverName;
+  document.getElementById('snapVehicle').textContent   = vehicleNum;
+  document.getElementById('snapPaid').textContent      = '₦' + paid.toLocaleString('en-NG', {maximumFractionDigits:0});
+  document.getElementById('snapOutstanding').textContent = '₦' + outstanding.toLocaleString('en-NG', {maximumFractionDigits:0});
+
+  document.getElementById('contractSnapshot').style.display = 'block';
+  updateAfterBalance();
+}
+
+function updateAfterBalance() {
+  const raw    = document.getElementById('amountInput').value.replace(/,/g, '');
+  const amount = parseFloat(raw) || 0;
+  const after  = currentOutstanding + amount;
+  document.getElementById('snapAfter').textContent =
+    '₦' + after.toLocaleString('en-NG', {maximumFractionDigits:0});
+}
+
+// Auto-select if preloaded
+{% if preselect_contract_id %}
+document.addEventListener('DOMContentLoaded', function() {
+  const el = document.getElementById('cc-{{ preselect_contract_id }}');
+  if (el) el.click();
+});
+{% endif %}
+</script>
+{% endblock %}

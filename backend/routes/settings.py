@@ -1,8 +1,21 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from backend.extensions import db
+from backend.models.audit import AuditLog
 
 settings_bp = Blueprint("settings", __name__)
+
+
+def _log(action, description=""):
+    db.session.add(AuditLog(
+        user_id=current_user.id,
+        action=action,
+        entity_type="Settings",
+        entity_id=current_user.id,
+        description=description or f"{action} by {current_user.username}",
+        ip_address=request.remote_addr,
+        user_agent=(request.headers.get("User-Agent") or "")[:255],
+    ))
 
 
 @settings_bp.route("/")
@@ -31,6 +44,7 @@ def change_password():
         return redirect(url_for("settings.index"))
 
     current_user.set_password(new_pw)
+    _log("CHANGE_PASSWORD", f"Password changed by {current_user.username}")
     db.session.commit()
     flash("Password changed successfully.", "success")
     return redirect(url_for("settings.index"))

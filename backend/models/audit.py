@@ -2,6 +2,30 @@ from datetime import datetime
 from backend.extensions import db
 
 
+# ─── Action → display category mapping ────────────────────────────────────────
+# Ordered by prefix specificity; first match wins. Used to derive a consistent
+# badge label/color/icon for any action string logged across the app, without
+# requiring every route to specify one explicitly.
+_ACTION_CATEGORIES = [
+    ("LOGIN",            "Login",   "success",   "bi-box-arrow-in-right"),
+    ("LOGOUT",           "Logout",  "secondary", "bi-box-arrow-right"),
+    ("RECORD_PAYMENT",   "Payment", "success",   "bi-cash-stack"),
+    ("VOID_PAYMENT",     "Payment", "danger",    "bi-cash-stack"),
+    ("RESTORE",          "Restore", "info",       "bi-arrow-counterclockwise"),
+    ("REACTIVATE",       "Restore", "info",       "bi-arrow-counterclockwise"),
+    ("ARCHIVE",          "Delete",  "danger",    "bi-archive-fill"),
+    ("VOID",             "Delete",  "danger",    "bi-x-circle-fill"),
+    ("DELETE",           "Delete",  "danger",    "bi-trash-fill"),
+    ("CREATE",           "Create",  "success",   "bi-plus-circle-fill"),
+    ("ADD",              "Create",  "success",   "bi-plus-circle-fill"),
+    ("EDIT",             "Update",  "primary",   "bi-pencil-fill"),
+    ("UPDATE",           "Update",  "primary",   "bi-pencil-fill"),
+    ("SUSPEND",          "Update",  "warning",   "bi-pause-circle-fill"),
+    ("COMPLETE",         "Update",  "primary",   "bi-trophy-fill"),
+    ("CHANGE_PASSWORD",  "System",  "dark",      "bi-shield-lock-fill"),
+]
+
+
 class AuditLog(db.Model):
     """Permanent record of every system action. Never deleted."""
 
@@ -24,3 +48,27 @@ class AuditLog(db.Model):
 
     def __repr__(self):
         return f"<AuditLog {self.action} by user={self.user_id}>"
+
+    # ── Display helpers (used by the Audit Log UI) ─────────────────────────
+    def _category(self):
+        act = (self.action or "").upper()
+        for prefix, label, color, icon in _ACTION_CATEGORIES:
+            if prefix in act:
+                return label, color, icon
+        return "System", "secondary", "bi-gear-fill"
+
+    @property
+    def action_label(self):
+        return self._category()[0]
+
+    @property
+    def action_color(self):
+        return self._category()[1]
+
+    @property
+    def action_icon(self):
+        return self._category()[2]
+
+    @property
+    def module_label(self):
+        return self.entity_type or "System"

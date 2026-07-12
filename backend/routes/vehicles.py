@@ -45,6 +45,8 @@ def _log(action: str, vehicle: Vehicle, description: str = ""):
         entity_type="Vehicle",
         entity_id=vehicle.id,
         description=description or f"{action}: {vehicle.vehicle_number}",
+        ip_address=request.remote_addr,
+        user_agent=(request.headers.get("User-Agent") or "")[:255],
     ))
 
 

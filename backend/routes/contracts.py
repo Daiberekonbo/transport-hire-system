@@ -78,6 +78,8 @@ def _log(action: str, contract: Contract, description: str = ""):
         entity_type="Contract",
         entity_id=contract.id,
         description=description or f"{action}: contract #{contract.id}",
+        ip_address=request.remote_addr,
+        user_agent=(request.headers.get("User-Agent") or "")[:255],
     ))
 
 

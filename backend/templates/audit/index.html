@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Audit Log{% endblock %}
+{% block page_title %}Audit Log{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title mb-0">Audit Log</h1>
+    <div class="page-header-sub">Permanent record of every action taken across the system</div>
+  </div>
+</div>
+
+{# ── Filters ──────────────────────────────────────────────────────────────── #}
+<div class="thms-card mb-3">
+  <div class="thms-card-body py-3">
+    <form method="GET" action="{{ url_for('audit.index') }}" class="row g-2 align-items-end">
+      <div class="col-12 col-md-3">
+        <label class="form-label small text-muted mb-1">Search</label>
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="Description, action, username…" value="{{ search }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">User</label>
+        <select name="user_id" class="form-select form-select-sm">
+          <option value="">All users</option>
+          {% for u in users %}
+          <option value="{{ u.id }}" {{ 'selected' if user_filter == u.id|string }}>{{ u.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Module</label>
+        <select name="module" class="form-select form-select-sm">
+          <option value="">All modules</option>
+          {% for m in modules %}
+          <option value="{{ m }}" {{ 'selected' if module_filter == m }}>{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Action</label>
+        <select name="action" class="form-select form-select-sm">
+          <option value="">All actions</option>
+          {% for a in actions %}
+          <option value="{{ a }}" {{ 'selected' if action_filter == a }}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">From</label>
+        <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from_s }}">
+      </div>
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">To</label>
+        <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to_s }}">
+      </div>
+      <div class="col-12 col-md-1 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-fill">
+          <i class="bi bi-search"></i>
+        </button>
+        <a href="{{ url_for('audit.index') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Log table ────────────────────────────────────────────────────────────── #}
+<div class="thms-card">
+  <div class="thms-card-header d-flex justify-content-between align-items-center">
+    <h6 class="thms-card-title mb-0">
+      <i class="bi bi-journal-text text-secondary"></i> Activity
+    </h6>
+    <span class="text-muted small">{{ logs.total }} total</span>
+  </div>
+
+  {% if logs.items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.84rem;">
+      <thead>
+        <tr>
+          <th>Date &amp; Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Module</th>
+          <th>Record</th>
+          <th>Description</th>
+          <th>IP Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs.items %}
+        <tr>
+          <td class="no-wrap text-muted small">
+            {{ log.created_at.strftime('%d %b %Y') if log.created_at else '—' }}
+            <div style="font-size:.7rem;">{{ log.created_at.strftime('%H:%M:%S') if log.created_at else '' }}</div>
+          </td>
+          <td class="fw-600 small">{{ log.user.username if log.user else '—' }}</td>
+          <td>
+            <span class="badge bg-{{ log.action_color }}-subtle text-{{ log.action_color }}" style="font-size:.7rem;">
+              <i class="bi {{ log.action_icon }} me-1"></i>{{ log.action_label }}
+            </span>
+            <div class="text-muted mt-1" style="font-size:.68rem;">{{ log.action }}</div>
+          </td>
+          <td class="text-muted small">{{ log.module_label }}</td>
+          <td class="text-muted small">{{ '#' ~ log.entity_id if log.entity_id else '—' }}</td>
+          <td class="small" style="max-width:340px;">{{ log.description or '—' }}</td>
+          <td class="text-muted small no-wrap">{{ log.ip_address or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  {% if logs.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2">
+    <div class="small text-muted">
+      Showing {{ ((logs.page-1)*logs.per_page)+1 }}–{{ [logs.page*logs.per_page, logs.total]|min }}
+      of {{ logs.total }}
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not logs.has_prev }}">
+          <a class="page-link" href="?page={{ logs.prev_num }}&q={{ search }}&user_id={{ user_filter }}&module={{ module_filter }}&action={{ action_filter }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}">‹</a>
+        </li>
+        {% for pg in logs.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if pg %}
+          <li class="page-item {{ 'active' if pg == logs.page }}">
+            <a class="page-link" href="?page={{ pg }}&q={{ search }}&user_id={{ user_filter }}&module={{ module_filter }}&action={{ action_filter }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}">{{ pg }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not logs.has_next }}">
+          <a class="page-link" href="?page={{ logs.next_num }}&q={{ search }}&user_id={{ user_filter }}&module={{ module_filter }}&action={{ action_filter }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}">›</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-journal-text d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+    <p class="mb-0">No audit records match these filters.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

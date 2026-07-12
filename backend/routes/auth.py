@@ -3,8 +3,21 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, login_required, current_user
 from backend.extensions import db
 from backend.models.user import User
+from backend.models.audit import AuditLog
 
 auth_bp = Blueprint("auth", __name__)
+
+
+def _log(action, user, description=""):
+    db.session.add(AuditLog(
+        user_id=user.id,
+        action=action,
+        entity_type="User",
+        entity_id=user.id,
+        description=description or f"{action}: {user.username}",
+        ip_address=request.remote_addr,
+        user_agent=(request.headers.get("User-Agent") or "")[:255],
+    ))
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -22,6 +35,7 @@ def login():
         if user and user.check_password(password):
             login_user(user, remember=remember)
             user.last_login = datetime.utcnow()
+            _log("LOGIN", user)
             db.session.commit()
             next_page = request.args.get("next")
             flash(f"Welcome back, {user.username}!", "success")
@@ -35,6 +49,8 @@ def login():
 @auth_bp.route("/logout")
 @login_required
 def logout():
+    _log("LOGOUT", current_user)
+    db.session.commit()
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("auth.login"))

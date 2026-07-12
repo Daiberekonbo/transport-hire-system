@@ -19,6 +19,8 @@ def _log(action, driver, description=""):
         entity_type="Driver",
         entity_id=driver.id,
         description=description or f"{action} driver: {driver.full_name}",
+        ip_address=request.remote_addr,
+        user_agent=(request.headers.get("User-Agent") or "")[:255],
     )
     db.session.add(entry)
 

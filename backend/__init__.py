@@ -25,6 +25,7 @@ def create_app(config_name="default"):
     from backend.routes.developer import developer_bp
     from backend.routes.settings  import settings_bp
     from backend.routes.expenses  import expenses_bp
+    from backend.routes.audit     import audit_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -37,6 +38,7 @@ def create_app(config_name="default"):
     app.register_blueprint(archives_bp,  url_prefix="/archives")
     app.register_blueprint(developer_bp, url_prefix="/developer")
     app.register_blueprint(settings_bp,  url_prefix="/settings")
+    app.register_blueprint(audit_bp,     url_prefix="/audit-log")
 
     # ── Flask-Login user loader ───────────────────────────────────────────────
     from backend.models.user import User

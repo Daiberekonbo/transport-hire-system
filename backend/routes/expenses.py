@@ -68,6 +68,8 @@ def _log(action: str, expense: Expense, extra: str = ""):
             f"driver={expense.driver.full_name} contract=#{expense.contract_id}"
             + (f". {extra}" if extra else "")
         ),
+        ip_address=request.remote_addr,
+        user_agent=(request.headers.get("User-Agent") or "")[:255],
     ))
 
 

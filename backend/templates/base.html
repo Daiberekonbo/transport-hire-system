@@ -88,6 +88,14 @@
       <span>Archives</span>
     </a>
 
+    {% if current_user.role == 'owner' %}
+    <a href="{{ url_for('audit.index') }}"
+       class="nav-item {% if request.blueprint == 'audit' %}active{% endif %}">
+      <i class="bi bi-journal-text"></i>
+      <span>Audit Log</span>
+    </a>
+    {% endif %}
+
     <div class="nav-section-label mt-3">System</div>
 
     <a href="{{ url_for('settings.index') }}"

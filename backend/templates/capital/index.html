@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Capital Management{% endblock %}
+{% block page_title %}Capital Management{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title mb-0">Capital Management</h1>
+    <div class="page-header-sub">Live capital position across vehicles, payments and expenditures</div>
+  </div>
+  {% if current_user.role == 'owner' %}
+  <a href="{{ url_for('capital.adjust') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+    <i class="bi bi-bank2"></i> Manual Adjustment
+  </a>
+  {% endif %}
+</div>
+
+{# ── Summary cards ─────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-piggy-bank-fill"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Capital Invested</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(summary.total_capital_invested) }}</div>
+        <div class="stat-sub">Vehicle cost + manual capital added</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon cyan"><i class="bi bi-truck-front"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Vehicle Purchase Cost</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(summary.vehicle_purchase_cost) }}</div>
+        <div class="stat-sub">Across the whole fleet</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="bi bi-credit-card-2-back-fill"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Extra Expenditure</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(summary.extra_expenditure) }}</div>
+        <div class="stat-sub">All non-voided expenditures</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-cash-stack"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Total Payments Received</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(summary.payments_received) }}</div>
+        <div class="stat-sub">All non-voided payments</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Outstanding Contract Balance</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(summary.outstanding_balance) }}</div>
+        <div class="stat-sub">Across all non-archived contracts</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-sm-6 col-xl-4">
+    <div class="stat-card">
+      <div class="stat-icon{% if summary.net_capital_position < 0 %} red{% else %} purple{% endif %}">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="stat-info">
+        <div class="stat-label">Net Capital Position</div>
+        <div class="stat-value">₦{{ "{:,.0f}".format(summary.net_capital_position) }}</div>
+        <div class="stat-sub">Current capital, calculated live</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Filters ────────────────────────────────────────────────────────────────── #}
+<div class="thms-card mb-4">
+  <div class="thms-card-body py-3">
+    <form method="GET" action="{{ url_for('capital.index') }}" class="row g-2 align-items-end">
+      <div class="col-12 col-sm-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Search</label>
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="Description, driver, vehicle…" value="{{ search }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Type</label>
+        <select name="type" class="form-select form-select-sm">
+          <option value="">All types</option>
+          {% for t in txn_types %}
+          <option value="{{ t }}" {{ 'selected' if type_filter == t }}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Driver</label>
+        <select name="driver_id" class="form-select form-select-sm">
+          <option value="">All drivers</option>
+          {% for d in drivers %}
+          <option value="{{ d.id }}" {{ 'selected' if driver_f == d.id|string }}>{{ d.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Vehicle</label>
+        <select name="vehicle_id" class="form-select form-select-sm">
+          <option value="">All vehicles</option>
+          {% for v in vehicles %}
+          <option value="{{ v.id }}" {{ 'selected' if vehicle_f == v.id|string }}>{{ v.vehicle_number }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">From</label>
+        <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from_s }}">
+      </div>
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">To</label>
+        <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to_s }}">
+      </div>
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">Min ₦</label>
+        <input type="number" name="amt_min" class="form-control form-control-sm" value="{{ amt_min_s }}">
+      </div>
+      <div class="col-6 col-md-1">
+        <label class="form-label small text-muted mb-1">Max ₦</label>
+        <input type="number" name="amt_max" class="form-control form-control-sm" value="{{ amt_max_s }}">
+      </div>
+      <div class="col-12 d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-search me-1"></i> Filter
+        </button>
+        <a href="{{ url_for('capital.index') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x me-1"></i> Clear
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Transaction ledger ────────────────────────────────────────────────────── #}
+<div class="thms-card">
+  <div class="thms-card-header d-flex justify-content-between align-items-center">
+    <h6 class="thms-card-title mb-0">
+      <i class="bi bi-list-columns-reverse text-primary"></i> Capital Transactions
+    </h6>
+    <span class="text-muted small">{{ txns.total }} total</span>
+  </div>
+
+  {% if txns.items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.84rem;">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th class="text-end">Amount</th>
+          <th class="text-end">Running Balance</th>
+          <th>Driver</th>
+          <th>Vehicle</th>
+          <th>Performed By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in txns.items %}
+        {% set color, icon = txn_meta.get(t.type, ('secondary', 'bi-dot')) %}
+        <tr>
+          <td class="text-muted small no-wrap">{{ t.date.strftime('%d %b %Y') if t.date else '—' }}</td>
+          <td>
+            <span class="badge bg-{{ color }}-subtle text-{{ color }}" style="font-size:.7rem;">
+              <i class="bi {{ icon }} me-1"></i>{{ t.type }}
+            </span>
+          </td>
+          <td class="small" style="max-width:320px;">{{ t.description }}</td>
+          <td class="text-end fw-700 no-wrap {{ 'text-success' if t.amount >= 0 else 'text-danger' }}">
+            {{ '+' if t.amount >= 0 else '−' }}₦{{ "{:,.0f}".format(t.amount | abs) }}
+          </td>
+          <td class="text-end fw-600 no-wrap">₦{{ "{:,.0f}".format(t.running_balance) }}</td>
+          <td class="small">
+            {% if t.driver %}{{ t.driver.full_name }}{% else %}—{% endif %}
+          </td>
+          <td class="small">
+            {% if t.vehicle %}{{ t.vehicle.vehicle_number }}{% else %}—{% endif %}
+          </td>
+          <td class="text-muted small">{{ t.performed_by }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if txns.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2">
+    <div class="small text-muted">
+      Showing {{ ((txns.page-1)*txns.per_page)+1 }}–{{ [txns.page*txns.per_page, txns.total]|min }}
+      of {{ txns.total }}
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not txns.has_prev }}">
+          <a class="page-link" href="?page={{ txns.prev_num }}&q={{ search }}&type={{ type_filter }}&driver_id={{ driver_f }}&vehicle_id={{ vehicle_f }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}&amt_min={{ amt_min_s }}&amt_max={{ amt_max_s }}">‹</a>
+        </li>
+        {% for pg in txns.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if pg %}
+          <li class="page-item {{ 'active' if pg == txns.page }}">
+            <a class="page-link" href="?page={{ pg }}&q={{ search }}&type={{ type_filter }}&driver_id={{ driver_f }}&vehicle_id={{ vehicle_f }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}&amt_min={{ amt_min_s }}&amt_max={{ amt_max_s }}">{{ pg }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not txns.has_next }}">
+          <a class="page-link" href="?page={{ txns.next_num }}&q={{ search }}&type={{ type_filter }}&driver_id={{ driver_f }}&vehicle_id={{ vehicle_f }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}&amt_min={{ amt_min_s }}&amt_max={{ amt_max_s }}">›</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-bar-chart d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+    <p class="mb-0">No capital transactions match these filters.</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

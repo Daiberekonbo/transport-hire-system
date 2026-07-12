@@ -62,10 +62,10 @@
 
     <div class="nav-section-label mt-3">Finance</div>
 
-    <a href="#" class="nav-item">
+    <a href="{{ url_for('capital.index') }}"
+       class="nav-item {% if request.blueprint == 'capital' %}active{% endif %}">
       <i class="bi bi-bar-chart-fill"></i>
       <span>Capital</span>
-      <span class="badge-soon">Soon</span>
     </a>
 
     <a href="{{ url_for('expenses.index') }}"

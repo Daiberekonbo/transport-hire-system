@@ -26,6 +26,7 @@ def create_app(config_name="default"):
     from backend.routes.settings  import settings_bp
     from backend.routes.expenses  import expenses_bp
     from backend.routes.audit     import audit_bp
+    from backend.routes.capital   import capital_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -39,6 +40,7 @@ def create_app(config_name="default"):
     app.register_blueprint(developer_bp, url_prefix="/developer")
     app.register_blueprint(settings_bp,  url_prefix="/settings")
     app.register_blueprint(audit_bp,     url_prefix="/audit-log")
+    app.register_blueprint(capital_bp,   url_prefix="/capital")
 
     # ── Flask-Login user loader ───────────────────────────────────────────────
     from backend.models.user import User
@@ -62,7 +64,7 @@ def create_app(config_name="default"):
         # Import all models so SQLAlchemy sees them before create_all()
         from backend.models import (          # noqa: F401
             user, driver, vehicle, vehicle_event,
-            contract, payment, expense, audit,
+            contract, payment, expense, audit, capital,
         )
         db.create_all()
         _run_migrations()

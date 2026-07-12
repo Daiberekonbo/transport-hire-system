@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Manual Capital Adjustment{% endblock %}
+{% block page_title %}Manual Capital Adjustment{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title mb-0">Manual Capital Adjustment</h1>
+    <div class="page-header-sub">Owner only — inject or withdraw capital directly</div>
+  </div>
+  <a href="{{ url_for('capital.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i> Back to Capital
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title mb-0">
+          <i class="bi bi-bank2 text-primary"></i> New Adjustment
+        </h6>
+      </div>
+      <div class="thms-card-body">
+        <form method="POST" action="{{ url_for('capital.adjust') }}">
+          <div class="mb-3">
+            <label class="thms-form-label">Adjustment Type <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" id="typeAdd" value="add"
+                       {{ 'checked' if form.get('type', 'add') == 'add' }}>
+                <label class="form-check-label" for="typeAdd">
+                  <i class="bi bi-plus-circle-fill text-success me-1"></i> Add Capital
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="type" id="typeWithdraw" value="withdraw"
+                       {{ 'checked' if form.get('type') == 'withdraw' }}>
+                <label class="form-check-label" for="typeWithdraw">
+                  <i class="bi bi-dash-circle-fill text-danger me-1"></i> Withdraw Capital
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="thms-form-label">Amount (₦) <span class="text-danger">*</span></label>
+            <input type="number" name="amount" min="0.01" step="0.01" class="form-control"
+                   placeholder="0.00" value="{{ form.get('amount', '') }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="thms-form-label">Date <span class="text-danger">*</span></label>
+            <input type="date" name="adjustment_date" class="form-control"
+                   value="{{ form.get('adjustment_date', today) }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="thms-form-label">Reason <span class="text-danger">*</span></label>
+            <textarea name="reason" rows="3" class="form-control"
+                      placeholder="Why is this capital being added or withdrawn?" required>{{ form.get('reason', '') }}</textarea>
+          </div>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <a href="{{ url_for('capital.index') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg me-1"></i> Save Adjustment
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

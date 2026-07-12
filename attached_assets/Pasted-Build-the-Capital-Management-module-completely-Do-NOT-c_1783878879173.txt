@@ -1,0 +1,104 @@
+Build the Capital Management module completely. Do NOT change the existing UI theme, layout, navigation, or database structure unless absolutely necessary. Integrate it with the current THMS application.
+
+Requirements:
+
+1. Dashboard Summary
+Display cards showing:
+- Total Capital Invested
+- Total Vehicle Purchase Cost
+- Total Extra Expenditure
+- Total Payments Received
+- Outstanding Contract Balance
+- Net Capital Position
+
+All cards must update automatically whenever:
+- A vehicle is added/edited
+- A payment is recorded or voided
+- An extra expenditure is added or voided
+- A contract is created, suspended, completed or archived
+
+2. Capital Transactions
+Create a table showing every capital-related transaction.
+
+Columns:
+- Date
+- Transaction Type
+- Description
+- Amount
+- Running Balance
+- Related Driver (if applicable)
+- Related Vehicle (if applicable)
+- Performed By
+
+Transaction types should include:
+- Vehicle Purchase
+- Extra Expenditure
+- Driver Loan
+- Fuel
+- Repair
+- Insurance
+- Tyres
+- Other Expense
+- Payment Received
+- Manual Capital Adjustment (Owner only)
+
+Newest transactions should appear first.
+
+3. Filters
+Allow filtering by:
+- Transaction Type
+- Driver
+- Vehicle
+- Date Range
+- Amount Range
+
+Include search functionality.
+
+4. Manual Capital Adjustment
+Owner only.
+
+Allow:
+- Add Capital
+- Withdraw Capital
+
+Fields:
+- Amount
+- Reason
+- Date
+
+Every adjustment must create an Audit Log entry.
+
+5. Calculations
+Capital should always calculate automatically.
+
+Current Capital =
+Vehicle Purchase Cost
++ Manual Capital Added
+- Extra Expenditure
++ Payments Received
+- Capital Withdrawals
+
+No hardcoded values.
+
+6. Validation
+- No negative amounts
+- Required fields
+- Proper flash messages
+- Prevent invalid submissions
+
+7. UI
+Reuse existing cards, badges, tables and styling already used throughout the application.
+Do not redesign the interface.
+
+8. Integration
+Every capital-related action must automatically create an Audit Log record.
+
+9. Testing
+Test the entire module by:
+- Purchasing a vehicle
+- Recording payments
+- Adding expenditures
+- Making manual adjustments
+- Confirming dashboard values update correctly.
+
+Only mark the task complete after all calculations are verified.

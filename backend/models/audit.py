@@ -16,6 +16,8 @@ _ACTION_CATEGORIES = [
     ("ARCHIVE",          "Delete",  "danger",    "bi-archive-fill"),
     ("VOID",             "Delete",  "danger",    "bi-x-circle-fill"),
     ("DELETE",           "Delete",  "danger",    "bi-trash-fill"),
+    ("WITHDRAW_CAPITAL", "Withdrawal", "danger", "bi-dash-circle-fill"),
+    ("ADD_CAPITAL",      "Capital", "success",   "bi-bank2"),
     ("CREATE",           "Create",  "success",   "bi-plus-circle-fill"),
     ("ADD",              "Create",  "success",   "bi-plus-circle-fill"),
     ("EDIT",             "Update",  "primary",   "bi-pencil-fill"),

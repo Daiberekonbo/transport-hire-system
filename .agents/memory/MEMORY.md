@@ -1,0 +1,1 @@
+- [Capital Management ledger design](capital-ledger.md) — computed/virtual ledger merging live tables, not a stored transaction log; only manual adjustments persist.

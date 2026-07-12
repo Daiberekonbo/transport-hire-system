@@ -68,10 +68,10 @@
       <span class="badge-soon">Soon</span>
     </a>
 
-    <a href="#" class="nav-item">
+    <a href="{{ url_for('expenses.index') }}"
+       class="nav-item {% if request.blueprint == 'expenses' %}active{% endif %}">
       <i class="bi bi-credit-card-2-back-fill"></i>
-      <span>Loans</span>
-      <span class="badge-soon">Soon</span>
+      <span>Extra Expenditure</span>
     </a>
 
     <div class="nav-section-label mt-3">Records</div>

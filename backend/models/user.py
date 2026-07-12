@@ -17,6 +17,10 @@ class User(UserMixin, db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
 
     audit_logs = db.relationship("AuditLog", backref="user", lazy="dynamic")
+    recorded_expenses = db.relationship(
+        "Expense", backref="recorder", lazy="dynamic",
+        foreign_keys="Expense.recorded_by",
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

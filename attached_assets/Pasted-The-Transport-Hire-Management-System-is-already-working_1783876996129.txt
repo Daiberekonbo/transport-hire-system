@@ -1,0 +1,76 @@
+The Transport Hire Management System is already working correctly. Do NOT modify, refactor or rewrite any existing working functionality, UI, routes, models or database structure unless absolutely necessary for this module.
+
+Build a complete Extra Expenditure module that integrates with the existing application.
+
+Requirements:
+
+1. Create an "Extra Expenditure" page accessible from the sidebar navigation.
+
+2. Support two expenditure types:
+   - Repair & Maintenance
+   - Driver Loan/Advance
+
+3. Every expenditure must be linked to an existing active contract.
+
+4. Store the following information:
+   - Contract
+   - Driver
+   - Vehicle
+   - Expenditure Type
+   - Amount
+   - Date
+   - Description/Reason
+   - Recorded By (logged-in user)
+   - Timestamp
+
+5. Business Logic:
+   - Repairs and loans increase the driver's outstanding balance.
+   - Outstanding balances must update automatically.
+   - Changes should immediately reflect on the contract summary and dashboard statistics.
+   - Maintain a running history of expenditures for each contract.
+
+6. Features:
+   - Create expenditure
+   - Edit expenditure
+   - Delete expenditure (with confirmation)
+   - View expenditure details
+   - Search and filter by:
+     - Driver
+     - Vehicle
+     - Contract
+     - Date
+     - Expenditure Type
+
+7. Validation:
+   - Amount must be greater than zero.
+   - Only active contracts can receive expenditures.
+   - Prevent invalid or orphan records.
+
+8. UI:
+   - Follow the existing design system exactly.
+   - Reuse existing layout, cards, forms, buttons and styling.
+   - Display success and error flash messages consistent with the rest of the application.
+
+9. Contract Timeline:
+   Every expenditure should appear in the contract timeline/history showing:
+   - Date
+   - Type
+   - Amount
+   - Description
+
+10. Database:
+   - Create migrations if required.
+   - Preserve all existing data.
+   - Do not break existing modules.
+
+11. Testing:
+   - Run the application after implementation.
+   - Fix any errors introduced.
+   - Verify the module works correctly before finishing.
+
+At the end, summarize:
+- Files created
+- Files modified
+- Database changes
+- Features implemented
+- Any assumptions made

@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}Expenditure Report{% endblock %}
+{% block page_title %}Expenditure Report{% endblock %}
+
+{% block content %}
+
+{% if not printable %}
+<div class="page-header d-print-none">
+  <div>
+    <h1 class="page-header-title mb-0">Expenditure Report</h1>
+    <div class="page-header-sub">Aggregate breakdown of extra expenditures</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('expenses.report', category=cat_filter, date_from=date_from_s, date_to=date_to_s, driver_id=driver_f, vehicle_id=vehicle_f, print=1) }}"
+       class="btn btn-outline-secondary btn-sm" target="_blank">
+      <i class="bi bi-printer me-1"></i> Print
+    </a>
+    <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+  </div>
+</div>
+
+<div class="thms-card mb-4 d-print-none">
+  <div class="thms-card-body py-3">
+    <form method="GET" action="{{ url_for('expenses.report') }}" class="row g-2 align-items-end">
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Category</label>
+        <select name="category" class="form-select form-select-sm">
+          <option value="">All categories</option>
+          {% for key, label in categories.items() %}
+          <option value="{{ key }}" {{ 'selected' if cat_filter == key }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Driver</label>
+        <select name="driver_id" class="form-select form-select-sm">
+          <option value="">All drivers</option>
+          {% for d in drivers %}
+          <option value="{{ d.id }}" {{ 'selected' if driver_f == d.id|string }}>{{ d.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">Vehicle</label>
+        <select name="vehicle_id" class="form-select form-select-sm">
+          <option value="">All vehicles</option>
+          {% for v in vehicles %}
+          <option value="{{ v.id }}" {{ 'selected' if vehicle_f == v.id|string }}>{{ v.vehicle_number }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">From</label>
+        <input type="date" name="date_from" class="form-control form-control-sm" value="{{ date_from_s }}">
+      </div>
+      <div class="col-6 col-md-2">
+        <label class="form-label small text-muted mb-1">To</label>
+        <input type="date" name="date_to" class="form-control form-control-sm" value="{{ date_to_s }}">
+      </div>
+      <div class="col-6 col-md-2 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-fill">
+          <i class="bi bi-search"></i> Filter
+        </button>
+        <a href="{{ url_for('expenses.report') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="text-center mb-4" id="printHeader">
+  <div class="fw-700" style="font-size:1.4rem;">TRANSPORT HIRE MANAGEMENT</div>
+  <div class="text-muted">Extra Expenditure Report</div>
+  <div class="text-muted small">Printed: {{ printed_at.strftime('%d %B %Y %H:%M') if printed_at else '' }}</div>
+</div>
+<div class="mb-3 d-print-none">
+  <button onclick="window.print()" class="btn btn-primary btn-sm me-2">
+    <i class="bi bi-printer me-1"></i> Print
+  </button>
+  <a href="{{ url_for('expenses.report') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+</div>
+{% endif %}
+
+<div class="thms-card mb-4">
+  <div class="thms-card-body text-center py-4">
+    <div class="text-muted small mb-1" style="text-transform:uppercase;letter-spacing:.04em;">Grand Total</div>
+    <div class="fw-700 text-danger" style="font-size:1.8rem;">₦{{ "{:,.0f}".format(grand_total) }}</div>
+    <div class="text-muted small mt-1">{{ expenses | length }} record{{ 's' if expenses|length != 1 }}</div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-4">
+    <div class="thms-card h-100">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-tags-fill text-primary"></i> By Category</h6>
+      </div>
+      <div class="thms-card-body p-0">
+        <table class="table mb-0" style="font-size:.85rem;">
+          <tbody>
+            {% for key, data in by_category.items() | sort(attribute='1.total', reverse=True) %}
+            <tr>
+              <td>{{ data.label }}</td>
+              <td class="text-muted small text-end">{{ data.count }}</td>
+              <td class="fw-700 text-danger text-end">₦{{ "{:,.0f}".format(data.total) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="thms-card h-100">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-people-fill text-secondary"></i> By Driver</h6>
+      </div>
+      <div class="thms-card-body p-0">
+        <table class="table mb-0" style="font-size:.85rem;">
+          <tbody>
+            {% for key, data in by_driver.items() %}
+            <tr>
+              <td>{{ data.name }}</td>
+              <td class="text-muted small text-end">{{ data.count }}</td>
+              <td class="fw-700 text-danger text-end">₦{{ "{:,.0f}".format(data.total) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-4">
+    <div class="thms-card h-100">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-truck-front text-info"></i> By Vehicle</h6>
+      </div>
+      <div class="thms-card-body p-0">
+        <table class="table mb-0" style="font-size:.85rem;">
+          <tbody>
+            {% for key, data in by_vehicle.items() %}
+            <tr>
+              <td>{{ data.number }}</td>
+              <td class="text-muted small text-end">{{ data.count }}</td>
+              <td class="fw-700 text-danger text-end">₦{{ "{:,.0f}".format(data.total) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="thms-card">
+  <div class="thms-card-header">
+    <h6 class="thms-card-title"><i class="bi bi-list-columns-reverse text-secondary"></i> All Records</h6>
+  </div>
+  <div class="thms-card-body p-0">
+    {% if expenses %}
+    <div class="table-responsive">
+      <table class="table mb-0" style="font-size:.84rem;">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Reference</th>
+            <th>Date</th>
+            <th>Driver</th>
+            <th>Vehicle</th>
+            <th>Category</th>
+            <th class="text-end">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenses %}
+          <tr>
+            <td class="ps-4 fw-600">{{ e.expense_number or ('#' ~ e.id) }}</td>
+            <td class="text-muted">{{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}</td>
+            <td>{{ e.driver.full_name }}</td>
+            <td class="text-muted">{{ e.vehicle.vehicle_number if e.vehicle else '—' }}</td>
+            <td>{{ e.category_label }}</td>
+            <td class="text-end fw-700 text-danger">₦{{ "{:,.0f}".format(e.amount|float) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:var(--bg-secondary,#f8fafc);">
+            <td colspan="5" class="ps-4 fw-700">Grand Total</td>
+            <td class="text-end fw-700 text-danger">₦{{ "{:,.0f}".format(grand_total) }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-receipt d-block mb-3" style="font-size:2.5rem;opacity:.15;"></i>
+      <p class="mb-0">No expenditures match these filters.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if printable %}
+<style>
+@media print {
+  .thms-sidebar, .thms-topbar, .d-print-none, .page-header { display: none !important; }
+  .thms-main { margin-left: 0 !important; padding: 8px !important; }
+  body { background: white !important; font-size: 11px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+}
+</style>
+<script>
+window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+</script>
+{% endif %}
+{% endblock %}

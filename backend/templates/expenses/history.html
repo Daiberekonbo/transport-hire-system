@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Expenditure History — Contract #{{ contract.id }}{% endblock %}
+{% block page_title %}Expenditure History{% endblock %}
+
+{% block content %}
+
+{% if not printable %}
+{# ── Screen header ──────────────────────────────────────────────────────── #}
+<div class="page-header d-print-none">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('contracts.view', contract_id=contract.id) }}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-header-title mb-0">Expenditure History</h1>
+      <div class="page-header-sub">
+        Contract #{{ contract.id }} — {{ contract.driver.full_name }} · {{ contract.vehicle.vehicle_number }}
+      </div>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('expenses.add', contract_id=contract.id) }}"
+       class="btn btn-danger btn-sm">
+      <i class="bi bi-plus-circle-fill me-1"></i> Add Expenditure
+    </a>
+    <a href="{{ url_for('expenses.history', contract_id=contract.id, print=1) }}"
+       class="btn btn-outline-secondary btn-sm" target="_blank">
+      <i class="bi bi-printer me-1"></i> Print Statement
+    </a>
+  </div>
+</div>
+{% else %}
+{# ── Print header ───────────────────────────────────────────────────────── #}
+<div class="text-center mb-4" id="printHeader">
+  <div class="fw-700" style="font-size:1.4rem;">TRANSPORT HIRE MANAGEMENT</div>
+  <div class="text-muted">Extra Expenditure Statement — Contract #{{ contract.id }}</div>
+  <div class="text-muted small">Printed: {{ printed_at.strftime('%d %B %Y %H:%M') if printed_at else '' }}</div>
+</div>
+<div class="mb-3 d-print-none">
+  <button onclick="window.print()" class="btn btn-primary btn-sm me-2">
+    <i class="bi bi-printer me-1"></i> Print
+  </button>
+  <a href="{{ url_for('expenses.history', contract_id=contract.id) }}"
+     class="btn btn-outline-secondary btn-sm">← Back</a>
+</div>
+{% endif %}
+
+{# ── Contract summary ─────────────────────────────────────────────────────── #}
+<div class="thms-card mb-3">
+  <div class="thms-card-body">
+    <div class="row g-3">
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="text-muted small mb-1">Driver</div>
+        <div class="fw-700">{{ contract.driver.full_name }}</div>
+        <div class="text-muted small">{{ contract.driver.phone }}</div>
+      </div>
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="text-muted small mb-1">Vehicle</div>
+        <div class="fw-700">{{ contract.vehicle.vehicle_number }}</div>
+        <div class="text-muted small">
+          {{ [contract.vehicle.manufacturer, contract.vehicle.model]|select|join(' ') }}
+        </div>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="text-muted small mb-1">Total Payable</div>
+        <div class="fw-700 text-primary">₦{{ "{:,.0f}".format(contract.total_payable | float) }}</div>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="text-muted small mb-1">Extra Expenditure</div>
+        <div class="fw-700 text-danger">₦{{ "{:,.0f}".format(total) }}</div>
+      </div>
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="text-muted small mb-1">Outstanding Balance</div>
+        <div class="fw-700 text-danger">₦{{ "{:,.0f}".format(contract.outstanding_balance) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Expenditure table ────────────────────────────────────────────────────── #}
+<div class="thms-card">
+  <div class="thms-card-header d-flex justify-content-between align-items-center">
+    <h6 class="thms-card-title mb-0">
+      <i class="bi bi-list-columns-reverse text-secondary"></i> Expenditures
+    </h6>
+    {% if printable %}
+    <span class="text-muted small">{{ expenses | length }} record{{ 's' if expenses|length != 1 }}</span>
+    {% else %}
+    <span class="text-muted small">{{ expenses.total }} total</span>
+    {% endif %}
+  </div>
+
+  {% set items = expenses if printable else expenses.items %}
+
+  {% if items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.84rem;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Reference</th>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Description</th>
+          <th>Approved By</th>
+          <th>Running Total</th>
+          {% if not printable %}<th>Actions</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% set running = namespace(total=0) %}
+        {% for e in items %}
+        {% set running.total = running.total + e.amount|float %}
+        <tr>
+          <td class="text-muted small">{{ loop.index }}</td>
+          <td>
+            {% if not printable %}
+            <a href="{{ url_for('expenses.view', expense_id=e.id) }}"
+               class="text-decoration-none text-primary small fw-600">
+              {{ e.expense_number or ('#' ~ e.id) }}
+            </a>
+            {% else %}
+            <span class="small fw-600">{{ e.expense_number or ('#' ~ e.id) }}</span>
+            {% endif %}
+          </td>
+          <td class="no-wrap">
+            {{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}
+          </td>
+          <td>
+            <span class="badge bg-{{ e.category_color }}-subtle text-{{ e.category_color }}" style="font-size:.7rem;">
+              <i class="bi {{ e.category_icon }} me-1"></i>{{ e.category_label }}
+            </span>
+          </td>
+          <td class="fw-700 text-danger no-wrap">₦{{ "{:,.0f}".format(e.amount|float) }}</td>
+          <td class="text-muted small">{{ e.display_description or e.display_title }}</td>
+          <td class="text-muted small">{{ e.approved_by or '—' }}</td>
+          <td class="fw-600 text-body no-wrap">₦{{ "{:,.0f}".format(running.total) }}</td>
+          {% if not printable %}
+          <td>
+            <div class="d-flex gap-1">
+              {% if can_edit %}
+              <a href="{{ url_for('expenses.edit', expense_id=e.id) }}"
+                 class="btn btn-sm btn-outline-primary" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% endif %}
+              <a href="{{ url_for('expenses.view', expense_id=e.id) }}"
+                 class="btn btn-sm btn-outline-secondary" title="View">
+                <i class="bi bi-eye"></i>
+              </a>
+            </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:var(--bg-secondary,#f8fafc);">
+          <td colspan="4" class="fw-700 small">Total</td>
+          <td class="fw-700 text-danger">₦{{ "{:,.0f}".format(total) }}</td>
+          <td colspan="{{ '2' if printable else '3' }}"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {# Pagination (screen only) #}
+  {% if not printable and expenses.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2 d-print-none">
+    <div class="small text-muted">
+      Showing {{ ((expenses.page-1)*expenses.per_page)+1 }}–{{ [expenses.page*expenses.per_page, expenses.total]|min }}
+      of {{ expenses.total }}
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not expenses.has_prev }}">
+          <a class="page-link" href="?page={{ expenses.prev_num }}">‹</a>
+        </li>
+        {% for pg in expenses.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+          {% if pg %}
+          <li class="page-item {{ 'active' if pg == expenses.page }}">
+            <a class="page-link" href="?page={{ pg }}">{{ pg }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not expenses.has_next }}">
+          <a class="page-link" href="?page={{ expenses.next_num }}">›</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-receipt d-block mb-3" style="font-size:2.5rem;opacity:.25;"></i>
+    <p class="mb-1">No extra expenditures recorded yet for this contract.</p>
+    {% if not printable %}
+    <a href="{{ url_for('expenses.add', contract_id=contract.id) }}"
+       class="btn btn-danger btn-sm mt-2">
+      <i class="bi bi-plus-circle-fill me-1"></i> Add First Expenditure
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{% if printable %}
+<style>
+@media print {
+  .thms-sidebar, .thms-topbar, .d-print-none, .page-header { display: none !important; }
+  .thms-main { margin-left: 0 !important; padding: 8px !important; }
+  body { background: white !important; font-size: 11px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+}
+</style>
+<script>
+window.addEventListener("load", () => setTimeout(() => window.print(), 400));
+</script>
+{% endif %}
+{% endblock %}

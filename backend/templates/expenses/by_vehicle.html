@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Expenditures — {{ vehicle.vehicle_number }}{% endblock %}
+{% block page_title %}Vehicle Expenditures{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="d-flex align-items-center gap-3">
+    <a href="{{ url_for('vehicles.view', vehicle_id=vehicle.id) }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 class="page-header-title mb-0">{{ vehicle.vehicle_number }}</h1>
+      <div class="page-header-sub">All extra expenditures linked to this vehicle</div>
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('expenses.add') }}" class="btn btn-danger btn-sm">
+      <i class="bi bi-plus-lg me-1"></i> Add Expenditure
+    </a>
+  </div>
+</div>
+
+<div class="thms-card mb-3">
+  <div class="thms-card-body d-flex flex-wrap gap-4">
+    <div>
+      <div class="text-muted small mb-1">Total Expenditures</div>
+      <div class="fw-700 text-danger" style="font-size:1.2rem;">₦{{ "{:,.0f}".format(total) }}</div>
+    </div>
+    <div>
+      <div class="text-muted small mb-1">Records</div>
+      <div class="fw-700" style="font-size:1.2rem;">{{ expenses | length }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="thms-card">
+  <div class="thms-card-header">
+    <h6 class="thms-card-title"><i class="bi bi-receipt text-danger"></i> Expenditure Records</h6>
+  </div>
+  <div class="thms-card-body p-0">
+    {% if expenses %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle" style="font-size:.875rem;">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Reference</th>
+            <th>Contract</th>
+            <th>Driver</th>
+            <th>Title / Category</th>
+            <th class="text-end">Amount</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenses %}
+          <tr>
+            <td class="ps-4">
+              <span class="badge bg-danger-subtle text-danger fw-600" style="font-size:.75rem;">
+                {{ e.expense_number or ('#' ~ e.id) }}
+              </span>
+            </td>
+            <td>
+              {% if e.contract_id %}
+              <a href="{{ url_for('contracts.view', contract_id=e.contract_id) }}" class="text-decoration-none">
+                Contract #{{ e.contract_id }}
+              </a>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <a href="{{ url_for('drivers.view', driver_id=e.driver.id) }}" class="text-decoration-none text-body fw-600">
+                {{ e.driver.full_name }}
+              </a>
+            </td>
+            <td>
+              <div class="fw-600">{{ e.display_title }}</div>
+              <div class="d-flex align-items-center gap-1 mt-1">
+                <i class="bi {{ e.category_icon }} text-{{ e.category_color }}" style="font-size:.8rem;"></i>
+                <span class="text-muted small">{{ e.category_label }}</span>
+              </div>
+            </td>
+            <td class="text-end fw-700 text-danger">₦{{ "{:,.0f}".format(e.amount|float) }}</td>
+            <td class="text-muted small">{{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}</td>
+            <td class="pe-4">
+              <a href="{{ url_for('expenses.view', expense_id=e.id) }}" class="btn btn-outline-primary btn-sm py-0 px-2">
+                <i class="bi bi-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-receipt d-block mb-3" style="font-size:2.5rem;opacity:.15;"></i>
+      <p class="mb-0">No expenditures recorded for this vehicle yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

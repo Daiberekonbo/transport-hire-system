@@ -24,6 +24,7 @@ def create_app(config_name="default"):
     from backend.routes.archives  import archives_bp
     from backend.routes.developer import developer_bp
     from backend.routes.settings  import settings_bp
+    from backend.routes.expenses  import expenses_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -31,6 +32,7 @@ def create_app(config_name="default"):
     app.register_blueprint(vehicles_bp,  url_prefix="/vehicles")
     app.register_blueprint(contracts_bp, url_prefix="/contracts")
     app.register_blueprint(payments_bp,  url_prefix="/payments")
+    app.register_blueprint(expenses_bp,  url_prefix="/expenses")
     app.register_blueprint(reports_bp,   url_prefix="/reports")
     app.register_blueprint(archives_bp,  url_prefix="/archives")
     app.register_blueprint(developer_bp, url_prefix="/developer")

@@ -4,12 +4,38 @@
 {% block page_title %}Dashboard Overview{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header align-items-start">
   <div>
-    <h1 class="page-header-title">Good {{ 'morning' if today.strftime('%H') | int < 12 else ('afternoon' if today.strftime('%H') | int < 17 else 'evening') }}, {{ current_user.username | capitalize }} 👋</h1>
-    <div class="page-header-sub">Here's what's happening in your business today.</div>
+    <h1 class="page-header-title">Good {{ 'morning' if today.strftime('%H') | int < 12 else ('afternoon' if today.strftime('%H') | int < 17 else 'evening') }}, {{ current_user.name }} 👋</h1>
+    <ul class="page-header-sub list-unstyled mb-0 mt-1 d-flex flex-column gap-1" style="line-height:1.7;">
+      {% if payments_today_count > 0 %}
+      <li>
+        <i class="bi bi-cash-stack text-success me-1"></i>
+        <strong>{{ payments_today_count }}</strong> payment{{ 's' if payments_today_count != 1 }} received today
+        <span class="text-muted">(₦{{ "{:,.0f}".format(payments_today_amount) }})</span>
+      </li>
+      {% else %}
+      <li><i class="bi bi-cash-stack text-muted me-1"></i>No payments recorded today yet</li>
+      {% endif %}
+      {% if expiring_contracts %}
+      <li>
+        <i class="bi bi-alarm text-warning me-1"></i>
+        <strong>{{ expiring_contracts | length }}</strong> contract{{ 's' if expiring_contracts | length != 1 }} nearing completion
+      </li>
+      {% endif %}
+      <li>
+        <i class="bi bi-hourglass-split text-amber me-1"></i>
+        <strong>₦{{ "{:,.0f}".format(total_outstanding) }}</strong> outstanding across {{ active_contracts }} contract{{ 's' if active_contracts != 1 }}
+      </li>
+      {% if expenses_today_count > 0 %}
+      <li>
+        <i class="bi bi-receipt text-danger me-1"></i>
+        <strong>{{ expenses_today_count }}</strong> expense{{ 's' if expenses_today_count != 1 }} recorded today
+      </li>
+      {% endif %}
+    </ul>
   </div>
-  <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2">
+  <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2 flex-shrink-0">
     <i class="bi bi-plus-lg"></i> Record Payment
   </a>
 </div>

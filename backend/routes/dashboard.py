@@ -58,6 +58,24 @@ def index():
         Expense.is_archived == False,
     ).scalar()
 
+    # Today's snapshot counts
+    payments_today_count = Payment.query.filter(
+        Payment.payment_date == today,
+        Payment.is_archived == False,
+    ).count()
+
+    payments_today_amount = db.session.query(
+        db.func.coalesce(db.func.sum(Payment.amount), 0)
+    ).filter(
+        Payment.payment_date == today,
+        Payment.is_archived == False,
+    ).scalar()
+
+    expenses_today_count = Expense.query.filter(
+        db.func.date(Expense.created_at) == today,
+        Expense.is_archived == False,
+    ).count()
+
     # Recent payments (last 10)
     recent_payments = (
         Payment.query
@@ -96,4 +114,7 @@ def index():
         vehicles_available=vehicles_available,
         vehicles_assigned=vehicles_assigned,
         today=today,
+        payments_today_count=payments_today_count,
+        payments_today_amount=payments_today_amount or 0,
+        expenses_today_count=expenses_today_count,
     )

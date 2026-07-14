@@ -180,6 +180,15 @@ def archive(driver_id):
         flash(f"'{driver.full_name}' is already archived.", "info")
         return redirect(url_for("drivers.view", driver_id=driver_id))
 
+    if driver.active_contract:
+        flash(
+            f"'{driver.full_name}' has an active hire-purchase contract "
+            f"(Contract #{driver.active_contract.id}). "
+            "Close or reassign the contract before archiving this driver.",
+            "danger",
+        )
+        return redirect(url_for("drivers.view", driver_id=driver_id))
+
     driver.status = "archived"
     driver.date_archived = datetime.utcnow()
     _log("ARCHIVE_DRIVER", driver)

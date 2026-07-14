@@ -41,6 +41,7 @@ from backend.models.driver import Driver
 from backend.models.user import User
 from backend.models.audit import AuditLog
 from backend.models.capital import CapitalAdjustment
+from backend.utils import parse_date as _parse_date, parse_amount as _parse_amount
 
 capital_bp = Blueprint("capital", __name__)
 
@@ -86,20 +87,6 @@ def owner_required(f):
             abort(403)
         return f(*args, **kwargs)
     return decorated
-
-
-def _parse_date(s):
-    try:
-        return datetime.strptime(s.strip(), "%Y-%m-%d").date()
-    except (ValueError, AttributeError, TypeError):
-        return None
-
-
-def _parse_amount(s):
-    try:
-        return float(str(s).replace(",", "").strip())
-    except (ValueError, TypeError):
-        return 0.0
 
 
 def _as_date(value):

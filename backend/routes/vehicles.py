@@ -31,6 +31,7 @@ from backend.extensions import db
 from backend.models.vehicle import Vehicle
 from backend.models.vehicle_event import VehicleEvent
 from backend.models.audit import AuditLog
+from backend.utils import parse_date as _parse_date
 
 vehicles_bp = Blueprint("vehicles", __name__)
 
@@ -93,17 +94,6 @@ def _populate(vehicle: Vehicle, form):
     vehicle.road_worthiness_expiry = _parse_date(form.get("road_worthiness_expiry"))
 
     vehicle.notes = form.get("notes", "").strip() or None
-
-
-def _parse_date(value):
-    """Convert 'YYYY-MM-DD' string → date object, or return None."""
-    if not value:
-        return None
-    try:
-        from datetime import date
-        return datetime.strptime(value.strip(), "%Y-%m-%d").date()
-    except ValueError:
-        return None
 
 
 # ── list ──────────────────────────────────────────────────────────────────────
@@ -353,6 +343,7 @@ def add_event(vehicle_id):
         vehicle.status = "available"
         flash("Vehicle status updated to Available.", "info")
 
+    _log("ADD_VEHICLE_EVENT", vehicle, f"Event added: {title} ({event_type})")
     db.session.commit()
     flash("Event recorded on the vehicle timeline.", "success")
     return redirect(url_for("vehicles.view", vehicle_id=vehicle_id) + "#timeline")

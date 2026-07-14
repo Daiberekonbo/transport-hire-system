@@ -39,18 +39,16 @@ def index():
         Payment.is_archived == False,
     ).scalar()
 
-    # Total outstanding across all active contracts
-    total_outstanding = db.session.query(
-        db.func.coalesce(
-            db.func.sum(Contract.total_payable) - db.func.sum(
-                db.session.query(db.func.coalesce(db.func.sum(Payment.amount), 0))
-                .filter(Payment.contract_id == Contract.id)
-                .correlate(Contract)
-                .scalar_subquery()
-            ),
-            0
-        )
-    ).filter(Contract.status == "active").scalar()
+    # Total outstanding across all active contracts.
+    # Computed in Python via Contract.outstanding_balance (same property used
+    # on the Contract detail page and in Capital Management) so this figure
+    # always matches what's shown elsewhere — it accounts for extra
+    # expenditure, excludes archived/voided payments, and is clamped at 0
+    # per contract instead of allowing negative contracts to offset others.
+    total_outstanding = sum(
+        c.outstanding_balance
+        for c in Contract.query.filter_by(status="active").all()
+    )
 
     # Outstanding loans
     outstanding_loans = db.session.query(

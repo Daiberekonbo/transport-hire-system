@@ -195,7 +195,7 @@ def _build_timeline(contract: Contract):
             "type": "expense",
             "icon": "bi-exclamation-triangle-fill text-danger",
             "title": f"Extra expenditure — ₦{float(e.amount):,.0f}",
-            "description": e.reason + (f" · {e.notes}" if e.notes else ""),
+            "description": e.display_description + (f" · {e.notes}" if e.notes else ""),
             "amount": float(e.amount),
         })
 
@@ -406,9 +406,13 @@ def edit(contract_id):
 
     if request.method == "POST":
         total_payable = _f(request.form.get("total_payable"))
-        years_agreed  = _i(request.form.get("years_agreed", 3))
+        years_agreed  = _i(request.form.get("years_agreed", 3), default=3)
         if total_payable <= 0:
             flash("Total amount payable must be greater than zero.", "danger")
+            return render_template("contracts/edit.html", contract=contract,
+                                   form=request.form, today=date.today())
+        if years_agreed <= 0:
+            flash("Number of years must be at least 1.", "danger")
             return render_template("contracts/edit.html", contract=contract,
                                    form=request.form, today=date.today())
 

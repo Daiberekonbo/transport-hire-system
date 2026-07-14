@@ -252,6 +252,20 @@ def record():
                                    preselect_contract_id=contract_id,
                                    today=date.today(), form=request.form)
 
+        outstanding = contract.outstanding_balance
+        if amount > outstanding > 0:
+            flash(
+                f"Payment of ₦{amount:,.0f} exceeds the outstanding balance of "
+                f"₦{outstanding:,.0f} for this contract. Please enter an amount "
+                f"up to the outstanding balance, or record it in smaller instalments.",
+                "danger",
+            )
+            return render_template("payments/record.html",
+                                   active_contracts=active_contracts,
+                                   contracts_json=json.dumps(contracts_json),
+                                   preselect_contract_id=contract_id,
+                                   today=date.today(), form=request.form)
+
         pay_date_str = request.form.get("payment_date", str(date.today()))
         try:
             pay_date = datetime.strptime(pay_date_str, "%Y-%m-%d").date()

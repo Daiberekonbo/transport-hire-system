@@ -10,33 +10,153 @@
   </div>
 </div>
 
+{# ── Tab bar ─────────────────────────────────────────────────────────────── #}
+<div class="d-flex gap-2 flex-wrap mb-3">
+  {% for val, label, count in [
+    ('drivers',   'Drivers',   counts.drivers),
+    ('vehicles',  'Vehicles',  counts.vehicles),
+    ('contracts', 'Contracts', counts.contracts),
+    ('payments',  'Payments (voided)', counts.payments),
+    ('expenses',  'Expenditure (voided)', counts.expenses),
+  ] %}
+  <a href="{{ url_for('archives.index', tab=val) }}"
+     class="btn btn-sm {{ 'btn-primary' if tab == val else 'btn-outline-secondary' }} d-flex align-items-center gap-2">
+    {{ label }}
+    <span class="badge {{ 'bg-white text-primary' if tab == val else 'bg-secondary bg-opacity-25 text-dark' }}">
+      {{ count }}
+    </span>
+  </a>
+  {% endfor %}
+</div>
+
 <div class="thms-card mb-3">
   <div class="thms-card-body">
     <form class="d-flex gap-2" method="GET">
+      <input type="hidden" name="tab" value="{{ tab }}" />
       <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
-             placeholder="Search archived drivers…" style="max-width:260px;" />
+             placeholder="Search by name…" style="max-width:260px;" />
       <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-search"></i> Search</button>
     </form>
   </div>
 </div>
 
 <div class="thms-card">
-  {% if drivers.items %}
+  {% if records and records.items %}
+
+  {% if tab == 'drivers' %}
   <table class="thms-table">
     <thead>
-      <tr><th>Driver</th><th>Phone</th><th>Date Archived</th><th>Notes</th></tr>
+      <tr><th>Driver</th><th>Phone</th><th>Date Archived</th><th>Notes</th><th></th></tr>
     </thead>
     <tbody>
-      {% for d in drivers.items %}
+      {% for d in records.items %}
       <tr>
-        <td class="fw-600">{{ d.full_name }}</td>
+        <td class="fw-600"><a href="{{ url_for('drivers.view', driver_id=d.id) }}">{{ d.full_name }}</a></td>
         <td class="text-muted small">{{ d.phone }}</td>
         <td class="text-muted small">{{ d.date_archived.strftime('%d %b %Y') if d.date_archived else '—' }}</td>
         <td class="text-muted small">{{ d.notes[:60] + '…' if d.notes and d.notes|length > 60 else (d.notes or '—') }}</td>
+        <td class="text-end">
+          <form method="POST" action="{{ url_for('drivers.restore', driver_id=d.id) }}" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-arrow-counterclockwise"></i> Restore
+            </button>
+          </form>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+
+  {% elif tab == 'vehicles' %}
+  <table class="thms-table">
+    <thead>
+      <tr><th>Vehicle</th><th>Make / Model</th><th>Date Archived</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for v in records.items %}
+      <tr>
+        <td class="fw-600"><a href="{{ url_for('vehicles.view', vehicle_id=v.id) }}">{{ v.vehicle_number }}</a></td>
+        <td class="text-muted small">{{ (v.manufacturer or '') ~ ' ' ~ (v.model or '') }}</td>
+        <td class="text-muted small">{{ v.date_archived.strftime('%d %b %Y') if v.date_archived else '—' }}</td>
+        <td class="text-end">
+          <form method="POST" action="{{ url_for('vehicles.restore', vehicle_id=v.id) }}" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-arrow-counterclockwise"></i> Restore
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% elif tab == 'contracts' %}
+  <table class="thms-table">
+    <thead>
+      <tr><th>Contract</th><th>Driver</th><th>Vehicle</th><th>Date Archived</th></tr>
+    </thead>
+    <tbody>
+      {% for c in records.items %}
+      <tr>
+        <td class="fw-600"><a href="{{ url_for('contracts.view', contract_id=c.id) }}">#{{ c.id }}</a></td>
+        <td class="text-muted small">{{ c.driver.full_name }}</td>
+        <td class="text-muted small">{{ c.vehicle.vehicle_number }}</td>
+        <td class="text-muted small">{{ c.date_archived.strftime('%d %b %Y') if c.date_archived else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="p-3 text-muted small">Archived contracts are final and cannot be restored from here.</div>
+
+  {% elif tab == 'payments' %}
+  <table class="thms-table">
+    <thead>
+      <tr><th>Receipt</th><th>Driver</th><th>Amount</th><th>Date Voided</th></tr>
+    </thead>
+    <tbody>
+      {% for p in records.items %}
+      <tr>
+        <td class="fw-600"><a href="{{ url_for('payments.view', payment_id=p.id) }}">{{ p.receipt_number or ('#' ~ p.id) }}</a></td>
+        <td class="text-muted small">{{ p.driver.full_name }}</td>
+        <td class="text-muted small">₦{{ "{:,.0f}".format(p.amount) }}</td>
+        <td class="text-muted small">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="p-3 text-muted small">Voided payments are excluded from totals and cannot be restored — this preserves an accurate audit trail.</div>
+
+  {% elif tab == 'expenses' %}
+  <table class="thms-table">
+    <thead>
+      <tr><th>Expenditure</th><th>Driver</th><th>Amount</th><th>Date Voided</th></tr>
+    </thead>
+    <tbody>
+      {% for e in records.items %}
+      <tr>
+        <td class="fw-600"><a href="{{ url_for('expenses.view', expense_id=e.id) }}">{{ e.expense_number or ('#' ~ e.id) }}</a></td>
+        <td class="text-muted small">{{ e.driver.full_name }}</td>
+        <td class="text-muted small">₦{{ "{:,.0f}".format(e.amount) }}</td>
+        <td class="text-muted small">{{ e.created_at.strftime('%d %b %Y') if e.created_at else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="p-3 text-muted small">Voided expenditures are excluded from contract balances and cannot be restored — this preserves an accurate audit trail.</div>
+  {% endif %}
+
+  {% if records.pages > 1 %}
+  <div class="d-flex justify-content-center gap-2 p-3">
+    {% if records.has_prev %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('archives.index', tab=tab, q=search, page=records.prev_num) }}">Previous</a>
+    {% endif %}
+    <span class="text-muted small align-self-center">Page {{ records.page }} of {{ records.pages }}</span>
+    {% if records.has_next %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('archives.index', tab=tab, q=search, page=records.next_num) }}">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% else %}
   <div class="empty-state">
     <i class="bi bi-archive d-block"></i>

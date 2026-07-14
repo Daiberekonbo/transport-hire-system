@@ -43,6 +43,7 @@ from backend.models.contract import Contract
 from backend.models.driver import Driver
 from backend.models.vehicle import Vehicle
 from backend.models.audit import AuditLog
+from backend.utils import parse_date as _parse_date, parse_amount as _parse_amount
 
 expenses_bp = Blueprint("expenses", __name__)
 
@@ -107,26 +108,12 @@ def _active_contracts_for_select():
             .all())
 
 
-def _parse_date(s: str):
-    try:
-        return datetime.strptime(s.strip(), "%Y-%m-%d").date()
-    except (ValueError, AttributeError):
-        return None
-
-
 def _parse_time(s: str):
     try:
         parts = s.strip().split(":")
         return dtime(int(parts[0]), int(parts[1]))
     except Exception:
         return None
-
-
-def _parse_amount(s: str) -> float:
-    try:
-        return float(str(s).replace(",", "").strip())
-    except (ValueError, TypeError):
-        return 0.0
 
 
 # ─── list ─────────────────────────────────────────────────────────────────────
@@ -355,8 +342,19 @@ def edit(expense_id):
         expense.approved_by = request.form.get("approved_by", "").strip() or None
         expense.notes       = request.form.get("notes", "").strip() or None
 
-        new_amount = _parse_amount(request.form.get("amount", str(old_amount)))
-        if new_amount > 0:
+        amount_str = request.form.get("amount", "").strip()
+        if amount_str:
+            new_amount = _parse_amount(amount_str)
+            if new_amount <= 0:
+                flash(
+                    "Amount must be a positive number — the existing amount was kept unchanged.",
+                    "danger",
+                )
+                return render_template("expenses/edit.html",
+                                       expense=expense,
+                                       active_contracts=active_contracts,
+                                       categories=CATEGORIES,
+                                       today=date.today())
             expense.amount = new_amount
 
         new_date = _parse_date(request.form.get("expense_date", ""))

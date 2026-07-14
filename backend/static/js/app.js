@@ -134,7 +134,7 @@ document.querySelectorAll("[data-confirm]").forEach((el) => {
 (function () {
   document.querySelectorAll("form").forEach((form) => {
     if (form.dataset.noLoading !== undefined) return;
-    if ((form.method || "get").toLowerCase() !== "post") return;
+    if ((form.getAttribute("method") || "get").toLowerCase() !== "post") return;
 
     form.addEventListener("submit", (e) => {
       // Skip if another handler (e.g. an inline confirm()) already cancelled it.

@@ -28,6 +28,10 @@ class User(UserMixin, db.Model):
         "Expense", backref="recorder", lazy="dynamic",
         foreign_keys="Expense.recorded_by",
     )
+    recorded_payments = db.relationship(
+        "Payment", backref="recorder", lazy="dynamic",
+        foreign_keys="Payment.recorded_by",
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

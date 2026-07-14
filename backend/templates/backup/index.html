@@ -23,6 +23,7 @@
 {# Silent quick-create form (no note) #}
 <form id="quickCreateForm" method="POST"
       action="{{ url_for('backup.create') }}" class="d-none">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="note" value="">
 </form>
 
@@ -102,6 +103,7 @@
   <div class="collapse" id="createPanel">
     <div class="thms-card-body">
       <form method="POST" action="{{ url_for('backup.create') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row g-3 align-items-end">
           <div class="col-12 col-md-8">
             <label class="form-label fw-600 small">Optional Note</label>
@@ -154,6 +156,7 @@
             enctype="multipart/form-data"
             id="restoreForm"
             onsubmit="return confirmRestore(event)">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="row g-3 align-items-end">
           <div class="col-12 col-md-8">
             <label class="form-label fw-600 small">
@@ -257,6 +260,7 @@
               <form method="POST"
                     action="{{ url_for('backup.delete', filename=b.filename) }}"
                     onsubmit="return confirm('Permanently delete {{ b.filename }}?\nThis cannot be undone.')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-outline-danger btn-sm"
                         title="Delete this backup">
                   <i class="bi bi-trash3"></i>
@@ -320,6 +324,7 @@
                 data-bs-dismiss="modal">Cancel</button>
         <form method="POST" action="{{ url_for('backup.restore') }}"
               enctype="multipart/form-data" id="historyRestoreForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="file" name="backup_file" id="historyRestoreFileInput" class="d-none">
           <button type="submit" class="btn btn-danger" id="modalRestoreBtn" disabled>
             <i class="bi bi-arrow-counterclockwise me-1"></i>Restore Database

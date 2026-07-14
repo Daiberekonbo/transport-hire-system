@@ -55,6 +55,12 @@ requirements.txt    # Python dependencies
 
 - Authentication, Dashboard, Drivers, Vehicles, Contracts, Payments, Expenses, Archives, Audit Log, Capital Management, Reports, Settings, Developer tools
 
+## Security Notes
+
+- CSRF protection is fully enabled (`CSRFProtect` + token in all 23 POST-form templates).
+- Default credentials box removed from the login page.
+- `SESSION_SECRET` Replit secret is picked up automatically by `config.py` as the Flask secret key.
+
 ## User Preferences
 
 <!-- Add any user preferences here -->

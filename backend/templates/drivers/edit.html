@@ -28,6 +28,7 @@
 {% macro val(field) %}{{ form.get(field, driver[field] if driver[field] is not none else '') }}{% endmacro %}
 
 <form method="POST" action="{{ url_for('drivers.edit', driver_id=driver.id) }}" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   <div class="row g-3">
 

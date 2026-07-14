@@ -183,6 +183,7 @@
               </button>
               {% else %}
               <form method="POST" action="{{ url_for('vehicles.restore', vehicle_id=v.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-sm btn-outline-success" title="Restore">
                   <i class="bi bi-arrow-counterclockwise"></i>
                 </button>
@@ -273,6 +274,7 @@
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
         <form method="POST" id="archiveForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn btn-danger">
             <i class="bi bi-archive-fill me-1"></i> Yes, Archive Vehicle
           </button>

@@ -13,6 +13,9 @@ def create_app(config_name="default"):
     db.init_app(app)
     login_manager.init_app(app)
 
+    from backend.extensions import csrf
+    csrf.init_app(app)
+
     # ── Blueprints ────────────────────────────────────────────────────────────
     from backend.routes.auth      import auth_bp
     from backend.routes.dashboard import dashboard_bp

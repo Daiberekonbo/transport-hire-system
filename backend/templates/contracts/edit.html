@@ -21,6 +21,7 @@
 </div>
 
 <form method="POST" action="{{ url_for('contracts.edit', contract_id=contract.id) }}" novalidate id="contractForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <div class="row g-3">
 
   <div class="col-12 col-xl-8">

@@ -24,6 +24,7 @@
       </div>
       <div class="thms-card-body">
         <form method="POST" action="{{ url_for('capital.adjust') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label class="thms-form-label">Adjustment Type <span class="text-danger">*</span></label>
             <div class="d-flex gap-3">

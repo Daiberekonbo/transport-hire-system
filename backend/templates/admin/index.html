@@ -34,6 +34,7 @@
   <!-- ── BUSINESS SETTINGS ─────────────────────────────────────────────── -->
   <div class="tab-pane fade" id="business">
     <form method="POST" action="{{ url_for('admin.save_business') }}" enctype="multipart/form-data" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="row g-3">
 
         <!-- Logo + Identity -->
@@ -187,6 +188,7 @@
               </td>
               <td>
                 <form method="POST" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="d-flex align-items-center gap-2">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <select name="role" class="form-select form-select-sm" style="width:auto;" {% if u.id == current_user.id %}disabled{% endif %}>
                     <option value="owner"     {% if u.role == 'owner' %}selected{% endif %}>Owner</option>
                     <option value="developer" {% if u.role == 'developer' %}selected{% endif %}>Developer</option>
@@ -221,6 +223,7 @@
                   <!-- Activate / Deactivate -->
                   {% if u.id != current_user.id %}
                   <form method="POST" action="{{ url_for('admin.toggle_user', user_id=u.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-sm {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
                             title="{{ 'Deactivate' if u.is_active else 'Activate' }}"
                             data-confirm="{{ 'Deactivate' if u.is_active else 'Activate' }} user {{ u.username }}?">
@@ -241,6 +244,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                   </div>
                   <form method="POST" action="{{ url_for('admin.reset_password', user_id=u.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body">
                       <div class="mb-3">
                         <label class="thms-form-label">New Password</label>
@@ -269,6 +273,7 @@
   <!-- ── APP PREFERENCES ───────────────────────────────────────────────── -->
   <div class="tab-pane fade" id="preferences">
     <form method="POST" action="{{ url_for('admin.save_preferences') }}" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="row g-3">
         <div class="col-12 col-lg-6">
           <div class="thms-card">

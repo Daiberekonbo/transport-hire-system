@@ -50,6 +50,7 @@
 </div>
 
 <form method="POST" action="{{ url_for('expenses.add') }}" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <input type="hidden" name="contract_id" id="contractIdInput" value="{{ preselect_contract_id or '' }}">
 
 <div class="row g-4">

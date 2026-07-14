@@ -18,6 +18,7 @@
       </div>
       <div class="thms-card-body">
         <form method="POST" action="{{ url_for('settings.update_profile') }}" enctype="multipart/form-data" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="d-flex align-items-center gap-3 mb-4">
             <div class="profile-photo-preview" id="profilePhotoPreview"
                  title="{{ current_user.name }}">
@@ -66,6 +67,7 @@
       </div>
       <div class="thms-card-body">
         <form method="POST" action="{{ url_for('settings.change_password') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label class="thms-form-label">Current Password</label>
             <input type="password" name="current_password" class="form-control" required

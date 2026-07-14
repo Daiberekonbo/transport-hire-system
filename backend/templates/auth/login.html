@@ -97,6 +97,7 @@
     {% endwith %}
 
     <form method="POST" action="{{ url_for('auth.login') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="mb-3">
         <label class="form-label">Username</label>
         <input type="text" name="username" class="form-control" placeholder="Enter username"
@@ -125,11 +126,6 @@
       </button>
     </form>
 
-    <div class="default-creds">
-      <strong>Default accounts:</strong><br />
-      Owner: <strong>owner</strong> / <strong>owner123</strong><br />
-      Developer: <strong>developer</strong> / <strong>dev123</strong>
-    </div>
   </div>
 
   <script>

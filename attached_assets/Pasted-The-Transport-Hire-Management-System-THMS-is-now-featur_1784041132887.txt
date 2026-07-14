@@ -1,0 +1,230 @@
+The Transport Hire Management System (THMS) is now feature-complete.
+
+The following modules are fully implemented:
+
+✅ Authentication & Role Management
+✅ Dashboard
+✅ Driver Management
+✅ Vehicle Management
+✅ Contract Management
+✅ Payment Management
+✅ Payment Receipt System
+✅ Extra Expenditure
+✅ Capital Management
+✅ Reports & Export Center (CSV, Excel, PDF)
+✅ Audit Log
+✅ Archives
+✅ Business Settings & Administration
+✅ User Management
+✅ Backup & Restore
+
+DO NOT redesign the application.
+DO NOT rebuild any existing module.
+DO NOT replace working code.
+
+Your task is to prepare the application for real-world production deployment.
+
+====================================================
+PHASE 1 — Production Data Cleanup
+====================================================
+
+Inspect the database and application.
+
+Remove:
+
+- Temporary test data
+- Demo records
+- Placeholder records
+- Dummy users
+- Sample contracts
+- Sample payments
+- Sample expenses
+
+DO NOT remove legitimate production configuration such as:
+
+- Business Settings
+- Default Owner account
+- Application Preferences
+
+====================================================
+PHASE 2 — Production Verification
+====================================================
+
+Verify every workflow from start to finish.
+
+Authentication
+
+✓ Login
+✓ Logout
+✓ Password Change
+
+Drivers
+
+✓ Create
+✓ Edit
+✓ Archive
+✓ Restore
+
+Vehicles
+
+✓ Create
+✓ Edit
+✓ Archive
+✓ Restore
+
+Contracts
+
+✓ Create
+✓ Update
+✓ Complete
+✓ Archive
+
+Payments
+
+✓ Record Payment
+✓ Generate Receipt
+✓ View Receipt
+✓ Download Receipt PDF
+
+Capital
+
+✓ Calculations
+✓ Adjustments
+
+Expenses
+
+✓ Add
+✓ Edit
+✓ Delete/Void
+
+Reports
+
+Verify every report:
+
+- Driver
+- Vehicle
+- Contract
+- Payment
+- Capital
+- Expenditure
+- Audit
+- Archive
+
+Verify:
+
+CSV
+Excel
+PDF
+Print
+
+Audit Log
+
+Verify every action creates an audit record.
+
+Backup
+
+Verify:
+
+Create Backup
+Download Backup
+Restore Backup
+
+Administration
+
+Verify:
+
+Business Settings
+Logo Upload
+User Management
+Preferences
+Profile Updates
+
+====================================================
+PHASE 3 — Production Polish
+====================================================
+
+Inspect the entire UI.
+
+Fix:
+
+- Broken links
+- Missing icons
+- Empty pages
+- Incorrect button text
+- Misaligned cards
+- Responsive layout issues
+- Flash message inconsistencies
+- Table overflow
+- Pagination issues
+- Missing loading indicators
+- Missing confirmation dialogs
+
+Do not redesign the application.
+
+====================================================
+PHASE 4 — Performance
+====================================================
+
+Optimize where necessary.
+
+Check:
+
+- Duplicate queries
+- N+1 query problems
+- Slow report generation
+- Inefficient loops
+- Unused imports
+- Dead code
+
+Only optimize if safe.
+
+====================================================
+PHASE 5 — Security Review
+====================================================
+
+Verify:
+
+- Owner-only pages are protected.
+- Developers cannot access restricted admin actions.
+- Password hashing works correctly.
+- File uploads are validated.
+- SQLAlchemy ORM is used safely.
+- CSRF protection is enabled.
+- Forms validate properly.
+
+====================================================
+PHASE 6 — Final Acceptance Test
+====================================================
+
+Run a complete business simulation:
+
+1. Add a vehicle.
+2. Add a driver.
+3. Create a contract.
+4. Record multiple weekly payments.
+5. Add extra expenditure.
+6. Generate receipt.
+7. Export reports.
+8. Archive a contract.
+9. Restore archived records.
+10. Create and restore a backup.
+
+Confirm every workflow completes successfully.
+
+====================================================
+FINAL DELIVERABLE
+====================================================
+
+Provide a final release report containing:
+
+• Files modified
+• Bugs fixed
+• Improvements made
+• Remaining known issues (if any)
+• Production readiness status
+
+If the application passes all tests, explicitly state:
+
+"THMS Version 1.0 is production-ready for live business use."
+
+Do not introduce new features unless they are required to fix issues discovered during testing.

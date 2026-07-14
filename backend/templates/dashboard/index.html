@@ -6,7 +6,7 @@
 {% block content %}
 <div class="page-header align-items-start">
   <div>
-    <h1 class="page-header-title">Good {{ 'morning' if today.strftime('%H') | int < 12 else ('afternoon' if today.strftime('%H') | int < 17 else 'evening') }}, {{ current_user.name }} 👋</h1>
+    <h1 class="page-header-title">Good {{ 'morning' if now.strftime('%H') | int < 12 else ('afternoon' if now.strftime('%H') | int < 17 else 'evening') }}, {{ current_user.name }} 👋</h1>
     <ul class="page-header-sub list-unstyled mb-0 mt-1 d-flex flex-column gap-1" style="line-height:1.7;">
       {% if payments_today_count > 0 %}
       <li>

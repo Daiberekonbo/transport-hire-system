@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template
 from flask_login import login_required
 from backend.extensions import db
@@ -114,6 +114,7 @@ def index():
         vehicles_available=vehicles_available,
         vehicles_assigned=vehicles_assigned,
         today=today,
+        now=datetime.now(),
         payments_today_count=payments_today_count,
         payments_today_amount=payments_today_amount or 0,
         expenses_today_count=expenses_today_count,

@@ -60,7 +60,7 @@ class Payment(db.Model):
     week_number    = db.Column(db.Integer, nullable=True)
 
     # ── Date / time ───────────────────────────────────────────────────────────
-    payment_date   = db.Column(db.Date, default=datetime.utcnow().date)
+    payment_date   = db.Column(db.Date, default=lambda: datetime.utcnow().date())
     payment_time   = db.Column(db.Time, nullable=True)
 
     # ── Parties ───────────────────────────────────────────────────────────────

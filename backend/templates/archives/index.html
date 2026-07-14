@@ -58,6 +58,7 @@
         <td class="text-muted small">{{ d.notes[:60] + '…' if d.notes and d.notes|length > 60 else (d.notes or '—') }}</td>
         <td class="text-end">
           <form method="POST" action="{{ url_for('drivers.restore', driver_id=d.id) }}" class="d-inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-sm btn-outline-success">
               <i class="bi bi-arrow-counterclockwise"></i> Restore
             </button>
@@ -83,6 +84,7 @@
         <td class="text-muted small">{{ v.date_archived.strftime('%d %b %Y') if v.date_archived else '—' }}</td>
         <td class="text-end">
           <form method="POST" action="{{ url_for('vehicles.restore', vehicle_id=v.id) }}" class="d-inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-sm btn-outline-success">
               <i class="bi bi-arrow-counterclockwise"></i> Restore
             </button>

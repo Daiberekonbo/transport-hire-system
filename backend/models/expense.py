@@ -92,7 +92,7 @@ class Expense(db.Model):
     amount_repaid = db.Column(db.Numeric(15, 2), default=0)
 
     # ── Date / time ───────────────────────────────────────────────────────────
-    expense_date = db.Column(db.Date,    default=datetime.utcnow().date)
+    expense_date = db.Column(db.Date,    default=lambda: datetime.utcnow().date())
     expense_time = db.Column(db.Time,    nullable=True)
 
     # ── Authorisation ─────────────────────────────────────────────────────────

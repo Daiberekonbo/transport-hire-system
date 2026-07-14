@@ -27,6 +27,7 @@ def create_app(config_name="default"):
     from backend.routes.expenses  import expenses_bp
     from backend.routes.audit     import audit_bp
     from backend.routes.capital   import capital_bp
+    from backend.routes.admin     import admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -41,6 +42,7 @@ def create_app(config_name="default"):
     app.register_blueprint(settings_bp,  url_prefix="/settings")
     app.register_blueprint(audit_bp,     url_prefix="/audit-log")
     app.register_blueprint(capital_bp,   url_prefix="/capital")
+    app.register_blueprint(admin_bp,     url_prefix="/admin")
 
     # ── Flask-Login user loader ───────────────────────────────────────────────
     from backend.models.user import User
@@ -48,6 +50,19 @@ def create_app(config_name="default"):
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    # ── Global template context ───────────────────────────────────────────────
+    from backend.models.settings import BusinessSettings, AppPreferences
+
+    @app.context_processor
+    def inject_global_settings():
+        try:
+            biz   = BusinessSettings.get()
+            prefs = AppPreferences.get()
+        except Exception:
+            biz   = None
+            prefs = None
+        return dict(biz=biz, app_prefs=prefs)
 
     # ── Custom Jinja2 filters ─────────────────────────────────────────────────
     import markupsafe
@@ -64,11 +79,12 @@ def create_app(config_name="default"):
         # Import all models so SQLAlchemy sees them before create_all()
         from backend.models import (          # noqa: F401
             user, driver, vehicle, vehicle_event,
-            contract, payment, expense, audit, capital,
+            contract, payment, expense, audit, capital, settings,
         )
         db.create_all()
         _run_migrations()
         _seed_defaults()
+        _seed_settings()
 
     return app
 
@@ -133,3 +149,9 @@ def _seed_defaults():
         dev.set_password("dev123")
         db.session.add_all([owner, dev])
         db.session.commit()
+
+
+def _seed_settings():
+    from backend.models.settings import BusinessSettings, AppPreferences
+    BusinessSettings.get()
+    AppPreferences.get()

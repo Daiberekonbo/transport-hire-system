@@ -76,8 +76,16 @@
 </head>
 <body>
   <div class="login-card">
-    <div class="login-logo"><i class="bi bi-truck-front-fill"></i></div>
-    <div class="login-title">Transport Hire Management</div>
+    {% if biz and biz.logo_url %}
+      <div class="login-logo" style="background:transparent;padding:2px;border-radius:12px;overflow:hidden;">
+        <img src="{{ url_for('static', filename=biz.logo_url) }}"
+             alt="{{ biz.display_name }}"
+             style="width:52px;height:52px;object-fit:contain;">
+      </div>
+    {% else %}
+      <div class="login-logo"><i class="bi bi-truck-front-fill"></i></div>
+    {% endif %}
+    <div class="login-title">{{ biz.display_name if biz else 'Transport Hire Management' }}</div>
     <div class="login-sub">Sign in to your account to continue</div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}

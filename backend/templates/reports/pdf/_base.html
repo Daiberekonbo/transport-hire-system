@@ -127,9 +127,22 @@
 
 <div class="report-header">
   <table width="100%"><tr>
-    <td>
-      <div class="company">Transport Hire Management System</div>
-      <div class="report-title">{% block report_title %}Report{% endblock %}</div>
+    <td style="vertical-align:top;">
+      {% if biz and biz.logo_url %}
+      <img src="{{ url_for('static', filename=biz.logo_url) }}"
+           alt="{{ biz.display_name }}"
+           style="height:36pt;max-width:80pt;object-fit:contain;margin-bottom:4pt;display:block;">
+      {% endif %}
+      <div class="company">{{ biz.display_name if biz else 'Transport Hire Management System' }}</div>
+      {% if biz and biz.address %}<div class="meta" style="margin-top:1pt;">{{ biz.address | replace('\n', ' · ') }}</div>{% endif %}
+      {% if biz and (biz.phone or biz.email) %}
+      <div class="meta" style="margin-top:1pt;">
+        {% if biz.phone %}{{ biz.phone }}{% endif %}
+        {% if biz.phone and biz.email %} · {% endif %}
+        {% if biz.email %}{{ biz.email }}{% endif %}
+      </div>
+      {% endif %}
+      <div class="report-title" style="margin-top:4pt;">{% block report_title %}Report{% endblock %}</div>
       <div class="meta">{% block report_meta %}Generated: {{ now.strftime('%d %B %Y at %H:%M') }}{% endblock %}</div>
     </td>
     <td style="text-align:right;vertical-align:top;font-size:7.5pt;color:#888;">

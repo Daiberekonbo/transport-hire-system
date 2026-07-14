@@ -1,0 +1,134 @@
+The Transport Hire Management System (THMS) is now production-ready. All core modules have been implemented, tested and verified.
+
+DO NOT redesign the application.
+DO NOT modify existing working business logic.
+DO NOT refactor completed modules unless required for integration.
+
+Your task is to implement the complete Administration & Business Settings module.
+
+==================================================
+PART 1 — Business Settings
+==================================================
+
+Create a Business Settings page accessible only to the Owner.
+
+Allow the owner to configure:
+
+• Business Name
+• Business Logo
+• Office Address
+• Phone Number(s)
+• Email Address
+• Website (optional)
+• Currency
+• Time Zone
+• Date Format
+
+These settings should automatically be used throughout the application including:
+
+- Reports
+- PDF Exports
+- Receipts
+- Dashboard Header
+- Login Branding
+
+==================================================
+PART 2 — User Profile
+==================================================
+
+Each user should have a profile page.
+
+Allow users to:
+
+• Change Username
+• Change Display Name
+• Change Email Address
+• Change Password
+• Upload/Change Profile Picture
+
+Password changes must require:
+
+- Current Password
+- New Password
+- Confirm Password
+
+Passwords must remain securely hashed.
+
+==================================================
+PART 3 — Owner User Management
+==================================================
+
+The Owner should be able to:
+
+• View all users
+• Create new users
+• Activate users
+• Deactivate users
+• Reset user passwords
+• Assign roles
+
+Supported roles:
+
+- Owner
+- Developer
+
+Prevent deleting the last Owner account.
+
+==================================================
+PART 4 — Application Preferences
+==================================================
+
+Allow the Owner to configure:
+
+• Default Dashboard Page
+• Pagination Size
+• Default Report Format
+• Theme Preference (Light/Dark if already supported)
+• Session Timeout
+
+==================================================
+PART 5 — Branding
+==================================================
+
+Use the uploaded Business Logo automatically on:
+
+• Login Page
+• Sidebar
+• Reports
+• PDF Exports
+• Payment Receipts
+
+==================================================
+PART 6 — Integration
+==================================================
+
+Every change made in Administration must:
+
+• Create an Audit Log entry
+• Display proper success/error messages
+• Validate all inputs
+
+==================================================
+PART 7 — Testing
+==================================================
+
+Test every new feature.
+
+Verify:
+
+✓ Profile updates work
+✓ Username changes work
+✓ Password changes work
+✓ Business settings save correctly
+✓ Logo uploads correctly
+✓ Branding appears in reports
+✓ Audit logs are generated
+
+Do not modify any completed modules outside of necessary integration.
+
+Provide a summary of:
+
+- Files created
+- Files modified
+- Features implemented
+- Tests performed

@@ -124,6 +124,12 @@
       <i class="bi bi-shield-lock-fill"></i>
       <span>Administration</span>
     </a>
+
+    <a href="{{ url_for('backup.index') }}"
+       class="nav-item {% if request.blueprint == 'backup' %}active{% endif %}">
+      <i class="bi bi-database-fill-gear"></i>
+      <span>Backup &amp; Restore</span>
+    </a>
     {% endif %}
 
     {% if current_user.role == 'developer' %}

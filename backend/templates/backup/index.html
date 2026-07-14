@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+{% block title %}Backup & Restore{% endblock %}
+{% block page_title %}Backup & Restore{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title mb-0">
+      <i class="bi bi-database-fill-gear me-2 text-primary"></i>Backup &amp; Restore
+    </h1>
+    <div class="page-header-sub">
+      Create, download, and restore database backups — owner access only.
+    </div>
+  </div>
+  {# Quick-create button triggers the hidden form below #}
+  <button type="button" class="btn btn-primary"
+          onclick="document.getElementById('quickCreateForm').requestSubmit()">
+    <i class="bi bi-database-fill-add me-2"></i>Create Backup Now
+  </button>
+</div>
+
+{# Silent quick-create form (no note) #}
+<form id="quickCreateForm" method="POST"
+      action="{{ url_for('backup.create') }}" class="d-none">
+  <input type="hidden" name="note" value="">
+</form>
+
+{# ── Warning banner ──────────────────────────────────────────────────────── #}
+<div class="alert alert-warning d-flex gap-3 align-items-start mb-4"
+     style="border-left:4px solid #f59e0b;">
+  <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 mt-1 text-warning"></i>
+  <div style="font-size:.875rem;">
+    <strong>Important:</strong>
+    Restoring a backup will <strong>replace all current data</strong> with the
+    contents of the backup file. Before every restore, the system automatically
+    creates a safety backup of the current database. Download your backups
+    regularly and store them off-site.
+  </div>
+</div>
+
+{# ── Status cards ────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="thms-card h-100">
+      <div class="thms-card-body text-center py-3">
+        <div class="stat-icon blue mx-auto mb-2" style="width:44px;height:44px;font-size:1.1rem;border-radius:10px;">
+          <i class="bi bi-database-fill"></i>
+        </div>
+        <div class="fw-700" style="font-size:1.3rem;">{{ backup_count }}</div>
+        <div class="text-muted small">Saved Backup{{ 's' if backup_count != 1 }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="thms-card h-100">
+      <div class="thms-card-body text-center py-3">
+        <div class="stat-icon green mx-auto mb-2" style="width:44px;height:44px;font-size:1.1rem;border-radius:10px;">
+          <i class="bi bi-hdd-fill"></i>
+        </div>
+        <div class="fw-700" style="font-size:1.3rem;">{{ total_size }}</div>
+        <div class="text-muted small">Total Storage Used</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="thms-card h-100">
+      <div class="thms-card-body text-center py-3">
+        <div class="stat-icon {{ 'green' if db_info.type == 'sqlite' else 'blue' }} mx-auto mb-2"
+             style="width:44px;height:44px;font-size:1.1rem;border-radius:10px;">
+          <i class="bi bi-diagram-3-fill"></i>
+        </div>
+        <div class="fw-700 text-capitalize" style="font-size:1.3rem;">{{ db_info.type }}</div>
+        <div class="text-muted small">Database Engine</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="thms-card h-100">
+      <div class="thms-card-body text-center py-3">
+        <div class="stat-icon yellow mx-auto mb-2" style="width:44px;height:44px;font-size:1.1rem;border-radius:10px;">
+          <i class="bi bi-shield-fill-check"></i>
+        </div>
+        <div class="fw-700" style="font-size:1.3rem;">Auto</div>
+        <div class="text-muted small">Safety Backup on Restore</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Create backup (full form with optional note) ──────────────────────── #}
+<div class="thms-card mb-4">
+  <div class="thms-card-header">
+    <h6 class="thms-card-title">
+      <i class="bi bi-database-fill-add text-primary"></i> Create New Backup
+    </h6>
+    <button class="btn btn-outline-secondary btn-sm" type="button"
+            data-bs-toggle="collapse" data-bs-target="#createPanel">
+      <i class="bi bi-chevron-down"></i>
+    </button>
+  </div>
+  <div class="collapse" id="createPanel">
+    <div class="thms-card-body">
+      <form method="POST" action="{{ url_for('backup.create') }}">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-8">
+            <label class="form-label fw-600 small">Optional Note</label>
+            <input type="text" name="note" class="form-control"
+                   placeholder="e.g. Before driver data import, end-of-month snapshot…"
+                   maxlength="120">
+            <div class="form-text">
+              Stored in the audit log. Backup filename is
+              <code>THMS_Backup_YYYYMMDD_HHMMSS.{{ 'db' if db_info.type == 'sqlite' else 'sql' }}</code>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-database-fill-add me-2"></i>Create Backup
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ── Restore section ─────────────────────────────────────────────────────── #}
+<div class="thms-card mb-4">
+  <div class="thms-card-header">
+    <h6 class="thms-card-title">
+      <i class="bi bi-cloud-upload-fill text-danger"></i> Restore from Backup
+    </h6>
+    <button class="btn btn-outline-danger btn-sm" type="button"
+            data-bs-toggle="collapse" data-bs-target="#restorePanel">
+      <i class="bi bi-chevron-down me-1"></i>Expand
+    </button>
+  </div>
+  <div class="collapse" id="restorePanel">
+    <div class="thms-card-body">
+      <div class="alert alert-danger mb-4"
+           style="font-size:.875rem;border-left:4px solid #dc2626;">
+        <div class="fw-700 mb-1">
+          <i class="bi bi-exclamation-octagon-fill me-1"></i>Destructive Operation
+        </div>
+        <ul class="mb-0 ps-3">
+          <li>All current data will be <strong>permanently replaced</strong> by the backup.</li>
+          <li>The system will first create an automatic safety backup of the current database.</li>
+          <li>Only upload <strong>.db files</strong> (SQLite) or <strong>.sql files</strong> (Postgres) exported from THMS.</li>
+          <li>The file is validated before restore proceeds.</li>
+        </ul>
+      </div>
+
+      <form method="POST" action="{{ url_for('backup.restore') }}"
+            enctype="multipart/form-data"
+            id="restoreForm"
+            onsubmit="return confirmRestore(event)">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-8">
+            <label class="form-label fw-600 small">
+              Select Backup File
+              <span class="text-muted fw-400">
+                (.{{ 'db' if db_info.type == 'sqlite' else 'sql' }} — THMS backup only)
+              </span>
+            </label>
+            <input type="file" name="backup_file" id="restoreFileInput"
+                   class="form-control"
+                   accept="{{ '.db' if db_info.type == 'sqlite' else '.sql' }}"
+                   required
+                   onchange="showRestoreFileInfo(this)">
+            <div id="restoreFileInfo" class="form-text mt-1"></div>
+          </div>
+          <div class="col-12 col-md-4">
+            <button type="submit" class="btn btn-danger w-100" id="restoreBtn" disabled>
+              <i class="bi bi-arrow-counterclockwise me-2"></i>Restore Database
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ── Backup History ───────────────────────────────────────────────────────── #}
+<div class="thms-card">
+  <div class="thms-card-header d-flex justify-content-between align-items-center">
+    <h6 class="thms-card-title mb-0">
+      <i class="bi bi-clock-history text-secondary"></i> Backup History
+    </h6>
+    <span class="badge bg-secondary-subtle text-secondary">
+      {{ backup_count }} file{{ 's' if backup_count != 1 }}
+    </span>
+  </div>
+
+  {% if backups %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="font-size:.875rem;">
+      <thead style="background:var(--bg-secondary,#f8fafc);">
+        <tr>
+          <th class="py-3 ps-3"
+              style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Filename
+          </th>
+          <th style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Created (UTC)
+          </th>
+          <th style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Type
+          </th>
+          <th class="text-end"
+              style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Size
+          </th>
+          <th class="pe-3 text-end"
+              style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in backups %}
+        <tr>
+          <td class="ps-3">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-database-fill text-primary opacity-75"></i>
+              <code style="font-size:.82rem;">{{ b.filename }}</code>
+            </div>
+          </td>
+          <td class="text-muted" style="white-space:nowrap;">
+            {{ b.created_at.strftime('%d %b %Y at %H:%M') }}
+          </td>
+          <td>
+            <span class="badge {{ 'bg-primary-subtle text-primary' if b.ext == 'db' else 'bg-secondary-subtle text-secondary' }}"
+                  style="font-size:.72rem;">
+              {{ b.ext.upper() }}
+            </span>
+          </td>
+          <td class="text-end fw-600" style="white-space:nowrap;">
+            {{ b.size_human }}
+          </td>
+          <td class="pe-3">
+            <div class="d-flex justify-content-end gap-1">
+              {# Download #}
+              <a href="{{ url_for('backup.download', filename=b.filename) }}"
+                 class="btn btn-outline-primary btn-sm"
+                 title="Download this backup">
+                <i class="bi bi-download"></i>
+              </a>
+
+              {# Restore from this file (uses inline form) #}
+              <button type="button" class="btn btn-outline-warning btn-sm"
+                      title="Restore from this backup"
+                      onclick="prefillRestore('{{ b.filename }}')">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+
+              {# Delete #}
+              <form method="POST"
+                    action="{{ url_for('backup.delete', filename=b.filename) }}"
+                    onsubmit="return confirm('Permanently delete {{ b.filename }}?\nThis cannot be undone.')">
+                <button type="submit" class="btn btn-outline-danger btn-sm"
+                        title="Delete this backup">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="thms-card-body text-center py-5">
+    <div class="mb-3" style="font-size:2.5rem;opacity:.3;">
+      <i class="bi bi-database-fill"></i>
+    </div>
+    <div class="fw-600 mb-1">No backups yet</div>
+    <div class="text-muted small mb-3">
+      Create your first backup to protect your data.
+    </div>
+    <button type="button" class="btn btn-primary btn-sm"
+            onclick="document.getElementById('quickCreateForm').requestSubmit()">
+      <i class="bi bi-database-fill-add me-1"></i>Create First Backup
+    </button>
+  </div>
+  {% endif %}
+
+</div>{# /card #}
+
+{# ── Restore-from-history modal ───────────────────────────────────────────── #}
+<div class="modal fade" id="restoreFromHistoryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning-subtle">
+        <h6 class="modal-title">
+          <i class="bi bi-arrow-counterclockwise me-2 text-warning"></i>
+          Restore from Saved Backup
+        </h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger mb-3" style="font-size:.85rem;">
+          <i class="bi bi-exclamation-octagon-fill me-1"></i>
+          This will <strong>replace all current data</strong> with the selected backup.
+          A safety backup of current data will be created automatically first.
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-600 small">Selected Backup</label>
+          <div id="modalBackupName" class="font-monospace small p-2 rounded"
+               style="background:#f8fafc;border:1px solid #e2e8f0;word-break:break-all;"></div>
+        </div>
+        <div class="small text-muted">
+          Type <strong>RESTORE</strong> below to confirm:
+        </div>
+        <input type="text" id="restoreConfirmInput" class="form-control mt-2"
+               placeholder="Type RESTORE to confirm" autocomplete="off">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary"
+                data-bs-dismiss="modal">Cancel</button>
+        <form method="POST" action="{{ url_for('backup.restore') }}"
+              enctype="multipart/form-data" id="historyRestoreForm">
+          <input type="file" name="backup_file" id="historyRestoreFileInput" class="d-none">
+          <button type="submit" class="btn btn-danger" id="modalRestoreBtn" disabled>
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Restore Database
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  // ── Restore from upload: enable button when file chosen ──────────────────
+  window.showRestoreFileInfo = function (input) {
+    const info = document.getElementById('restoreFileInfo');
+    const btn  = document.getElementById('restoreBtn');
+    if (!input.files || !input.files[0]) {
+      info.textContent = '';
+      btn.disabled = true;
+      return;
+    }
+    const f = input.files[0];
+    const mb = (f.size / 1024 / 1024).toFixed(2);
+    info.innerHTML = '<i class="bi bi-file-earmark-fill me-1"></i>'
+      + f.name + ' — ' + mb + ' MB';
+    btn.disabled = false;
+  };
+
+  // ── Restore from upload: confirm dialog ──────────────────────────────────
+  window.confirmRestore = function (e) {
+    const answer = prompt(
+      'WARNING: This will replace ALL current data with the backup.\n\n' +
+      'A safety backup of current data will be created first.\n\n' +
+      'Type  RESTORE  to continue:'
+    );
+    if (answer !== 'RESTORE') {
+      e.preventDefault();
+      if (answer !== null) {
+        alert('Restore cancelled — you must type RESTORE exactly to proceed.');
+      }
+      return false;
+    }
+    return true;
+  };
+
+  // ── Restore from history row: open modal ─────────────────────────────────
+  window.prefillRestore = function (filename) {
+    document.getElementById('modalBackupName').textContent = filename;
+    document.getElementById('restoreConfirmInput').value = '';
+    document.getElementById('modalRestoreBtn').disabled = true;
+
+    // The history-restore form re-uses the upload mechanism:
+    // We fetch the file from the server via the download endpoint,
+    // then attach it to the hidden file input.
+    const modal = new bootstrap.Modal(document.getElementById('restoreFromHistoryModal'));
+
+    // Fetch the file as a Blob and attach it to the hidden input
+    const downloadUrl = '/backup/download/' + encodeURIComponent(filename);
+    fetch(downloadUrl)
+      .then(r => {
+        if (!r.ok) throw new Error('Download failed: ' + r.status);
+        return r.blob();
+      })
+      .then(blob => {
+        const ext = filename.split('.').pop();
+        const mimeType = ext === 'db' ? 'application/octet-stream' : 'text/plain';
+        const file = new File([blob], filename, { type: mimeType });
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('historyRestoreFileInput').files = dt.files;
+      })
+      .catch(err => {
+        alert('Could not load backup file for restore: ' + err.message);
+      });
+
+    modal.show();
+  };
+
+  // ── Modal confirmation input ──────────────────────────────────────────────
+  const confirmInput = document.getElementById('restoreConfirmInput');
+  const modalBtn     = document.getElementById('modalRestoreBtn');
+  if (confirmInput && modalBtn) {
+    confirmInput.addEventListener('input', function () {
+      modalBtn.disabled = this.value.trim() !== 'RESTORE';
+    });
+  }
+
+  // ── Modal form submit guard ───────────────────────────────────────────────
+  const historyForm = document.getElementById('historyRestoreForm');
+  if (historyForm) {
+    historyForm.addEventListener('submit', function (e) {
+      const fileInput = document.getElementById('historyRestoreFileInput');
+      if (!fileInput.files || !fileInput.files[0]) {
+        e.preventDefault();
+        alert('Backup file is still loading — please wait a moment and try again.');
+        return false;
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

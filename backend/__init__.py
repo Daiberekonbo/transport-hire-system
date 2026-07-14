@@ -28,6 +28,7 @@ def create_app(config_name="default"):
     from backend.routes.audit     import audit_bp
     from backend.routes.capital   import capital_bp
     from backend.routes.admin     import admin_bp
+    from backend.routes.backup    import backup_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -43,6 +44,7 @@ def create_app(config_name="default"):
     app.register_blueprint(audit_bp,     url_prefix="/audit-log")
     app.register_blueprint(capital_bp,   url_prefix="/capital")
     app.register_blueprint(admin_bp,     url_prefix="/admin")
+    app.register_blueprint(backup_bp,    url_prefix="/backup")
 
     # ── Flask-Login user loader ───────────────────────────────────────────────
     from backend.models.user import User

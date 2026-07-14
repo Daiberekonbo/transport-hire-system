@@ -1,26 +1,60 @@
 # Transport Hire Management System (THMS)
 
-A Flask web app for managing hire-purchase (lease-to-own) vehicle operations for a Nigerian transport business — drivers, vehicles, contracts, payments, expenses, and reports.
+A production-quality web application for managing hire-purchase (lease-to-own) vehicle operations for a Nigerian transport business.
 
 ## Tech Stack
 
-- **Backend:** Python 3.12, Flask 3.x, SQLAlchemy 2.x
-- **Database:** PostgreSQL in production; falls back to local SQLite (`thms.db`) when `DATABASE_URL` is not set
-- **Frontend:** Jinja2 templates, Bootstrap 5, vanilla JavaScript
+- **Backend:** Python 3.11/3.12, Flask 3.x, SQLAlchemy 2.x
+- **Database:** SQLite (dev) / PostgreSQL via `DATABASE_URL` env var (prod)
+- **Frontend:** Jinja2 templates, Bootstrap 5, Vanilla JavaScript
 - **Auth:** Flask-Login with bcrypt password hashing
 
-## Running the App
+## How to Run
 
-The "Start application" workflow runs `python run.py`, serving on port 5000. Dependencies are managed via `requirements.txt` (installed through Replit's Python package manager).
+```bash
+python run.py
+```
 
-Default login accounts (change immediately in a real deployment):
-- `owner` / `owner123`
-- `developer` / `dev123`
+The app runs on `http://0.0.0.0:5000`. The workflow "Start application" handles this automatically.
+
+## Default Login Credentials
+
+| User      | Password  | Role      |
+|-----------|-----------|-----------|
+| owner     | owner123  | Owner     |
+| developer | dev123    | Developer |
+
+> **Change these passwords after first login.**
+
+## Environment Variables
+
+| Variable       | Purpose                          | Default                        |
+|----------------|----------------------------------|--------------------------------|
+| `SECRET_KEY`   | Flask session signing key        | hardcoded dev fallback         |
+| `DATABASE_URL` | PostgreSQL connection string     | SQLite (`thms.db` in project root) |
+| `FLASK_ENV`    | `development` or `production`    | `development`                  |
+
+The `SESSION_SECRET` Replit secret is available but the app currently reads `SECRET_KEY`. Rename or alias as needed.
 
 ## Project Structure
 
-See `backend/` (app factory, models, routes, templates, static assets) and `frontend/` (PWA manifest/service worker only — the actual UI is server-rendered via Jinja2). `run.py` is the entry point.
+```
+backend/
+  __init__.py       # Flask app factory, DB init, migrations, seed
+  config.py         # Config classes (Dev/Prod)
+  extensions.py     # db, login_manager
+  models/           # SQLAlchemy models
+  routes/           # Flask blueprints
+  templates/        # Jinja2 HTML templates
+  static/           # CSS, JS, uploads
+run.py              # Entry point
+requirements.txt    # Python dependencies
+```
 
-## User preferences
+## Modules
 
-None recorded yet.
+- Authentication, Dashboard, Drivers, Vehicles, Contracts, Payments, Expenses, Archives, Audit Log, Capital Management, Reports, Settings, Developer tools
+
+## User Preferences
+
+<!-- Add any user preferences here -->

@@ -1,139 +1,225 @@
 {% extends "base.html" %}
 {% block title %}Receipt {{ payment.receipt_number }}{% endblock %}
-{% block page_title %}Receipt{% endblock %}
+{% block page_title %}Payment Receipt{% endblock %}
 
 {% block content %}
-<div class="d-print-none mb-3 d-flex gap-2">
+
+{# ── Action buttons (hidden when printing) ─────────────────────────────────── #}
+<div class="d-print-none mb-3 d-flex flex-wrap gap-2 align-items-center">
   <button onclick="window.print()" class="btn btn-primary">
-    <i class="bi bi-printer me-2"></i>Print Receipt
+    <i class="bi bi-printer-fill me-2"></i>Print Receipt
   </button>
+  <a href="{{ url_for('payments.receipt_pdf', payment_id=payment.id) }}"
+     class="btn btn-success">
+    <i class="bi bi-file-earmark-pdf-fill me-2"></i>Download PDF
+  </a>
   <a href="{{ url_for('payments.view', payment_id=payment.id) }}"
      class="btn btn-outline-secondary">
-    <i class="bi bi-arrow-left me-1"></i> Back
+    <i class="bi bi-arrow-left me-1"></i>Back to Payment
   </a>
+  {% if payment.is_archived %}
+  <span class="badge bg-danger-subtle text-danger px-3 py-2 ms-auto">
+    <i class="bi bi-x-circle-fill me-1"></i>VOIDED
+  </span>
+  {% endif %}
 </div>
 
-{# ── Printable receipt card ───────────────────────────────────────────────── #}
+{# ── Receipt card ──────────────────────────────────────────────────────────── #}
 <div class="row justify-content-center">
   <div class="col-12 col-md-8 col-lg-6">
 
-    <div class="thms-card" id="receiptCard" style="border:2px solid var(--border-color,#e2e8f0);">
+    <div class="thms-card" id="receiptCard"
+         style="border:2px solid var(--border-color,#e2e8f0);">
       <div class="thms-card-body p-4">
 
-        {# Header #}
+        {# ── Business header ─────────────────────────────────────────────── #}
         <div class="text-center mb-4">
-          <div class="fw-700 mb-1" style="font-size:1.4rem;letter-spacing:.02em;">
-            TRANSPORT HIRE MANAGEMENT
+          {% if biz and biz.logo_url %}
+          <div class="mb-3">
+            <img src="{{ url_for('static', filename=biz.logo_url) }}"
+                 alt="{{ biz.display_name }}"
+                 style="height:64px;max-width:180px;object-fit:contain;">
           </div>
-          <div class="text-muted small">Official Payment Receipt</div>
-          <div class="mt-2 mx-auto" style="width:60px;height:3px;background:var(--color-primary,#2563eb);border-radius:2px;"></div>
+          {% endif %}
+          <div class="fw-700 mb-1"
+               style="font-size:1.25rem;letter-spacing:.02em;text-transform:uppercase;">
+            {{ biz.display_name if biz and biz.business_name else 'Transport Hire Management System' }}
+          </div>
+          {% if biz and biz.address %}
+          <div class="text-muted small">{{ biz.address | replace('\n', ' · ') }}</div>
+          {% endif %}
+          {% if biz and (biz.phone or biz.email) %}
+          <div class="text-muted small">
+            {% if biz.phone %}<i class="bi bi-telephone me-1"></i>{{ biz.phone }}{% endif %}
+            {% if biz.phone and biz.email %} &nbsp;·&nbsp; {% endif %}
+            {% if biz.email %}<i class="bi bi-envelope me-1"></i>{{ biz.email }}{% endif %}
+          </div>
+          {% endif %}
+          <div class="mt-2 text-muted" style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;">
+            Official Payment Receipt
+          </div>
+          <div class="mt-2 mx-auto"
+               style="width:60px;height:3px;background:var(--color-primary,#2563eb);border-radius:2px;">
+          </div>
         </div>
 
-        {# Receipt number banner #}
+        {# ── Receipt number banner ─────────────────────────────────────────── #}
         <div class="text-center mb-4 p-3 rounded-3"
              style="background:rgba(37,99,235,.08);">
-          <div class="text-muted small mb-1">Receipt Number</div>
-          <div class="fw-700 text-primary" style="font-size:1.25rem;letter-spacing:.05em;">
+          <div class="text-muted small mb-1" style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;">
+            Receipt Number
+          </div>
+          <div class="fw-700 text-primary font-monospace"
+               style="font-size:1.2rem;letter-spacing:.06em;">
             {{ payment.receipt_number or ('#' ~ payment.id) }}
           </div>
+          {% if payment.is_archived %}
+          <div class="mt-1">
+            <span class="badge bg-danger-subtle text-danger" style="font-size:.7rem;">VOIDED</span>
+          </div>
+          {% endif %}
         </div>
 
-        {# Amount #}
+        {# ── Amount ───────────────────────────────────────────────────────── #}
         <div class="text-center mb-4">
-          <div class="text-muted small mb-1">Amount Paid</div>
-          <div class="fw-700 text-success" style="font-size:2rem;">
+          <div class="text-muted small mb-1"
+               style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;">
+            Amount Paid
+          </div>
+          <div class="fw-700 text-success" style="font-size:2.25rem;">
             ₦{{ "{:,.2f}".format(payment.amount) }}
           </div>
-          <div class="text-muted small">{{ payment.method_label }}</div>
+          <div>
+            <span class="badge bg-{{ payment.method_color }}-subtle text-{{ payment.method_color }} px-3 py-1">
+              {{ payment.method_label }}
+            </span>
+          </div>
         </div>
 
-        <hr />
+        <hr class="my-3" />
 
-        {# Details grid #}
+        {# ── Payment details ───────────────────────────────────────────────── #}
         <div class="mb-3" style="font-size:.875rem;">
-
-          {% macro drow(label, value, important=false) %}
+          {% macro drow(label, value, mono=false, important=false) %}
           {% if value %}
           <div class="d-flex justify-content-between py-2 border-bottom">
-            <span class="text-muted">{{ label }}</span>
-            <span class="{{ 'fw-700' if important else 'fw-600' }} text-end" style="max-width:60%;">{{ value }}</span>
+            <span class="text-muted" style="font-size:.8rem;">{{ label }}</span>
+            <span class="{{ 'font-monospace ' if mono else '' }}{{ 'fw-700 text-primary' if important else 'fw-600' }} text-end"
+                  style="max-width:65%;">{{ value }}</span>
           </div>
           {% endif %}
           {% endmacro %}
 
-          {{ drow('Driver',          payment.driver.full_name,    important=true) }}
-          {{ drow('Vehicle',         contract.vehicle.vehicle_number) }}
-          {{ drow('Contract',        '#' ~ contract.id) }}
-          {{ drow('Payment Date',    payment.payment_date.strftime('%A, %d %B %Y') if payment.payment_date else '—') }}
+          {{ drow('Receipt Number',    payment.receipt_number or ('#' ~ payment.id), mono=true, important=true) }}
+          {{ drow('Payment Date',      payment.payment_date.strftime('%A, %d %B %Y') if payment.payment_date else '—') }}
           {% if payment.payment_time %}
-          {{ drow('Payment Time',    payment.payment_time.strftime('%H:%M')) }}
+          {{ drow('Payment Time',      payment.payment_time.strftime('%H:%M')) }}
           {% endif %}
-          {{ drow('Week(s) Covered', payment.week_range_display) }}
+          {{ drow('Driver',            payment.driver.full_name, important=true) }}
+          {{ drow('Vehicle',           contract.vehicle.vehicle_number) }}
+          {{ drow('Contract No.',      '#' ~ contract.id) }}
+          {{ drow('Payment Method',    payment.method_label) }}
           {% if payment.bank_name %}
-          {{ drow('Bank',            payment.bank_name) }}
+          {{ drow('Bank',              payment.bank_name) }}
+          {% endif %}
+          {% if payment.pos_terminal %}
+          {{ drow('POS Terminal',      payment.pos_terminal) }}
           {% endif %}
           {% if payment.reference %}
-          {{ drow('Bank Reference',  payment.reference) }}
+          {{ drow('Bank Reference',    payment.reference) }}
           {% endif %}
           {% if payment.sender %}
-          {{ drow('Paid By',         payment.sender) }}
+          {{ drow('Paid By',           payment.sender) }}
           {% endif %}
           {% if payment.receiver %}
-          {{ drow('Received By',     payment.receiver) }}
+          {{ drow('Received By',       payment.receiver) }}
+          {% endif %}
+          {% if payment.week_from %}
+          {{ drow('Weeks Covered',     payment.week_range_display) }}
+          {% endif %}
+          {% if recorder %}
+          {{ drow('Recorded By',       recorder.display_name or recorder.username) }}
           {% endif %}
           {% if payment.notes %}
-          {{ drow('Notes',           payment.notes) }}
+          {{ drow('Notes',             payment.notes) }}
           {% endif %}
         </div>
 
-        <hr />
+        <hr class="my-3" />
 
-        {# Contract summary #}
-        <div class="mb-3" style="font-size:.84rem;">
-          <div class="text-muted small mb-2 fw-600" style="text-transform:uppercase;letter-spacing:.04em;">
-            Contract Balance After This Payment
+        {# ── Balance snapshot ──────────────────────────────────────────────── #}
+        <div class="mb-3">
+          <div class="text-muted mb-2"
+               style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;">
+            Balance Summary
           </div>
-          <div class="row g-2">
+          <div class="row g-2" style="font-size:.84rem;">
             <div class="col-6">
-              <div class="text-muted" style="font-size:.72rem;">Total Agreed</div>
-              <div class="fw-600">₦{{ "{:,.0f}".format(contract.total_payable | float) }}</div>
+              <div class="rounded-3 p-2 text-center" style="background:#f8fafc;">
+                <div class="text-muted" style="font-size:.68rem;text-transform:uppercase;">Total Agreed</div>
+                <div class="fw-600">₦{{ "{:,.0f}".format(contract.total_payable | float) }}</div>
+              </div>
             </div>
             <div class="col-6">
-              <div class="text-muted" style="font-size:.72rem;">Weeks Progress</div>
-              <div class="fw-600">{{ contract.weeks_completed }}/{{ contract.total_weeks }}</div>
+              <div class="rounded-3 p-2 text-center" style="background:#f8fafc;">
+                <div class="text-muted" style="font-size:.68rem;text-transform:uppercase;">Weeks Progress</div>
+                <div class="fw-600">{{ contract.weeks_completed }}/{{ contract.total_weeks }}</div>
+              </div>
             </div>
             <div class="col-6">
-              <div class="text-muted" style="font-size:.72rem;">Total Paid</div>
-              <div class="fw-600 text-success">₦{{ "{:,.0f}".format(contract.total_paid) }}</div>
+              <div class="rounded-3 p-2 text-center" style="background:#fef3c7;">
+                <div class="text-muted" style="font-size:.68rem;text-transform:uppercase;">Previous Balance</div>
+                <div class="fw-700 text-warning-emphasis">₦{{ "{:,.0f}".format(previous_balance) }}</div>
+              </div>
             </div>
             <div class="col-6">
-              <div class="text-muted" style="font-size:.72rem;">Outstanding</div>
-              <div class="fw-600 text-danger">₦{{ "{:,.0f}".format(contract.outstanding_balance) }}</div>
+              <div class="rounded-3 p-2 text-center"
+                   style="background:{{ '#dcfce7' if remaining_balance <= 0 else '#fee2e2' }};">
+                <div class="text-muted" style="font-size:.68rem;text-transform:uppercase;">Remaining Balance</div>
+                <div class="fw-700 {{ 'text-success' if remaining_balance <= 0 else 'text-danger' }}">
+                  {{ '₦0 — FULLY PAID' if remaining_balance <= 0 else '₦' ~ "{:,.0f}".format(remaining_balance) }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <hr />
+        <hr class="my-3" />
 
-        {# Footer #}
-        <div class="text-center text-muted" style="font-size:.72rem;">
-          <div>Printed: {{ printed_at.strftime('%d %B %Y %H:%M') if printed_at else '' }}</div>
-          <div class="mt-1">This receipt is computer-generated and is valid without a signature.</div>
+        {# ── Footer ───────────────────────────────────────────────────────── #}
+        <div class="text-center text-muted" style="font-size:.7rem;">
+          <div>Printed: {{ printed_at.strftime('%d %B %Y at %H:%M UTC') if printed_at else '' }}</div>
+          <div class="mt-1">
+            This receipt is computer-generated and is valid without a physical signature.
+          </div>
+          {% if biz and biz.business_name %}
+          <div class="mt-1 fw-600">{{ biz.display_name }}</div>
+          {% endif %}
         </div>
 
-      </div>
-    </div>
+      </div>{# /card-body #}
+    </div>{# /card #}
 
   </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <style>
 @media print {
-  .thms-sidebar, .thms-topbar, .d-print-none, .breadcrumb, .page-header { display: none !important; }
+  .thms-sidebar,
+  .thms-topbar,
+  .d-print-none,
+  .breadcrumb,
+  .page-header { display: none !important; }
   .thms-main { margin-left: 0 !important; padding: 0 !important; }
-  #receiptCard { border: 1px solid #ccc !important; max-width: 500px; margin: 0 auto; }
+  #receiptCard {
+    border: 1px solid #ccc !important;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: none !important;
+  }
   body { background: white !important; }
 }
 </style>

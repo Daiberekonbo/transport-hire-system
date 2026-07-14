@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Receipt Search{% endblock %}
+{% block page_title %}Receipt Search{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header-title mb-0">
+      <i class="bi bi-receipt me-2 text-primary"></i>Receipt Search
+    </h1>
+    <div class="page-header-sub">
+      Find any receipt by number, driver, vehicle, or date
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('payments.record') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i> Record Payment
+    </a>
+    <a href="{{ url_for('payments.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-list-ul me-1"></i> All Payments
+    </a>
+  </div>
+</div>
+
+{# ── Search form ────────────────────────────────────────────────────────────── #}
+<div class="thms-card mb-4">
+  <div class="thms-card-body">
+    <form method="get" action="{{ url_for('payments.receipts') }}"
+          class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label fw-600 small">Search</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" name="q" value="{{ q }}"
+                 class="form-control"
+                 placeholder="Receipt no., driver name, vehicle…">
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-600 small">From Date</label>
+        <input type="date" name="date_from" value="{{ date_from_str }}"
+               class="form-control">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label fw-600 small">To Date</label>
+        <input type="date" name="date_to" value="{{ date_to_str }}"
+               class="form-control">
+      </div>
+      <div class="col-12 col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1">
+          <i class="bi bi-search me-1"></i>Search
+        </button>
+        {% if q or date_from_str or date_to_str %}
+        <a href="{{ url_for('payments.receipts') }}"
+           class="btn btn-outline-secondary">
+          <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Results ────────────────────────────────────────────────────────────────── #}
+<div class="thms-card">
+  <div class="thms-card-header d-flex justify-content-between align-items-center">
+    <h6 class="thms-card-title mb-0">
+      <i class="bi bi-receipt text-secondary me-1"></i>
+      {% if q or date_from_str or date_to_str %}
+        Search Results
+      {% else %}
+        All Receipts
+      {% endif %}
+    </h6>
+    <span class="badge bg-secondary-subtle text-secondary">
+      {{ payments.total }} receipt{{ 's' if payments.total != 1 }}
+    </span>
+  </div>
+
+  {% if payments.items %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="font-size:.875rem;">
+      <thead style="background:var(--bg-secondary,#f8fafc);">
+        <tr>
+          <th class="py-3 ps-3" style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Receipt No.
+          </th>
+          <th style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Date
+          </th>
+          <th style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Driver
+          </th>
+          <th style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Vehicle
+          </th>
+          <th class="text-end" style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Amount
+          </th>
+          <th style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Method
+          </th>
+          <th style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Status
+          </th>
+          <th class="pe-3 text-end" style="font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments.items %}
+        <tr class="{{ 'opacity-50' if p.is_archived else '' }}">
+          <td class="ps-3">
+            <code class="text-primary fw-600"
+                  style="font-size:.82rem;letter-spacing:.03em;">
+              {{ p.receipt_number or ('#' ~ p.id) }}
+            </code>
+          </td>
+          <td class="text-muted" style="font-size:.82rem;white-space:nowrap;">
+            {{ p.payment_date.strftime('%d %b %Y') if p.payment_date else '—' }}
+          </td>
+          <td class="fw-600">{{ p.driver.full_name }}</td>
+          <td class="text-muted">{{ p.contract.vehicle.vehicle_number }}</td>
+          <td class="text-end fw-700">₦{{ "{:,.0f}".format(p.amount) }}</td>
+          <td>
+            <span class="badge bg-{{ p.method_color }}-subtle text-{{ p.method_color }}">
+              {{ p.method_label }}
+            </span>
+          </td>
+          <td>
+            {% if p.is_archived %}
+            <span class="status-pill status-archived">Voided</span>
+            {% else %}
+            <span class="status-pill status-active">Valid</span>
+            {% endif %}
+          </td>
+          <td class="pe-3">
+            <div class="d-flex justify-content-end gap-1">
+              <a href="{{ url_for('payments.receipt', payment_id=p.id) }}"
+                 class="btn btn-outline-primary btn-sm" target="_blank"
+                 title="View Receipt">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('payments.receipt_pdf', payment_id=p.id) }}"
+                 class="btn btn-outline-success btn-sm"
+                 title="Download PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
+              <a href="{{ url_for('payments.view', payment_id=p.id) }}"
+                 class="btn btn-outline-secondary btn-sm"
+                 title="Payment Detail">
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# ── Pagination ───────────────────────────────────────────────────────────── #}
+  {% if payments.pages > 1 %}
+  <div class="thms-card-body border-top pt-3 d-flex justify-content-between align-items-center">
+    <div class="text-muted small">
+      Showing {{ payments.items | length }} of {{ payments.total }} receipts
+      (page {{ payments.page }} of {{ payments.pages }})
+    </div>
+    <div class="d-flex gap-1">
+      {% if payments.has_prev %}
+      <a href="{{ url_for('payments.receipts', q=q, date_from=date_from_str, date_to=date_to_str, page=payments.prev_num) }}"
+         class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+      {% endif %}
+      {% if payments.has_next %}
+      <a href="{{ url_for('payments.receipts', q=q, date_from=date_from_str, date_to=date_to_str, page=payments.next_num) }}"
+         class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="thms-card-body text-center py-5">
+    <div class="mb-3" style="font-size:2.5rem;opacity:.35;">
+      <i class="bi bi-receipt"></i>
+    </div>
+    <div class="fw-600 mb-1">No receipts found</div>
+    <div class="text-muted small">
+      {% if q or date_from_str or date_to_str %}
+        No receipts match your search criteria. Try different keywords or dates.
+      {% else %}
+        No payments have been recorded yet.
+        <a href="{{ url_for('payments.record') }}">Record the first payment →</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>{# /card #}
+
+{% endblock %}

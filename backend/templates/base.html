@@ -63,9 +63,15 @@
     </a>
 
     <a href="{{ url_for('payments.index') }}"
-       class="nav-item {% if request.blueprint == 'payments' %}active{% endif %}">
+       class="nav-item {% if request.blueprint == 'payments' and request.endpoint != 'payments.receipts' %}active{% endif %}">
       <i class="bi bi-cash-stack"></i>
       <span>Payments</span>
+    </a>
+
+    <a href="{{ url_for('payments.receipts') }}"
+       class="nav-item {% if request.endpoint == 'payments.receipts' %}active{% endif %}">
+      <i class="bi bi-receipt"></i>
+      <span>Receipts</span>
     </a>
 
     <div class="nav-section-label mt-3">Finance</div>

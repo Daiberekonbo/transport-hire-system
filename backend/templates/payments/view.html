@@ -21,10 +21,19 @@
     </div>
   </div>
 
-  <div class="d-flex gap-2">
+  <div class="d-flex flex-wrap gap-2">
     <a href="{{ url_for('payments.receipt', payment_id=payment.id) }}"
-       class="btn btn-outline-secondary btn-sm" target="_blank">
-      <i class="bi bi-printer me-1"></i> Print Receipt
+       class="btn btn-outline-primary btn-sm" target="_blank">
+      <i class="bi bi-receipt me-1"></i> View Receipt
+    </a>
+    <a href="{{ url_for('payments.receipt', payment_id=payment.id) }}"
+       class="btn btn-outline-secondary btn-sm" target="_blank"
+       onclick="this.addEventListener('load',()=>window.print())">
+      <i class="bi bi-printer me-1"></i> Print
+    </a>
+    <a href="{{ url_for('payments.receipt_pdf', payment_id=payment.id) }}"
+       class="btn btn-outline-success btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
     </a>
     {% if not payment.is_archived %}
     <form method="POST" action="{{ url_for('payments.void', payment_id=payment.id) }}"
@@ -36,6 +45,31 @@
     {% endif %}
   </div>
 </div>
+
+{# ── Just-recorded success banner ───────────────────────────────────────── #}
+{% if just_recorded %}
+<div class="alert alert-success d-flex align-items-center gap-3 mb-3"
+     style="border-left:4px solid #16a34a;">
+  <i class="bi bi-check-circle-fill fs-4 text-success flex-shrink-0"></i>
+  <div class="flex-grow-1">
+    <div class="fw-700">Payment recorded successfully!</div>
+    <div class="small text-muted mt-1">
+      Receipt <strong class="font-monospace">{{ payment.receipt_number }}</strong>
+      has been issued. Use the buttons below to view, print, or download the receipt.
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-shrink-0">
+    <a href="{{ url_for('payments.receipt', payment_id=payment.id) }}"
+       class="btn btn-success btn-sm" target="_blank">
+      <i class="bi bi-receipt me-1"></i>View Receipt
+    </a>
+    <a href="{{ url_for('payments.receipt_pdf', payment_id=payment.id) }}"
+       class="btn btn-outline-success btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+    </a>
+  </div>
+</div>
+{% endif %}
 
 {% if payment.is_archived %}
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">

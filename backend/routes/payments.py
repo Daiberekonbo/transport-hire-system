@@ -5,12 +5,14 @@ Payments Management Routes
 Routes
 ------
 GET  /payments/                         — full payment list with filters
+GET  /payments/receipts                 — receipt search (by number, driver, vehicle, date)
 GET  /payments/record                   — record form (driver/contract selection)
 GET  /payments/record?contract_id=X     — record form pre-loaded for contract
-POST /payments/record                   — save payment
+POST /payments/record                   — save payment → redirect to view with receipt buttons
 GET  /payments/overdue                  — overdue summary across all contracts
-GET  /payments/<id>                     — payment detail
-GET  /payments/<id>/receipt             — printable receipt
+GET  /payments/<id>                     — payment detail (with View Receipt / Download PDF)
+GET  /payments/<id>/receipt             — printable receipt (browser)
+GET  /payments/<id>/receipt/pdf         — download PDF receipt
 POST /payments/<id>/void                — void (soft-delete) a payment
 GET  /payments/history/<contract_id>    — full payment history for one contract
 GET  /payments/api/contract-info        — JSON: contract data for JS widget
@@ -19,21 +21,23 @@ Business logic
 --------------
 • week_from / week_to are computed from the contract's total paid BEFORE this
   payment, divided by weekly_amount. This is deterministic and self-correcting.
-• Receipt numbers are assigned after DB flush (requires the auto-increment ID):
-      RCPT-{YYYYMM}-{id:05d}
+• Receipt numbers use a global monotonic counter — THMS-{YYYYMMDD}-{seq:06d}.
+  The sequence never resets, never reuses a number, even after voids.
 • Overdue = weeks elapsed since start_date − weeks_completed. Elapsed weeks
   are floor((today − start_date).days / 7).
 • Voiding a payment recalculates contract.weeks_completed from remaining payments.
-• Every mutation is recorded in AuditLog.
+• Every mutation is recorded in AuditLog. Viewing / printing a receipt also logs.
 """
 
 import json
 from datetime import datetime, date, time as dtime
+from io import BytesIO
 from math import floor
+
 from flask import (Blueprint, render_template, redirect, url_for,
-                   flash, request, jsonify)
+                   flash, request, jsonify, make_response)
 from flask_login import login_required, current_user
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 
 from backend.extensions import db
 from backend.models.payment import Payment
@@ -65,8 +69,14 @@ def _log(action: str, payment: Payment, extra: str = ""):
 
 
 def _generate_receipt(payment: Payment) -> str:
-    now = datetime.utcnow()
-    return f"RCPT-{now.year}{now.month:02d}-{payment.id:05d}"
+    """
+    Assign the next globally-unique, never-reused receipt number.
+    Format: THMS-{YYYYMMDD}-{seq:06d}   e.g. THMS-20260714-000001
+    Must be called inside an open session; caller commits.
+    """
+    from backend.models.receipt_seq import ReceiptSequence
+    date_str = datetime.utcnow().strftime("%Y%m%d")
+    return ReceiptSequence.next_number(date_str)
 
 
 def _compute_week_coverage(contract: Contract, payment_amount: float):
@@ -144,6 +154,26 @@ def _build_contracts_json():
     return data
 
 
+def _receipt_balance_snapshot(payment: Payment, contract: Contract):
+    """
+    Compute balance BEFORE and AFTER this specific payment, based on all
+    non-archived payments for the contract with id ≤ payment.id.
+    Returns (previous_balance, remaining_balance).
+    """
+    paid_through_this = (
+        db.session.query(func.sum(Payment.amount))
+        .filter(
+            Payment.contract_id == contract.id,
+            Payment.is_archived == False,
+            Payment.id <= payment.id,
+        )
+        .scalar() or 0
+    )
+    remaining = float(contract.total_payable or 0) - float(paid_through_this)
+    previous  = remaining + float(payment.amount)
+    return previous, remaining
+
+
 # ─── routes ───────────────────────────────────────────────────────────────────
 
 @payments_bp.route("/")
@@ -204,6 +234,56 @@ def index():
         date_from_str=date_from_str,
         date_to_str=date_to_str,
         total_amount=total_amount,
+    )
+
+
+@payments_bp.route("/receipts")
+@login_required
+def receipts():
+    """Dedicated receipt search — by receipt number, driver, vehicle, or date."""
+    q             = request.args.get("q",        "").strip()
+    date_from_str = request.args.get("date_from","")
+    date_to_str   = request.args.get("date_to",  "")
+    page          = request.args.get("page", 1, type=int)
+
+    query = (
+        Payment.query
+        .join(Driver,   Payment.driver_id   == Driver.id)
+        .join(Contract, Payment.contract_id == Contract.id)
+        .join(Vehicle,  Contract.vehicle_id == Vehicle.id)
+        .order_by(Payment.created_at.desc())
+    )
+
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            or_(
+                Payment.receipt_number.ilike(like),
+                Driver.full_name.ilike(like),
+                Vehicle.vehicle_number.ilike(like),
+            )
+        )
+    if date_from_str:
+        try:
+            df = datetime.strptime(date_from_str, "%Y-%m-%d").date()
+            query = query.filter(Payment.payment_date >= df)
+        except ValueError:
+            pass
+    if date_to_str:
+        try:
+            dt = datetime.strptime(date_to_str, "%Y-%m-%d").date()
+            query = query.filter(Payment.payment_date <= dt)
+        except ValueError:
+            pass
+
+    payments = query.paginate(page=page, per_page=30, error_out=False)
+
+    return render_template(
+        "payments/receipts.html",
+        payments=payments,
+        q=q,
+        date_from_str=date_from_str,
+        date_to_str=date_to_str,
     )
 
 
@@ -307,7 +387,7 @@ def record():
         db.session.add(payment)
         db.session.flush()  # get payment.id
 
-        # ── Generate receipt number ───────────────────────────────────────────
+        # ── Assign globally-unique, never-reused receipt number ───────────────
         payment.receipt_number = _generate_receipt(payment)
 
         # ── Recalculate contract progress ─────────────────────────────────────
@@ -323,7 +403,8 @@ def record():
             f"Receipt: {payment.receipt_number}",
             "success",
         )
-        return redirect(url_for("payments.view", payment_id=payment.id))
+        # Redirect to view with flag so the page highlights receipt buttons
+        return redirect(url_for("payments.view", payment_id=payment.id, just_recorded=1))
 
     return render_template(
         "payments/record.html",
@@ -338,15 +419,17 @@ def record():
 @payments_bp.route("/<int:payment_id>")
 @login_required
 def view(payment_id):
-    payment  = Payment.query.get_or_404(payment_id)
-    contract = payment.contract
-    ow, oa, _ = _overdue(contract)
+    payment      = Payment.query.get_or_404(payment_id)
+    contract     = payment.contract
+    ow, oa, _    = _overdue(contract)
+    just_recorded = request.args.get("just_recorded", 0, type=int)
     return render_template(
         "payments/view.html",
         payment=payment,
         contract=contract,
         overdue_weeks=ow,
         overdue_amount=oa,
+        just_recorded=just_recorded,
     )
 
 
@@ -355,12 +438,68 @@ def view(payment_id):
 def receipt(payment_id):
     payment  = Payment.query.get_or_404(payment_id)
     contract = payment.contract
+
+    previous_balance, remaining_balance = _receipt_balance_snapshot(payment, contract)
+
+    from backend.models.user import User
+    recorder = User.query.get(payment.recorded_by) if payment.recorded_by else None
+
+    # Audit: receipt was viewed / reprinted
+    _log("VIEW_RECEIPT", payment, "Receipt viewed in browser.")
+    db.session.commit()
+
     return render_template(
         "payments/receipt.html",
         payment=payment,
         contract=contract,
         printed_at=datetime.utcnow(),
+        previous_balance=previous_balance,
+        remaining_balance=remaining_balance,
+        recorder=recorder,
     )
+
+
+@payments_bp.route("/<int:payment_id>/receipt/pdf")
+@login_required
+def receipt_pdf(payment_id):
+    """Generate and download a professional PDF receipt."""
+    payment  = Payment.query.get_or_404(payment_id)
+    contract = payment.contract
+
+    previous_balance, remaining_balance = _receipt_balance_snapshot(payment, contract)
+
+    from backend.models.user import User
+    recorder = User.query.get(payment.recorded_by) if payment.recorded_by else None
+
+    html = render_template(
+        "payments/receipt_pdf.html",
+        payment=payment,
+        contract=contract,
+        printed_at=datetime.utcnow(),
+        previous_balance=previous_balance,
+        remaining_balance=remaining_balance,
+        recorder=recorder,
+    )
+
+    try:
+        from xhtml2pdf import pisa
+        pdf_buffer = BytesIO()
+        pisa.CreatePDF(html, dest=pdf_buffer, base_url=request.url_root)
+        pdf_buffer.seek(0)
+        pdf_bytes = pdf_buffer.read()
+    except Exception as e:
+        flash(f"PDF generation failed: {e}", "danger")
+        return redirect(url_for("payments.receipt", payment_id=payment_id))
+
+    # Audit: PDF receipt downloaded
+    _log("PRINT_RECEIPT", payment, "PDF receipt downloaded.")
+    db.session.commit()
+
+    filename = f"Receipt-{payment.receipt_number or payment.id}.pdf"
+    response = make_response(pdf_bytes)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @payments_bp.route("/<int:payment_id>/void", methods=["POST"])

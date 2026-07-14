@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Receipt {{ payment.receipt_number }} — THMS</title>
+<style>
+  @page {
+    size: A5 portrait;
+    margin: 1.2cm 1.4cm 1.4cm 1.4cm;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 9pt;
+    color: #1a1a2e;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────────── */
+  .header {
+    border-bottom: 2.5pt solid #1a2341;
+    padding-bottom: 8pt;
+    margin-bottom: 10pt;
+  }
+  .header-table { width: 100%; border-collapse: collapse; }
+  .header-logo-cell { width: 72pt; vertical-align: middle; }
+  .header-logo { max-height: 48pt; max-width: 70pt; object-fit: contain; }
+  .header-info-cell { vertical-align: middle; padding-left: 8pt; }
+  .biz-name {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #1a2341;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+  }
+  .biz-sub {
+    font-size: 7pt;
+    color: #64748b;
+    margin-top: 2pt;
+  }
+  .doc-title-cell { text-align: right; vertical-align: middle; }
+  .doc-title {
+    font-size: 11pt;
+    font-weight: bold;
+    color: #1a2341;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .doc-subtitle {
+    font-size: 7pt;
+    color: #64748b;
+    margin-top: 2pt;
+  }
+
+  /* ── Receipt number band ─────────────────────────────────────────────────── */
+  .receipt-band {
+    background: #eff6ff;
+    border: 1pt solid #bfdbfe;
+    border-radius: 4pt;
+    text-align: center;
+    padding: 7pt 10pt;
+    margin-bottom: 10pt;
+  }
+  .receipt-band .label {
+    font-size: 6.5pt;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .receipt-band .number {
+    font-size: 13pt;
+    font-weight: bold;
+    color: #1d4ed8;
+    letter-spacing: .07em;
+    font-family: Courier, monospace;
+    margin-top: 2pt;
+  }
+  .voided-badge {
+    display: inline-block;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 7pt;
+    font-weight: bold;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    margin-top: 3pt;
+  }
+
+  /* ── Amount block ────────────────────────────────────────────────────────── */
+  .amount-block {
+    text-align: center;
+    margin-bottom: 10pt;
+  }
+  .amount-label {
+    font-size: 7pt;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+  }
+  .amount-value {
+    font-size: 22pt;
+    font-weight: bold;
+    color: #15803d;
+    margin: 2pt 0;
+  }
+  .method-badge {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 7.5pt;
+    font-weight: bold;
+    padding: 2pt 8pt;
+    border-radius: 3pt;
+  }
+
+  /* ── Divider ─────────────────────────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1pt solid #e2e8f0;
+    margin: 8pt 0;
+  }
+  .divider-bold {
+    border-top: 1.5pt solid #1a2341;
+  }
+
+  /* ── Detail rows ─────────────────────────────────────────────────────────── */
+  .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
+  .detail-table td {
+    padding: 3.5pt 2pt;
+    border-bottom: .5pt solid #f1f5f9;
+    font-size: 8pt;
+    vertical-align: top;
+  }
+  .detail-table .dl { color: #64748b; width: 42%; }
+  .detail-table .dv { font-weight: 600; text-align: right; }
+  .detail-table .dv-mono { font-family: Courier, monospace; font-weight: bold; color: #1d4ed8; }
+  .detail-table .dv-important { font-weight: bold; color: #1a2341; }
+
+  /* ── Section heading ─────────────────────────────────────────────────────── */
+  .section-heading {
+    font-size: 6.5pt;
+    font-weight: bold;
+    color: #1a2341;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    border-bottom: 1pt solid #cbd5e1;
+    padding-bottom: 2pt;
+    margin-bottom: 5pt;
+  }
+
+  /* ── Balance grid ────────────────────────────────────────────────────────── */
+  .balance-table { width: 100%; border-collapse: collapse; margin-bottom: 8pt; }
+  .balance-table td {
+    width: 25%;
+    padding: 5pt 4pt;
+    border: .5pt solid #e2e8f0;
+    text-align: center;
+    vertical-align: middle;
+    background: #f8fafc;
+  }
+  .balance-table .bl { font-size: 6pt; color: #64748b; text-transform: uppercase; letter-spacing: .05em; }
+  .balance-table .bv { font-size: 8.5pt; font-weight: bold; color: #1a2341; margin-top: 2pt; }
+  .balance-table .bv-prev { color: #92400e; }
+  .balance-table .bv-remain-zero { color: #15803d; }
+  .balance-table .bv-remain { color: #991b1b; }
+
+  /* ── Footer ──────────────────────────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    font-size: 6.5pt;
+    color: #94a3b8;
+    margin-top: 8pt;
+    border-top: .5pt solid #e2e8f0;
+    padding-top: 5pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<div class="header">
+  <table class="header-table">
+    <tr>
+      <td class="header-logo-cell">
+        {% if biz and biz.logo_url %}
+        <img class="header-logo"
+             src="{{ url_for('static', filename=biz.logo_url, _external=True) }}"
+             alt="{{ biz.display_name }}">
+        {% endif %}
+      </td>
+      <td class="header-info-cell">
+        <div class="biz-name">
+          {{ biz.display_name if biz and biz.business_name else 'Transport Hire Management System' }}
+        </div>
+        {% if biz and biz.address %}
+        <div class="biz-sub">{{ biz.address | replace('\n', ' · ') }}</div>
+        {% endif %}
+        {% if biz and (biz.phone or biz.email) %}
+        <div class="biz-sub">
+          {% if biz.phone %}Tel: {{ biz.phone }}{% endif %}
+          {% if biz.phone and biz.email %} · {% endif %}
+          {% if biz.email %}{{ biz.email }}{% endif %}
+        </div>
+        {% endif %}
+      </td>
+      <td class="doc-title-cell">
+        <div class="doc-title">Payment Receipt</div>
+        <div class="doc-subtitle">
+          {{ payment.payment_date.strftime('%d %B %Y') if payment.payment_date else '' }}
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- ── Receipt number ──────────────────────────────────────────────────────── -->
+<div class="receipt-band">
+  <div class="label">Receipt Number</div>
+  <div class="number">{{ payment.receipt_number or ('#' ~ payment.id) }}</div>
+  {% if payment.is_archived %}
+  <div><span class="voided-badge">VOIDED</span></div>
+  {% endif %}
+</div>
+
+<!-- ── Amount ─────────────────────────────────────────────────────────────── -->
+<div class="amount-block">
+  <div class="amount-label">Amount Paid</div>
+  <div class="amount-value">&#8358;{{ "{:,.2f}".format(payment.amount) }}</div>
+  <div><span class="method-badge">{{ payment.method_label }}</span></div>
+</div>
+
+<hr class="divider">
+
+<!-- ── Payment details ─────────────────────────────────────────────────────── -->
+<div class="section-heading">Payment Details</div>
+<table class="detail-table">
+  <tr>
+    <td class="dl">Receipt No.</td>
+    <td class="dv dv-mono">{{ payment.receipt_number or ('#' ~ payment.id) }}</td>
+  </tr>
+  <tr>
+    <td class="dl">Payment Date</td>
+    <td class="dv">{{ payment.payment_date.strftime('%A, %d %B %Y') if payment.payment_date else '—' }}</td>
+  </tr>
+  {% if payment.payment_time %}
+  <tr>
+    <td class="dl">Payment Time</td>
+    <td class="dv">{{ payment.payment_time.strftime('%H:%M') }}</td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td class="dl">Driver</td>
+    <td class="dv dv-important">{{ payment.driver.full_name }}</td>
+  </tr>
+  <tr>
+    <td class="dl">Vehicle</td>
+    <td class="dv">{{ contract.vehicle.vehicle_number }}</td>
+  </tr>
+  <tr>
+    <td class="dl">Contract No.</td>
+    <td class="dv">#{{ contract.id }}</td>
+  </tr>
+  <tr>
+    <td class="dl">Payment Method</td>
+    <td class="dv">{{ payment.method_label }}</td>
+  </tr>
+  {% if payment.bank_name %}
+  <tr>
+    <td class="dl">Bank</td>
+    <td class="dv">{{ payment.bank_name }}</td>
+  </tr>
+  {% endif %}
+  {% if payment.pos_terminal %}
+  <tr>
+    <td class="dl">POS Terminal</td>
+    <td class="dv">{{ payment.pos_terminal }}</td>
+  </tr>
+  {% endif %}
+  {% if payment.reference %}
+  <tr>
+    <td class="dl">Reference</td>
+    <td class="dv">{{ payment.reference }}</td>
+  </tr>
+  {% endif %}
+  {% if payment.sender %}
+  <tr>
+    <td class="dl">Paid By</td>
+    <td class="dv">{{ payment.sender }}</td>
+  </tr>
+  {% endif %}
+  {% if payment.receiver %}
+  <tr>
+    <td class="dl">Received By</td>
+    <td class="dv">{{ payment.receiver }}</td>
+  </tr>
+  {% endif %}
+  {% if payment.week_from %}
+  <tr>
+    <td class="dl">Weeks Covered</td>
+    <td class="dv">{{ payment.week_range_display }}</td>
+  </tr>
+  {% endif %}
+  {% if recorder %}
+  <tr>
+    <td class="dl">Recorded By</td>
+    <td class="dv">{{ recorder.display_name or recorder.username }}</td>
+  </tr>
+  {% endif %}
+  {% if payment.notes %}
+  <tr>
+    <td class="dl">Notes</td>
+    <td class="dv">{{ payment.notes }}</td>
+  </tr>
+  {% endif %}
+</table>
+
+<hr class="divider">
+
+<!-- ── Balance summary ─────────────────────────────────────────────────────── -->
+<div class="section-heading">Balance Summary</div>
+<table class="balance-table">
+  <tr>
+    <td>
+      <div class="bl">Total Agreed</div>
+      <div class="bv">&#8358;{{ "{:,.0f}".format(contract.total_payable | float) }}</div>
+    </td>
+    <td>
+      <div class="bl">Weeks Progress</div>
+      <div class="bv">{{ contract.weeks_completed }}/{{ contract.total_weeks }}</div>
+    </td>
+    <td>
+      <div class="bl">Previous Balance</div>
+      <div class="bv bv-prev">&#8358;{{ "{:,.0f}".format(previous_balance) }}</div>
+    </td>
+    <td>
+      <div class="bl">Remaining Balance</div>
+      {% if remaining_balance <= 0 %}
+      <div class="bv bv-remain-zero">FULLY PAID</div>
+      {% else %}
+      <div class="bv bv-remain">&#8358;{{ "{:,.0f}".format(remaining_balance) }}</div>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<hr class="divider divider-bold">
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<div class="footer">
+  <div>Generated: {{ printed_at.strftime('%d %B %Y at %H:%M UTC') if printed_at else '' }}</div>
+  <div>This receipt is computer-generated and is valid without a physical signature.</div>
+  {% if biz and biz.business_name %}
+  <div style="font-weight:bold;margin-top:2pt;">{{ biz.display_name }}</div>
+  {% endif %}
+</div>
+
+</body>
+</html>

@@ -80,11 +80,13 @@ def create_app(config_name="default"):
         from backend.models import (          # noqa: F401
             user, driver, vehicle, vehicle_event,
             contract, payment, expense, audit, capital, settings,
+            receipt_seq,
         )
         db.create_all()
         _run_migrations()
         _seed_defaults()
         _seed_settings()
+        _seed_receipt_seq()
 
     return app
 
@@ -155,3 +157,11 @@ def _seed_settings():
     from backend.models.settings import BusinessSettings, AppPreferences
     BusinessSettings.get()
     AppPreferences.get()
+
+
+def _seed_receipt_seq():
+    """Ensure the single receipt-sequence row exists (creates it if absent)."""
+    from backend.models.receipt_seq import ReceiptSequence
+    if ReceiptSequence.query.first() is None:
+        db.session.add(ReceiptSequence(last_seq=0))
+        db.session.commit()

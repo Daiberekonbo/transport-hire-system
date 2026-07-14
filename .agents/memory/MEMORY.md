@@ -1,2 +1,3 @@
 - [Capital Management ledger design](capital-ledger.md) — computed/virtual ledger merging live tables, not a stored transaction log; only manual adjustments persist.
 - [THMS system-wide conventions](system-review-conventions.md) — audit-log-every-mutation rule, permanent-archive design for contracts/payments/expenses, outstanding_balance source of truth, Expense.reason can be None.
+- [Receipt numbering design](receipt-numbering.md) — global monotonic ReceiptSequence table, never resets, format THMS-YYYYMMDD-######; seeded via _seed_receipt_seq().

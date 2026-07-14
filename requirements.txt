@@ -72,3 +72,5 @@ SQLAlchemy
 typing_extensions
 Werkzeug
 WTForms
+openpyxl
+xhtml2pdf

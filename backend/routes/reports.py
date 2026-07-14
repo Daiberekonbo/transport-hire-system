@@ -167,11 +167,13 @@ def _xlsx_resp(sheet_title, col_headers, rows, filename, totals=None):
                 ws.cell(rn, 2).fill, ws.cell(rn, 2).font = tot_fill, tot_font
 
     # Auto-fit column widths
-    for col in ws.columns:
+    for ci in range(1, ncols + 1):
+        ltr  = _col_letter(ci)
         best = 10
-        ltr  = col[0].column_letter
-        for cell in col:
+        for cell in ws[ltr]:
             try:
+                if isinstance(cell, openpyxl.cell.cell.MergedCell):
+                    continue
                 best = max(best, min(len(str(cell.value or "")), 60))
             except Exception:
                 pass
@@ -568,9 +570,10 @@ def payment():
                .filter(Driver.full_name.ilike(like) | Payment.receipt_number.ilike(like)))
     q = q.order_by(Payment.payment_date.desc(), Payment.id.desc())
 
-    # Aggregates from the full (untruncated) filtered query
-    total_amount = float(q.with_entities(func.sum(Payment.amount)).scalar() or 0)
-    total_count  = q.count()
+    # Aggregates from the full (untruncated) filtered query — strip ORDER BY
+    # first, otherwise Postgres demands payment_date appear in GROUP BY.
+    total_amount = float(q.order_by(None).with_entities(func.sum(Payment.amount)).scalar() or 0)
+    total_count  = q.order_by(None).count()
 
     if date_from and date_to:
         days       = max((date_to - date_from).days + 1, 7)

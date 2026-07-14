@@ -344,6 +344,9 @@
 
 </div><!-- /.tab-content -->
 
+{% endblock %}
+
+{% block scripts %}
 <script>
 (function () {
   // Logo preview
@@ -361,7 +364,7 @@
     });
   }
 
-  // Activate the tab from URL hash, or default to #business
+  // Activate the tab from URL hash, defaulting to #business
   function activateTab(hash) {
     const target = hash || '#business';
     const trigger = document.querySelector('#adminTabs a[href="' + target + '"]');

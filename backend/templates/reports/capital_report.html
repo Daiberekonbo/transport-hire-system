@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Capital Report{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; padding-top: 0 !important; }
+  .page-content { padding: 8px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+  .thms-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-none d-print-block text-center mb-4 pb-2" style="border-bottom:2px solid #1a2341;">
+  <div style="font-size:15pt;font-weight:700;color:#1a2341;">Transport Hire Management System</div>
+  <div style="font-size:12pt;font-weight:600;color:#333;margin-top:4px;">Capital Report</div>
+  <div style="font-size:8pt;color:#666;margin-top:2px;">Generated: {{ now.strftime('%d %b %Y at %H:%M') }}</div>
+</div>
+
+<div class="page-header d-print-none">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small">
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+      <li class="breadcrumb-item active">Capital Report</li>
+    </ol></nav>
+    <h1 class="page-header-title">Capital Report</h1>
+    <div class="page-header-sub">Business capital position — vehicle purchases, income, expenditure and outstanding balances.</div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap d-print-none">
+    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+    <a href="?format=pdf"   class="btn btn-sm btn-outline-danger"><i class="bi bi-filetype-pdf me-1"></i>PDF</a>
+    <a href="?format=excel" class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-xlsx me-1"></i>Excel</a>
+    <a href="?format=csv"   class="btn btn-sm btn-outline-info"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+  </div>
+</div>
+
+{# Summary KPI grid #}
+{% set manual_net = summary.manual_added - summary.manual_withdrawn %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="thms-card h-100"><div class="thms-card-body py-3 text-center">
+      <div class="stat-icon blue mx-auto mb-2" style="width:2.2rem;height:2.2rem;font-size:.95rem;"><i class="bi bi-truck-front"></i></div>
+      <div class="fw-700 text-primary" style="font-size:.9rem;">₦{{ "{:,.0f}".format(summary.vehicle_cost) }}</div>
+      <div class="text-muted" style="font-size:.7rem;margin-top:2px;">Vehicle Investment</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="thms-card h-100"><div class="thms-card-body py-3 text-center">
+      <div class="stat-icon green mx-auto mb-2" style="width:2.2rem;height:2.2rem;font-size:.95rem;"><i class="bi bi-cash-stack"></i></div>
+      <div class="fw-700 text-success" style="font-size:.9rem;">₦{{ "{:,.0f}".format(summary.payments_received) }}</div>
+      <div class="text-muted" style="font-size:.7rem;margin-top:2px;">Payments Received</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="thms-card h-100"><div class="thms-card-body py-3 text-center">
+      <div class="stat-icon red mx-auto mb-2" style="width:2.2rem;height:2.2rem;font-size:.95rem;"><i class="bi bi-credit-card-2-back"></i></div>
+      <div class="fw-700 text-danger" style="font-size:.9rem;">₦{{ "{:,.0f}".format(summary.extra_expenditure) }}</div>
+      <div class="text-muted" style="font-size:.7rem;margin-top:2px;">Extra Expenditure</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="thms-card h-100"><div class="thms-card-body py-3 text-center">
+      <div class="stat-icon amber mx-auto mb-2" style="width:2.2rem;height:2.2rem;font-size:.95rem;"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="fw-700 {{ 'text-success' if summary.net_capital >= 0 else 'text-danger' }}" style="font-size:.9rem;">
+        {{ '+' if summary.net_capital >= 0 else '' }}₦{{ "{:,.0f}".format(summary.net_capital) }}
+      </div>
+      <div class="text-muted" style="font-size:.7rem;margin-top:2px;">Net Capital Position</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="thms-card h-100"><div class="thms-card-body py-3 text-center">
+      <div class="stat-icon red mx-auto mb-2" style="width:2.2rem;height:2.2rem;font-size:.95rem;"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="fw-700 text-danger" style="font-size:.9rem;">₦{{ "{:,.0f}".format(summary.outstanding_balance) }}</div>
+      <div class="text-muted" style="font-size:.7rem;margin-top:2px;">Total Outstanding</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-sm-4 col-lg-2">
+    <div class="thms-card h-100"><div class="thms-card-body py-3 text-center">
+      <div class="stat-icon secondary mx-auto mb-2" style="width:2.2rem;height:2.2rem;font-size:.95rem;"><i class="bi bi-sliders"></i></div>
+      <div class="fw-700 {{ 'text-success' if manual_net >= 0 else 'text-danger' }}" style="font-size:.9rem;">
+        {{ '+' if manual_net >= 0 else '' }}₦{{ "{:,.0f}".format(manual_net) }}
+      </div>
+      <div class="text-muted" style="font-size:.7rem;margin-top:2px;">Manual Adjustments</div>
+    </div></div>
+  </div>
+</div>
+
+{# Vehicle list #}
+<div class="thms-card mb-4">
+  <div class="thms-card-body border-bottom">
+    <div class="fw-600">Vehicles — Purchase Investment</div>
+    <div class="text-muted small">Fleet assets contributing to capital base.</div>
+  </div>
+  {% if vehicles %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.83rem;">
+      <thead>
+        <tr>
+          <th>Vehicle (Plate)</th>
+          <th>Make &amp; Model</th>
+          <th>Year</th>
+          <th>Purchase Cost</th>
+          <th>Purchase Date</th>
+          <th>Status</th>
+          <th>Assigned Driver</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vehicles %}
+        <tr>
+          <td class="fw-600"><a href="{{ url_for('vehicles.view', vehicle_id=v.id) }}" class="text-decoration-none">{{ v.vehicle_number }}</a></td>
+          <td class="small text-muted">{{ v.manufacturer or '' }} {{ v.model or '' }}</td>
+          <td class="small text-muted text-center">{{ v.year or '—' }}</td>
+          <td class="small fw-700 text-primary no-wrap">₦{{ "{:,.0f}".format(v.purchase_price|float) }}</td>
+          <td class="small text-muted no-wrap">{{ v.purchase_date.strftime('%d %b %Y') if v.purchase_date else '—' }}</td>
+          <td>
+            <span class="badge bg-{{ 'primary' if v.status == 'assigned' else ('success' if v.status == 'available' else ('warning' if v.status == 'maintenance' else 'secondary')) }}-subtle text-{{ 'primary' if v.status == 'assigned' else ('success' if v.status == 'available' else ('warning' if v.status == 'maintenance' else 'secondary')) }}" style="font-size:.65rem;">{{ v.status.title() }}</span>
+          </td>
+          <td class="small">{{ v.active_contract.driver.full_name if v.active_contract and v.active_contract.driver else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="table-light">
+          <td colspan="3" class="fw-700 small text-end">Total Vehicle Investment:</td>
+          <td class="fw-700 text-primary no-wrap">₦{{ "{:,.0f}".format(summary.vehicle_cost) }}</td>
+          <td colspan="3"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state py-4">
+    <i class="bi bi-truck-front d-block mb-2" style="font-size:2rem;opacity:.2;"></i>
+    <p class="mb-0 small">No vehicle purchase data available.</p>
+  </div>
+  {% endif %}
+</div>
+
+{# Manual adjustments #}
+{% if adjustments %}
+<div class="thms-card">
+  <div class="thms-card-body border-bottom">
+    <div class="fw-600">Manual Capital Adjustments</div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.83rem;">
+      <thead>
+        <tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        {% for adj in adjustments %}
+        <tr>
+          <td class="small text-muted no-wrap">{{ adj.adjustment_date.strftime('%d %b %Y') if adj.adjustment_date else '—' }}</td>
+          <td>
+            <span class="badge bg-{{ 'success' if adj.type == 'add' else 'danger' }}-subtle text-{{ 'success' if adj.type == 'add' else 'danger' }}" style="font-size:.65rem;">{{ adj.type.title() if adj.type else '—' }}</span>
+          </td>
+          <td class="fw-700 no-wrap {{ 'text-success' if adj.type == 'add' else 'text-danger' }}">
+            {{ '+' if adj.type == 'add' else '-' }}₦{{ "{:,.0f}".format(adj.amount|float) }}
+          </td>
+          <td class="small text-muted">{{ adj.description or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

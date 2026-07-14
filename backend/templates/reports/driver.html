@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Driver Report{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; padding-top: 0 !important; }
+  .page-content { padding: 8px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+  .thms-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Print-only header #}
+<div class="d-none d-print-block text-center mb-4 pb-2" style="border-bottom:2px solid #1a2341;">
+  <div style="font-size:15pt;font-weight:700;color:#1a2341;">Transport Hire Management System</div>
+  <div style="font-size:12pt;font-weight:600;color:#333;margin-top:4px;">Driver Report</div>
+  <div style="font-size:8pt;color:#666;margin-top:2px;">Generated: {{ now.strftime('%d %b %Y at %H:%M') }}</div>
+</div>
+
+{# Page header #}
+<div class="page-header d-print-none">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small">
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+      <li class="breadcrumb-item active">Driver Report</li>
+    </ol></nav>
+    <h1 class="page-header-title">Driver Report</h1>
+    <div class="page-header-sub">All drivers with contracts, payment totals and outstanding balances.</div>
+  </div>
+</div>
+
+{# Filters + Export #}
+<div class="thms-card mb-3 d-print-none">
+  <div class="thms-card-body py-3">
+    <form method="GET" class="d-flex flex-wrap align-items-end gap-2">
+
+      <div class="flex-grow-1" style="min-width:200px;max-width:320px;">
+        <label class="thms-form-label small">Search</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search }}"
+                 class="form-control form-control-sm border-start-0 ps-0"
+                 placeholder="Name or phone…" autocomplete="off">
+        </div>
+      </div>
+
+      <div style="min-width:140px;">
+        <label class="thms-form-label small">Status</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All statuses</option>
+          {% for s in ['active','suspended','archived'] %}
+          <option value="{{ s }}" {{ 'selected' if status_f == s }}>{{ s.title() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="d-flex gap-1 flex-wrap">
+        <button type="submit" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-funnel me-1"></i>Filter
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+          <i class="bi bi-printer me-1"></i>Print
+        </button>
+        <button type="submit" name="format" value="pdf" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-filetype-pdf me-1"></i>PDF
+        </button>
+        <button type="submit" name="format" value="excel" class="btn btn-sm btn-outline-success">
+          <i class="bi bi-filetype-xlsx me-1"></i>Excel
+        </button>
+        <button type="submit" name="format" value="csv" class="btn btn-sm btn-outline-info">
+          <i class="bi bi-filetype-csv me-1"></i>CSV
+        </button>
+        {% if search or status_f %}
+        <a href="{{ url_for('reports.driver') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x"></i>Clear
+        </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+</div>
+
+{# Summary strip #}
+<div class="row g-2 mb-3">
+  <div class="col-4">
+    <div class="thms-card">
+      <div class="thms-card-body py-3 text-center">
+        <div class="fw-700 fs-5">{{ pag.total if pag else rows|length }}</div>
+        <div class="text-muted small">Drivers</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="thms-card">
+      <div class="thms-card-body py-3 text-center">
+        <div class="fw-700 fs-6 text-success">₦{{ "{:,.0f}".format(total_paid) }}</div>
+        <div class="text-muted small">Total Paid</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="thms-card">
+      <div class="thms-card-body py-3 text-center">
+        <div class="fw-700 fs-6 text-danger">₦{{ "{:,.0f}".format(total_outstanding) }}</div>
+        <div class="text-muted small">Total Outstanding</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Table #}
+<div class="thms-card">
+  {% if rows %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.83rem;">
+      <thead>
+        <tr>
+          <th>Driver</th>
+          <th>Phone</th>
+          <th>Next of Kin</th>
+          <th>Guarantor</th>
+          <th>Vehicle</th>
+          <th>Contract</th>
+          <th>Weekly</th>
+          <th>Total Paid</th>
+          <th>Extra Exp.</th>
+          <th>Outstanding</th>
+          <th>Registered</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        {% set d = r.driver %}
+        {% set c = r.contract %}
+        <tr>
+          <td>
+            <a href="{{ url_for('drivers.view', driver_id=d.id) }}" class="fw-600 text-decoration-none">{{ d.full_name }}</a>
+            <div>
+              <span class="badge bg-{{ 'success' if d.status == 'active' else ('warning' if d.status == 'suspended' else 'secondary') }}-subtle text-{{ 'success' if d.status == 'active' else ('warning' if d.status == 'suspended' else 'secondary') }}" style="font-size:.65rem;">{{ d.status.title() }}</span>
+            </div>
+          </td>
+          <td class="text-muted small">{{ d.phone }}</td>
+          <td class="small">
+            {% if d.nok_name %}{{ d.nok_name }}<div class="text-muted" style="font-size:.7rem;">{{ d.nok_relationship or '' }}</div>{% else %}—{% endif %}
+          </td>
+          <td class="small text-muted">{{ d.guarantor1_name or '—' }}</td>
+          <td class="small">{{ r.vehicle.vehicle_number if r.vehicle else '—' }}</td>
+          <td class="small text-muted">{{ c.status.title() if c else '—' }}</td>
+          <td class="small fw-600 no-wrap">{{ '₦{:,.0f}'.format(c.weekly_amount|float) if c else '—' }}</td>
+          <td class="small fw-600 text-success no-wrap">₦{{ "{:,.0f}".format(r.total_paid) }}</td>
+          <td class="small text-warning no-wrap">₦{{ "{:,.0f}".format(r.total_exp) }}</td>
+          <td class="small fw-700 text-danger no-wrap">₦{{ "{:,.0f}".format(r.outstanding) }}</td>
+          <td class="small text-muted no-wrap">{{ d.date_registered.strftime('%d %b %Y') if d.date_registered else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  {% if pag and pag.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2 d-print-none">
+    <div class="small text-muted">
+      Showing <strong>{{ ((pag.page-1)*pag.per_page)+1 }}</strong>–<strong>{{ [pag.page*pag.per_page, pag.total]|min }}</strong>
+      of <strong>{{ pag.total }}</strong>
+    </div>
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {{ 'disabled' if not pag.has_prev }}">
+        <a class="page-link" href="?page={{ pag.prev_num }}&q={{ search }}&status={{ status_f }}">‹</a>
+      </li>
+      {% for pg in pag.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+        {% if pg %}<li class="page-item {{ 'active' if pg == pag.page }}"><a class="page-link" href="?page={{ pg }}&q={{ search }}&status={{ status_f }}">{{ pg }}</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {{ 'disabled' if not pag.has_next }}">
+        <a class="page-link" href="?page={{ pag.next_num }}&q={{ search }}&status={{ status_f }}">›</a>
+      </li>
+    </ul></nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-people d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+    <p class="mb-1">No drivers match the current filters.</p>
+    {% if search or status_f %}
+    <a href="{{ url_for('reports.driver') }}" class="btn btn-sm btn-outline-secondary mt-2">Clear filters</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

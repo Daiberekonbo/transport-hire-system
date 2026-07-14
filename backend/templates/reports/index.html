@@ -5,43 +5,88 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <h1 class="page-header-title">Reports</h1>
-    <div class="page-header-sub">Generate and export business reports.</div>
+    <h1 class="page-header-title">Reports &amp; Export Center</h1>
+    <div class="page-header-sub">Generate, filter and export business reports as PDF, Excel or CSV.</div>
   </div>
 </div>
 
 <div class="row g-3">
-  {% set report_types = [
-    ('driver', 'bi-people-fill', 'blue', 'Driver Report', 'Summary of all drivers, their contracts and payment status.'),
-    ('vehicle', 'bi-truck-front', 'cyan', 'Vehicle Report', 'Fleet inventory, assignment and utilisation overview.'),
-    ('payment', 'bi-cash-stack', 'green', 'Payment Report', 'All payment transactions filtered by date range.'),
-    ('weekly', 'bi-calendar-week', 'purple', 'Weekly Report', 'Collections and outstanding for the current week.'),
-    ('monthly', 'bi-calendar-month', 'amber', 'Monthly Report', 'Monthly summary of all income and outstanding balances.'),
-    ('loan', 'bi-credit-card-2-back-fill', 'red', 'Loan Report', 'Driver loans and extra expenditures outstanding.'),
+  {% set report_cards = [
+    (
+      url_for('reports.driver'),
+      'bi-people-fill', 'blue',
+      'Driver Report',
+      'All drivers with their contracts, payment totals and outstanding balances.'
+    ),
+    (
+      url_for('reports.vehicle'),
+      'bi-truck-front', 'cyan',
+      'Vehicle Report',
+      'Fleet inventory, assigned drivers, income generated and expenditure per vehicle.'
+    ),
+    (
+      url_for('reports.contract'),
+      'bi-file-earmark-text-fill', 'purple',
+      'Contract Report',
+      'Active, completed and archived hire-purchase contracts with progress and balances.'
+    ),
+    (
+      url_for('reports.payment'),
+      'bi-cash-stack', 'green',
+      'Payment Report',
+      'All payment transactions — filterable by period, date range and payment method.'
+    ),
+    (
+      url_for('reports.expense'),
+      'bi-credit-card-2-back-fill', 'red',
+      'Expenditure Report',
+      'Extra expenditures and loans broken down by category with grand totals.'
+    ),
+    (
+      url_for('reports.capital'),
+      'bi-bar-chart-fill', 'amber',
+      'Capital Report',
+      'Business capital position — vehicle purchases, income, expenditure and outstanding.'
+    ),
+    (
+      url_for('reports.audit'),
+      'bi-journal-text', 'blue',
+      'Audit Report',
+      'Export the full system audit log, filtered by user, module, action and date range.'
+    ),
+    (
+      url_for('reports.archive'),
+      'bi-archive-fill', 'secondary',
+      'Archive Report',
+      'Archived drivers, vehicles and contracts — full history with export.'
+    ),
   ] %}
-  {% for slug, icon, color, title, desc in report_types %}
+
+  {% for link, icon, color, title, desc in report_cards %}
   <div class="col-12 col-sm-6 col-xl-4">
     <div class="thms-card h-100">
       <div class="thms-card-body d-flex flex-column gap-3">
-        <div class="d-flex align-items-center gap-3">
-          <div class="stat-icon {{ color }}"><i class="bi {{ icon }}"></i></div>
+        <div class="d-flex align-items-start gap-3">
+          <div class="stat-icon {{ color }} flex-shrink-0"><i class="bi {{ icon }}"></i></div>
           <div>
             <div class="fw-600">{{ title }}</div>
-            <div class="text-muted small">{{ desc }}</div>
+            <div class="text-muted small mt-1">{{ desc }}</div>
           </div>
         </div>
-        <div class="d-flex gap-2 mt-auto">
-          <button class="btn btn-sm btn-outline-secondary flex-1" disabled>
-            <i class="bi bi-filetype-pdf me-1"></i>PDF
-          </button>
-          <button class="btn btn-sm btn-outline-secondary flex-1" disabled>
-            <i class="bi bi-filetype-xlsx me-1"></i>Excel
-          </button>
-          <button class="btn btn-sm btn-outline-secondary flex-1" disabled>
-            <i class="bi bi-filetype-csv me-1"></i>CSV
-          </button>
+        <div class="d-flex gap-2 mt-auto flex-wrap">
+          <a href="{{ link }}" class="btn btn-sm btn-primary flex-fill">
+            <i class="bi bi-eye me-1"></i>View Report
+          </a>
+          <a href="{{ link }}?format=pdf" class="btn btn-sm btn-outline-danger" title="Download PDF">
+            <i class="bi bi-filetype-pdf"></i>
+          </a>
+          <a href="{{ link }}?format=excel" class="btn btn-sm btn-outline-success" title="Download Excel">
+            <i class="bi bi-filetype-xlsx"></i>
+          </a>
+          <a href="{{ link }}?format=csv" class="btn btn-sm btn-outline-info" title="Download CSV">
+            <i class="bi bi-filetype-csv"></i>
+          </a>
         </div>
-        <div class="text-muted small text-center"><i class="bi bi-hourglass-split me-1"></i>Export coming soon</div>
       </div>
     </div>
   </div>

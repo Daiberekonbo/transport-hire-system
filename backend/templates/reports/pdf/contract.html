@@ -1,0 +1,68 @@
+{% extends "reports/pdf/_base.html" %}
+{% block title %}Contract Report{% endblock %}
+{% block report_title %}Contract Report — {{ status_f.title() if status_f else 'All Statuses' }}{% endblock %}
+{% block report_filters %}
+  {% if search %}Search: <strong>{{ search }}</strong>&nbsp;{% endif %}
+  {% if status_f %}Status: <strong>{{ status_f.title() }}</strong>{% endif %}
+{% endblock %}
+
+{% block body %}
+
+<table class="summary-grid">
+  <tr>
+    <td><div class="label">Total Contracts</div><div class="value">{{ items|length }}</div></td>
+    <td><div class="label">Total Paid</div><div class="value text-success">₦{{ "{:,.0f}".format(total_paid) }}</div></td>
+    <td><div class="label">Total Outstanding</div><div class="value text-danger">₦{{ "{:,.0f}".format(total_outstanding) }}</div></td>
+    <td><div class="label">Active</div><div class="value">{{ status_counts.get('active', 0) }}</div></td>
+    <td><div class="label">Completed</div><div class="value">{{ status_counts.get('completed', 0) }}</div></td>
+    <td><div class="label">Archived</div><div class="value">{{ status_counts.get('archived', 0) }}</div></td>
+  </tr>
+</table>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Driver</th>
+      <th>Vehicle</th>
+      <th>Status</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Weekly Amt</th>
+      <th>Duration</th>
+      <th>Wks Paid</th>
+      <th>Wks Left</th>
+      <th>Progress</th>
+      <th>Total Paid</th>
+      <th>Outstanding</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in items %}
+    <tr>
+      <td class="fw-bold text-muted">#{{ c.id }}</td>
+      <td class="fw-bold">{{ c.driver.full_name if c.driver else '—' }}</td>
+      <td class="text-muted">{{ c.vehicle.vehicle_number if c.vehicle else '—' }}</td>
+      <td><span class="badge badge-{{ 'success' if c.status == 'active' else ('warning' if c.status == 'suspended' else ('primary' if c.status == 'completed' else 'secondary')) }}">{{ c.status.title() }}</span></td>
+      <td class="text-muted">{{ c.start_date.strftime('%d %b %Y') if c.start_date else '—' }}</td>
+      <td class="text-muted">{{ c.expected_end_date.strftime('%d %b %Y') if c.expected_end_date else '—' }}</td>
+      <td class="fw-bold">₦{{ "{:,.0f}".format(c.weekly_amount|float) }}</td>
+      <td class="text-center text-muted">{{ c.years_agreed }}yr{{ 's' if c.years_agreed != 1 }}</td>
+      <td class="text-center text-success fw-bold">{{ c.weeks_completed }}</td>
+      <td class="text-center text-muted">{{ c.weeks_remaining }}</td>
+      <td class="text-center">{{ c.progress_percent }}%</td>
+      <td class="text-success fw-bold">₦{{ "{:,.0f}".format(c.total_paid) }}</td>
+      <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="11" class="text-right">Totals:</td>
+      <td class="text-success">₦{{ "{:,.0f}".format(total_paid) }}</td>
+      <td class="text-danger">₦{{ "{:,.0f}".format(total_outstanding) }}</td>
+    </tr>
+  </tfoot>
+</table>
+
+{% endblock %}

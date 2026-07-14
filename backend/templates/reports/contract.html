@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Contract Report{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; padding-top: 0 !important; }
+  .page-content { padding: 8px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+  .thms-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-none d-print-block text-center mb-4 pb-2" style="border-bottom:2px solid #1a2341;">
+  <div style="font-size:15pt;font-weight:700;color:#1a2341;">Transport Hire Management System</div>
+  <div style="font-size:12pt;font-weight:600;color:#333;margin-top:4px;">Contract Report — {{ status_f.title() if status_f else 'All' }}</div>
+  <div style="font-size:8pt;color:#666;margin-top:2px;">Generated: {{ now.strftime('%d %b %Y at %H:%M') }}</div>
+</div>
+
+<div class="page-header d-print-none">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small">
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+      <li class="breadcrumb-item active">Contract Report</li>
+    </ol></nav>
+    <h1 class="page-header-title">Contract Report</h1>
+    <div class="page-header-sub">Active, completed and archived hire-purchase contracts with payment progress.</div>
+  </div>
+</div>
+
+{# Status tab strip #}
+<div class="d-flex gap-2 mb-3 flex-wrap d-print-none">
+  {% for s, label in [('active','Active'),('suspended','Suspended'),('inactive','Inactive'),('completed','Completed'),('archived','Archived')] %}
+  <a href="?status={{ s }}&q={{ search }}"
+     class="btn btn-sm {{ 'btn-primary' if status_f == s else 'btn-outline-secondary' }}">
+    {{ label }}
+    <span class="badge {{ 'bg-white text-primary' if status_f == s else 'bg-secondary bg-opacity-25 text-secondary' }} ms-1">{{ status_counts.get(s, 0) }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="thms-card mb-3 d-print-none">
+  <div class="thms-card-body py-3">
+    <form method="GET" class="d-flex flex-wrap align-items-end gap-2">
+      <input type="hidden" name="status" value="{{ status_f }}">
+
+      <div class="flex-grow-1" style="min-width:200px;max-width:340px;">
+        <label class="thms-form-label small">Search driver or vehicle</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search }}"
+                 class="form-control form-control-sm border-start-0 ps-0"
+                 placeholder="Driver name or plate…" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="d-flex gap-1 flex-wrap">
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+        <button type="submit" name="format" value="pdf"   class="btn btn-sm btn-outline-danger"><i class="bi bi-filetype-pdf me-1"></i>PDF</button>
+        <button type="submit" name="format" value="excel" class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-xlsx me-1"></i>Excel</button>
+        <button type="submit" name="format" value="csv"   class="btn btn-sm btn-outline-info"><i class="bi bi-filetype-csv me-1"></i>CSV</button>
+        {% if search %}<a href="?status={{ status_f }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x"></i>Clear</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-2 mb-3">
+  <div class="col-4"><div class="thms-card"><div class="thms-card-body py-3 text-center">
+    <div class="fw-700 fs-5">{{ pag.total if pag else items|length }}</div>
+    <div class="text-muted small">{{ status_f.title() if status_f else 'All' }} Contracts</div>
+  </div></div></div>
+  <div class="col-4"><div class="thms-card"><div class="thms-card-body py-3 text-center">
+    <div class="fw-700 text-success" style="font-size:1rem;">₦{{ "{:,.0f}".format(total_paid) }}</div>
+    <div class="text-muted small">Total Paid</div>
+  </div></div></div>
+  <div class="col-4"><div class="thms-card"><div class="thms-card-body py-3 text-center">
+    <div class="fw-700 text-danger" style="font-size:1rem;">₦{{ "{:,.0f}".format(total_outstanding) }}</div>
+    <div class="text-muted small">Total Outstanding</div>
+  </div></div></div>
+</div>
+
+<div class="thms-card">
+  {% if items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.83rem;">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Driver</th>
+          <th>Vehicle</th>
+          <th>Status</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Weekly Amt</th>
+          <th>Duration</th>
+          <th>Wks Paid</th>
+          <th>Wks Left</th>
+          <th>Progress</th>
+          <th>Total Paid</th>
+          <th>Outstanding</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in items %}
+        <tr>
+          <td><a href="{{ url_for('contracts.view', contract_id=c.id) }}" class="fw-600 text-decoration-none text-primary small">#{{ c.id }}</a></td>
+          <td class="small fw-600">{{ c.driver.full_name if c.driver else '—' }}</td>
+          <td class="small text-muted">{{ c.vehicle.vehicle_number if c.vehicle else '—' }}</td>
+          <td>
+            <span class="badge bg-{{ 'success' if c.status == 'active' else ('warning' if c.status == 'suspended' else ('primary' if c.status == 'completed' else 'secondary')) }}-subtle text-{{ 'success' if c.status == 'active' else ('warning' if c.status == 'suspended' else ('primary' if c.status == 'completed' else 'secondary')) }}" style="font-size:.65rem;">{{ c.status.title() }}</span>
+          </td>
+          <td class="small text-muted no-wrap">{{ c.start_date.strftime('%d %b %Y') if c.start_date else '—' }}</td>
+          <td class="small text-muted no-wrap">{{ c.expected_end_date.strftime('%d %b %Y') if c.expected_end_date else '—' }}</td>
+          <td class="small fw-600 no-wrap">₦{{ "{:,.0f}".format(c.weekly_amount|float) }}</td>
+          <td class="small text-muted text-center">{{ c.years_agreed }}yr{{ 's' if c.years_agreed != 1 }}</td>
+          <td class="small text-center fw-600 text-success">{{ c.weeks_completed }}</td>
+          <td class="small text-center text-muted">{{ c.weeks_remaining }}</td>
+          <td style="min-width:100px;">
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1" style="height:6px;">
+                <div class="progress-bar bg-{{ 'success' if c.progress_percent >= 75 else ('primary' if c.progress_percent >= 50 else ('warning' if c.progress_percent >= 25 else 'danger')) }}"
+                     style="width:{{ c.progress_percent }}%;"></div>
+              </div>
+              <span class="small text-muted" style="font-size:.7rem;">{{ c.progress_percent }}%</span>
+            </div>
+          </td>
+          <td class="small fw-600 text-success no-wrap">₦{{ "{:,.0f}".format(c.total_paid) }}</td>
+          <td class="small fw-700 text-danger no-wrap">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pag and pag.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2 d-print-none">
+    <div class="small text-muted">Showing {{ ((pag.page-1)*pag.per_page)+1 }}–{{ [pag.page*pag.per_page, pag.total]|min }} of {{ pag.total }}</div>
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {{ 'disabled' if not pag.has_prev }}"><a class="page-link" href="?page={{ pag.prev_num }}&q={{ search }}&status={{ status_f }}">‹</a></li>
+      {% for pg in pag.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+        {% if pg %}<li class="page-item {{ 'active' if pg == pag.page }}"><a class="page-link" href="?page={{ pg }}&q={{ search }}&status={{ status_f }}">{{ pg }}</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {{ 'disabled' if not pag.has_next }}"><a class="page-link" href="?page={{ pag.next_num }}&q={{ search }}&status={{ status_f }}">›</a></li>
+    </ul></nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-file-earmark-text d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+    <p class="mb-1">No {{ status_f or '' }} contracts found.</p>
+    {% if search %}<a href="?status={{ status_f }}" class="btn btn-sm btn-outline-secondary mt-2">Clear search</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

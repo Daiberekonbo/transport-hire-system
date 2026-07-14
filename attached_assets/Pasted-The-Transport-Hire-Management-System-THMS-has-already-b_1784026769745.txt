@@ -1,0 +1,260 @@
+The Transport Hire Management System (THMS) has already been analyzed and all core business modules are implemented and working.
+
+DO NOT redesign the application.
+DO NOT rewrite existing business logic.
+DO NOT modify existing working modules except where integration is required.
+
+Your task is to implement the complete Reporting & Export Center.
+
+========================================================
+GENERAL REQUIREMENTS
+========================================================
+
+Replace every "Export Coming Soon" placeholder with fully functional reports.
+
+Every report must support:
+
+• View in Browser
+• Print Preview
+• Print
+• Export to PDF
+• Export to Excel (.xlsx)
+• Export to CSV
+
+Use the application's existing Bootstrap design, cards, tables, filters and navigation.
+
+========================================================
+REPORTS TO IMPLEMENT
+========================================================
+
+1. DRIVER REPORT
+
+Include:
+
+• Driver Name
+• Phone Number
+• Address
+• Next of Kin
+• Guarantor
+• Assigned Vehicle
+• Contract Status
+• Weekly Payment
+• Outstanding Balance
+• Total Payments Made
+• Total Extra Expenditure
+• Date Registered
+
+Allow filters:
+
+• Active
+• Completed
+• Archived
+• Driver Search
+
+========================================================
+
+2. VEHICLE REPORT
+
+Include:
+
+• Registration Number
+• Make
+• Model
+• Year
+• Purchase Cost
+• Current Driver
+• Contract Status
+• Total Income Generated
+• Total Repairs
+• Total Extra Expenditure
+• Current Outstanding Balance
+
+========================================================
+
+3. CONTRACT REPORT
+
+Include:
+
+• Active Contracts
+• Completed Contracts
+• Archived Contracts
+
+For each contract show:
+
+• Driver
+• Vehicle
+• Weekly Amount
+• Duration
+• Weeks Paid
+• Weeks Remaining
+• Progress %
+• Outstanding Balance
+
+========================================================
+
+4. PAYMENT REPORT
+
+Allow:
+
+Daily
+Weekly
+Monthly
+Yearly
+Custom Date Range
+
+Display:
+
+• Payment Date
+• Driver
+• Vehicle
+• Amount
+• Payment Method
+• Recorded By
+
+Show:
+
+• Total Payments
+• Average Weekly Collection
+• Total Collection
+
+========================================================
+
+5. EXTRA EXPENDITURE REPORT
+
+Break down by category:
+
+• Driver Loan
+• Repair
+• Fuel
+• Insurance
+• Tyres
+• Other
+
+Show totals for every category.
+
+========================================================
+
+6. CAPITAL REPORT
+
+Show:
+
+• Vehicle Purchases
+• Manual Capital Added
+• Manual Withdrawals
+• Payments Received
+• Extra Expenditure
+• Current Capital
+• Outstanding Contracts
+
+========================================================
+
+7. AUDIT REPORT
+
+Allow export of audit logs filtered by:
+
+• User
+• Module
+• Action
+• Date Range
+
+========================================================
+
+8. ARCHIVE REPORT
+
+Generate reports for archived:
+
+• Drivers
+• Vehicles
+• Contracts
+
+========================================================
+FILTERS
+========================================================
+
+Every report should support:
+
+• Search
+• Date Range
+• Sorting
+• Pagination
+• Export only filtered results
+
+========================================================
+EXPORTS
+========================================================
+
+CSV
+- UTF-8 encoded
+- Proper column headers
+
+Excel
+- Professional formatting
+- Auto column widths
+- Bold headers
+- Worksheet title
+
+PDF
+- Business header
+- Company information
+- Report title
+- Generated date & time
+- Page numbers
+- Totals and summary section
+- Professional printable layout
+
+========================================================
+PRINTING
+========================================================
+
+Every report should have:
+
+• Print Preview
+• Print Button
+
+The printed report should be clean and printer-friendly.
+
+========================================================
+VALIDATION
+========================================================
+
+Handle:
+
+• Empty datasets
+• Invalid filters
+• Invalid date ranges
+
+Display friendly messages instead of errors.
+
+========================================================
+PERFORMANCE
+========================================================
+
+Optimize queries to avoid unnecessary database calls.
+
+========================================================
+TESTING
+========================================================
+
+After implementation:
+
+1. Test every report.
+2. Test every export format.
+3. Test print preview.
+4. Verify downloaded files open correctly.
+5. Verify totals match dashboard calculations.
+
+========================================================
+DELIVERABLE
+========================================================
+
+When complete, provide:
+
+• Files Created
+• Files Modified
+• Database Changes (if any)
+• Export libraries used
+• Reports implemented
+• Features completed
+• Any assumptions made
+
+Do not leave any "Coming Soon" placeholders anywhere in the Reports module.

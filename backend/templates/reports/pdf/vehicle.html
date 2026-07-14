@@ -1,0 +1,67 @@
+{% extends "reports/pdf/_base.html" %}
+{% block title %}Vehicle Report{% endblock %}
+{% block report_title %}Vehicle Report{% endblock %}
+{% block report_filters %}
+  {% if search %}Search: <strong>{{ search }}</strong>&nbsp;{% endif %}
+  {% if status_f %}Status: <strong>{{ status_f.title() }}</strong>{% endif %}
+{% endblock %}
+
+{% block body %}
+
+<table class="summary-grid">
+  <tr>
+    <td><div class="label">Total Vehicles</div><div class="value">{{ rows|length }}</div></td>
+    <td><div class="label">Total Income</div><div class="value text-success">₦{{ "{:,.0f}".format(total_income) }}</div></td>
+    <td><div class="label">Total Expenditure</div><div class="value text-warning">₦{{ "{:,.0f}".format(total_expenditure) }}</div></td>
+    <td><div class="label">Total Outstanding</div><div class="value text-danger">₦{{ "{:,.0f}".format(total_outstanding) }}</div></td>
+    <td><div class="label">Assigned</div><div class="value">{{ rows|selectattr('driver','ne',None)|list|length }}</div></td>
+    <td><div class="label">Status Filter</div><div class="value" style="font-size:8pt;">{{ status_f.title() if status_f else 'All' }}</div></td>
+  </tr>
+</table>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Plate / Fleet No.</th>
+      <th>Make &amp; Model</th>
+      <th>Year</th>
+      <th>Purchase Cost</th>
+      <th>Status</th>
+      <th>Driver</th>
+      <th>Contract</th>
+      <th>Income</th>
+      <th>Repairs</th>
+      <th>Total Exp.</th>
+      <th>Outstanding</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    {% set v = r.vehicle %}
+    <tr>
+      <td class="fw-bold">{{ v.vehicle_number }}</td>
+      <td class="text-muted">{{ v.manufacturer or '' }} {{ v.model or '' }}</td>
+      <td class="text-center text-muted">{{ v.year or '—' }}</td>
+      <td>₦{{ "{:,.0f}".format(v.purchase_price|float) if v.purchase_price else '—' }}</td>
+      <td><span class="badge badge-{{ 'success' if v.status == 'available' else ('primary' if v.status == 'assigned' else ('warning' if v.status == 'maintenance' else 'secondary')) }}">{{ v.status.title() }}</span></td>
+      <td>{{ r.driver.full_name if r.driver else '—' }}</td>
+      <td>{{ r.contract.status.title() if r.contract else '—' }}</td>
+      <td class="text-success fw-bold">₦{{ "{:,.0f}".format(r.income) }}</td>
+      <td class="text-warning">₦{{ "{:,.0f}".format(r.repairs) }}</td>
+      <td class="text-muted">₦{{ "{:,.0f}".format(r.total_exp) }}</td>
+      <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(r.outstanding) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="7" class="text-right">Totals:</td>
+      <td class="text-success">₦{{ "{:,.0f}".format(total_income) }}</td>
+      <td></td>
+      <td class="text-muted">₦{{ "{:,.0f}".format(total_expenditure) }}</td>
+      <td class="text-danger">₦{{ "{:,.0f}".format(total_outstanding) }}</td>
+    </tr>
+  </tfoot>
+</table>
+
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "reports/pdf/_base.html" %}
+{% block title %}Driver Report{% endblock %}
+{% block report_title %}Driver Report{% endblock %}
+{% block report_meta %}
+  Generated: {{ now.strftime('%d %B %Y at %H:%M') }}
+{% endblock %}
+{% block report_filters %}
+  {% if search %}Search: <strong>{{ search }}</strong>&nbsp;{% endif %}
+  {% if status_f %}Status: <strong>{{ status_f.title() }}</strong>{% endif %}
+{% endblock %}
+
+{% block body %}
+
+<table class="summary-grid">
+  <tr>
+    <td><div class="label">Total Drivers</div><div class="value">{{ rows|length }}</div></td>
+    <td><div class="label">Total Paid</div><div class="value text-success">₦{{ "{:,.0f}".format(total_paid) }}</div></td>
+    <td><div class="label">Total Outstanding</div><div class="value text-danger">₦{{ "{:,.0f}".format(total_outstanding) }}</div></td>
+    <td><div class="label">Active</div><div class="value">{{ rows|selectattr('driver.status','eq','active')|list|length }}</div></td>
+    <td><div class="label">With Contracts</div><div class="value">{{ rows|selectattr('contract','ne',None)|list|length }}</div></td>
+    <td><div class="label">Filter</div><div class="value" style="font-size:8pt;">{{ status_f.title() if status_f else 'All' }}</div></td>
+  </tr>
+</table>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Driver Name</th>
+      <th>Phone</th>
+      <th>Status</th>
+      <th>Vehicle</th>
+      <th>Contract</th>
+      <th>Weekly Amt</th>
+      <th>Total Paid</th>
+      <th>Extra Exp.</th>
+      <th>Outstanding</th>
+      <th>Registered</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    {% set d = r.driver %}
+    {% set c = r.contract %}
+    <tr>
+      <td class="fw-bold">{{ d.full_name }}</td>
+      <td class="text-muted">{{ d.phone or '—' }}</td>
+      <td><span class="badge badge-{{ 'success' if d.status == 'active' else ('warning' if d.status == 'suspended' else 'secondary') }}">{{ d.status.title() }}</span></td>
+      <td>{{ r.vehicle.vehicle_number if r.vehicle else '—' }}</td>
+      <td>{{ c.status.title() if c else '—' }}</td>
+      <td>{{ '₦{:,.0f}'.format(c.weekly_amount|float) if c else '—' }}</td>
+      <td class="text-success fw-bold">₦{{ "{:,.0f}".format(r.total_paid) }}</td>
+      <td class="text-warning">₦{{ "{:,.0f}".format(r.total_exp) }}</td>
+      <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(r.outstanding) }}</td>
+      <td class="text-muted">{{ d.date_registered.strftime('%d %b %Y') if d.date_registered else '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="6" class="text-right">Totals:</td>
+      <td class="text-success">₦{{ "{:,.0f}".format(total_paid) }}</td>
+      <td></td>
+      <td class="text-danger">₦{{ "{:,.0f}".format(total_outstanding) }}</td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+
+{% endblock %}

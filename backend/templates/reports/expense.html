@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Expenditure Report{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; padding-top: 0 !important; }
+  .page-content { padding: 8px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+  .thms-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-none d-print-block text-center mb-4 pb-2" style="border-bottom:2px solid #1a2341;">
+  <div style="font-size:15pt;font-weight:700;color:#1a2341;">Transport Hire Management System</div>
+  <div style="font-size:12pt;font-weight:600;color:#333;margin-top:4px;">Expenditure Report</div>
+  {% if date_from_s or date_to_s %}<div style="font-size:9pt;color:#555;margin-top:2px;">{{ date_from_s or '' }} — {{ date_to_s or '' }}</div>{% endif %}
+  <div style="font-size:8pt;color:#666;margin-top:2px;">Generated: {{ now.strftime('%d %b %Y at %H:%M') }}</div>
+</div>
+
+<div class="page-header d-print-none">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small">
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+      <li class="breadcrumb-item active">Expenditure Report</li>
+    </ol></nav>
+    <h1 class="page-header-title">Expenditure Report</h1>
+    <div class="page-header-sub">Extra expenditures and loans broken down by category with grand totals.</div>
+  </div>
+</div>
+
+<div class="thms-card mb-3 d-print-none">
+  <div class="thms-card-body py-3">
+    <form method="GET" class="d-flex flex-wrap align-items-end gap-2">
+
+      <div style="min-width:130px;">
+        <label class="thms-form-label small">From</label>
+        <input type="date" name="date_from" value="{{ date_from_s }}" class="form-control form-control-sm">
+      </div>
+      <div style="min-width:130px;">
+        <label class="thms-form-label small">To</label>
+        <input type="date" name="date_to" value="{{ date_to_s }}" class="form-control form-control-sm">
+      </div>
+
+      <div style="min-width:170px;">
+        <label class="thms-form-label small">Category</label>
+        <select name="category" class="form-select form-select-sm">
+          <option value="">All categories</option>
+          {% for cat_key, cat_label in categories.items() %}
+          <option value="{{ cat_key }}" {{ 'selected' if category_f == cat_key }}>{{ cat_label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="flex-grow-1" style="min-width:180px;max-width:280px;">
+        <label class="thms-form-label small">Search</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search }}"
+                 class="form-control form-control-sm border-start-0 ps-0"
+                 placeholder="Driver or description…" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="d-flex gap-1 flex-wrap">
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+        <button type="submit" name="format" value="pdf"   class="btn btn-sm btn-outline-danger"><i class="bi bi-filetype-pdf me-1"></i>PDF</button>
+        <button type="submit" name="format" value="excel" class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-xlsx me-1"></i>Excel</button>
+        <button type="submit" name="format" value="csv"   class="btn btn-sm btn-outline-info"><i class="bi bi-filetype-csv me-1"></i>CSV</button>
+        {% if search or category_f or date_from_s or date_to_s %}
+        <a href="{{ url_for('reports.expense') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x"></i>Clear</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{# Category totals strip #}
+{% if cat_totals %}
+<div class="row g-2 mb-3">
+  {% for cat, amt in cat_totals.items() %}
+  <div class="col-6 col-sm-4 col-lg-3">
+    <div class="thms-card">
+      <div class="thms-card-body py-2 px-3">
+        <div class="small text-muted">{{ categories.get(cat, cat.replace('_',' ').title()) }}</div>
+        <div class="fw-700 text-danger">₦{{ "{:,.0f}".format(amt) }}</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="col-6 col-sm-4 col-lg-3">
+    <div class="thms-card border-danger-subtle">
+      <div class="thms-card-body py-2 px-3">
+        <div class="small text-muted fw-600">Grand Total</div>
+        <div class="fw-700 fs-6 text-danger">₦{{ "{:,.0f}".format(grand_total) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="thms-card">
+  {% if items %}
+  <div style="overflow-x:auto;">
+    <table class="thms-table" style="font-size:.83rem;">
+      <thead>
+        <tr>
+          <th>Ref #</th>
+          <th>Date</th>
+          <th>Driver</th>
+          <th>Vehicle</th>
+          <th>Category</th>
+          <th>Title / Description</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in items %}
+        <tr>
+          <td class="small text-muted">{{ e.expense_number or ('#' ~ e.id) }}</td>
+          <td class="small no-wrap text-muted">{{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}</td>
+          <td class="small fw-600">{{ e.driver.full_name if e.driver else '—' }}</td>
+          <td class="small text-muted">{{ e.vehicle.vehicle_number if e.vehicle else '—' }}</td>
+          <td class="small">
+            <span class="badge bg-warning-subtle text-warning" style="font-size:.65rem;">{{ e.category_label if e.category_label is defined else e.category.replace('_',' ').title() }}</span>
+          </td>
+          <td class="small text-muted">{{ e.display_title if e.display_title is defined else (e.title or e.description or '—') }}</td>
+          <td class="fw-700 text-danger no-wrap">₦{{ "{:,.0f}".format(e.amount|float) }}</td>
+          <td class="small">
+            <span class="badge bg-secondary-subtle text-secondary" style="font-size:.65rem;">{{ e.status.replace('_',' ').title() if e.status else '—' }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="table-light">
+          <td colspan="6" class="fw-700 small text-end">Grand Total:</td>
+          <td class="fw-700 text-danger no-wrap">₦{{ "{:,.0f}".format(grand_total) }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {% if pag and pag.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2 d-print-none">
+    <div class="small text-muted">Showing {{ ((pag.page-1)*pag.per_page)+1 }}–{{ [pag.page*pag.per_page, pag.total]|min }} of {{ pag.total }}</div>
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {{ 'disabled' if not pag.has_prev }}"><a class="page-link" href="?page={{ pag.prev_num }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}&category={{ category_f }}&q={{ search }}">‹</a></li>
+      {% for pg in pag.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+        {% if pg %}<li class="page-item {{ 'active' if pg == pag.page }}"><a class="page-link" href="?page={{ pg }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}&category={{ category_f }}&q={{ search }}">{{ pg }}</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {{ 'disabled' if not pag.has_next }}"><a class="page-link" href="?page={{ pag.next_num }}&date_from={{ date_from_s }}&date_to={{ date_to_s }}&category={{ category_f }}&q={{ search }}">›</a></li>
+    </ul></nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state py-5">
+    <i class="bi bi-credit-card-2-back d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+    <p class="mb-1">No expenditures found for the selected filters.</p>
+    <a href="{{ url_for('reports.expense') }}" class="btn btn-sm btn-outline-secondary mt-2">Clear filters</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

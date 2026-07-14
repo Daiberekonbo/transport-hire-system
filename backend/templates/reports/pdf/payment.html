@@ -1,0 +1,60 @@
+{% extends "reports/pdf/_base.html" %}
+{% block title %}Payment Report{% endblock %}
+{% block report_title %}Payment Report{% endblock %}
+{% block report_filters %}
+  {% if period %}Period: <strong>{{ period.title() }}</strong>&nbsp;{% endif %}
+  {% if df_s %}From: <strong>{{ df_s }}</strong>&nbsp;{% endif %}
+  {% if dt_s %}To: <strong>{{ dt_s }}</strong>&nbsp;{% endif %}
+  {% if method_f %}Method: <strong>{{ method_f.replace('_',' ').title() }}</strong>{% endif %}
+{% endblock %}
+
+{% block body %}
+
+<table class="summary-grid">
+  <tr>
+    <td><div class="label">Total Payments</div><div class="value">{{ items|length }}</div></td>
+    <td><div class="label">Total Amount</div><div class="value text-success">₦{{ "{:,.0f}".format(total_amount) }}</div></td>
+    <td><div class="label">Period</div><div class="value" style="font-size:8pt;">{{ period.title() if period else 'All Time' }}</div></td>
+    <td><div class="label">Date From</div><div class="value" style="font-size:8pt;">{{ df_s or '—' }}</div></td>
+    <td><div class="label">Date To</div><div class="value" style="font-size:8pt;">{{ dt_s or '—' }}</div></td>
+    <td><div class="label">Method</div><div class="value" style="font-size:8pt;">{{ method_f.replace('_',' ').title() if method_f else 'All' }}</div></td>
+  </tr>
+</table>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Receipt #</th>
+      <th>Date</th>
+      <th>Driver</th>
+      <th>Vehicle</th>
+      <th>Amount</th>
+      <th>Method</th>
+      <th>Reference</th>
+      <th>Recorded By</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in items %}
+    <tr>
+      <td class="fw-bold text-muted">{{ p.receipt_number or '—' }}</td>
+      <td class="text-muted">{{ p.payment_date.strftime('%d %b %Y') if p.payment_date else '—' }}</td>
+      <td class="fw-bold">{{ p.contract.driver.full_name if p.contract and p.contract.driver else '—' }}</td>
+      <td class="text-muted">{{ p.contract.vehicle.vehicle_number if p.contract and p.contract.vehicle else '—' }}</td>
+      <td class="text-success fw-bold">₦{{ "{:,.0f}".format(p.amount|float) }}</td>
+      <td>{{ (p.payment_method or '').replace('_',' ').title() }}</td>
+      <td class="text-muted">{{ p.reference or '—' }}</td>
+      <td class="text-muted">{{ users_map.get(p.recorded_by, 'System') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="4" class="text-right">Total:</td>
+      <td class="text-success fw-bold">₦{{ "{:,.0f}".format(total_amount) }}</td>
+      <td colspan="3"></td>
+    </tr>
+  </tfoot>
+</table>
+
+{% endblock %}

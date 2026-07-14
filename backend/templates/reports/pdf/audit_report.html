@@ -1,0 +1,56 @@
+{% extends "reports/pdf/_base.html" %}
+{% block title %}Audit Log Report{% endblock %}
+{% block report_title %}Audit Log Report{% endblock %}
+{% block report_filters %}
+  {% if date_from_s %}From: <strong>{{ date_from_s }}</strong>&nbsp;{% endif %}
+  {% if date_to_s %}To: <strong>{{ date_to_s }}</strong>&nbsp;{% endif %}
+  {% if module_f %}Module: <strong>{{ module_f.title() }}</strong>&nbsp;{% endif %}
+  {% if action_f %}Action: <strong>{{ action_f.replace('_',' ').title() }}</strong>{% endif %}
+{% endblock %}
+
+{% block body %}
+
+<table class="summary-grid">
+  <tr>
+    <td><div class="label">Total Entries</div><div class="value">{{ items|length }}</div></td>
+    <td><div class="label">Module</div><div class="value" style="font-size:8pt;">{{ module_f.title() if module_f else 'All' }}</div></td>
+    <td><div class="label">Action</div><div class="value" style="font-size:8pt;">{{ action_f.replace('_',' ').title() if action_f else 'All' }}</div></td>
+    <td><div class="label">From</div><div class="value" style="font-size:8pt;">{{ date_from_s or '—' }}</div></td>
+    <td><div class="label">To</div><div class="value" style="font-size:8pt;">{{ date_to_s or '—' }}</div></td>
+    <td></td>
+  </tr>
+</table>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>User</th>
+      <th>Module</th>
+      <th>Action</th>
+      <th>Record ID</th>
+      <th>Description</th>
+      <th>IP Address</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for log in items %}
+    {% set act = log.action or '' %}
+    <tr>
+      <td class="text-muted" style="font-size:7.5pt;">{{ log.created_at.strftime('%d %b %Y %H:%M:%S') if log.created_at else '—' }}</td>
+      <td>{{ users_map.get(log.user_id, 'System') }}</td>
+      <td><span class="badge badge-primary">{{ log.entity_type or '—' }}</span></td>
+      <td>
+        <span class="badge badge-{{ 'success' if 'create' in act else ('danger' if 'delete' in act else ('warning' if 'archive' in act else 'secondary')) }}">
+          {{ act.replace('_',' ').title() }}
+        </span>
+      </td>
+      <td class="text-muted text-center">{{ ('#' ~ log.entity_id) if log.entity_id else '—' }}</td>
+      <td class="text-muted" style="font-size:7.5pt;">{{ log.description or '—' }}</td>
+      <td class="text-muted" style="font-size:7.5pt;">{{ log.ip_address or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

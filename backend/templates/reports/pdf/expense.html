@@ -1,0 +1,83 @@
+{% extends "reports/pdf/_base.html" %}
+{% block title %}Expenditure Report{% endblock %}
+{% block report_title %}Expenditure Report{% endblock %}
+{% block report_filters %}
+  {% if date_from_s %}From: <strong>{{ date_from_s }}</strong>&nbsp;{% endif %}
+  {% if date_to_s %}To: <strong>{{ date_to_s }}</strong>&nbsp;{% endif %}
+  {% if category_f %}Category: <strong>{{ category_f.replace('_',' ').title() }}</strong>{% endif %}
+{% endblock %}
+
+{% block body %}
+
+<table class="summary-grid">
+  <tr>
+    <td><div class="label">Total Entries</div><div class="value">{{ items|length }}</div></td>
+    <td><div class="label">Grand Total</div><div class="value text-danger">₦{{ "{:,.0f}".format(grand_total) }}</div></td>
+    <td><div class="label">Date From</div><div class="value" style="font-size:8pt;">{{ date_from_s or '—' }}</div></td>
+    <td><div class="label">Date To</div><div class="value" style="font-size:8pt;">{{ date_to_s or '—' }}</div></td>
+    <td><div class="label">Category</div><div class="value" style="font-size:8pt;">{{ category_f.replace('_',' ').title() if category_f else 'All' }}</div></td>
+    <td></td>
+  </tr>
+</table>
+
+{% if cat_totals %}
+<div class="section-heading">Category Breakdown</div>
+<table class="data-table" style="width:50%;">
+  <thead>
+    <tr><th>Category</th><th>Total Amount</th></tr>
+  </thead>
+  <tbody>
+    {% for cat, amt in cat_totals.items() %}
+    <tr>
+      <td>{{ categories.get(cat, cat.replace('_',' ').title()) }}</td>
+      <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(amt) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td class="text-right fw-bold">Grand Total:</td>
+      <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(grand_total) }}</td>
+    </tr>
+  </tfoot>
+</table>
+{% endif %}
+
+<div class="section-heading">Expenditure Detail</div>
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Ref #</th>
+      <th>Date</th>
+      <th>Driver</th>
+      <th>Vehicle</th>
+      <th>Category</th>
+      <th>Title / Description</th>
+      <th>Amount</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in items %}
+    <tr>
+      <td class="text-muted">{{ e.expense_number or ('#' ~ e.id) }}</td>
+      <td class="text-muted">{{ e.expense_date.strftime('%d %b %Y') if e.expense_date else '—' }}</td>
+      <td class="fw-bold">{{ e.driver.full_name if e.driver else '—' }}</td>
+      <td class="text-muted">{{ e.vehicle.vehicle_number if e.vehicle else '—' }}</td>
+      <td><span class="badge badge-warning">{{ e.category_label if e.category_label is defined else e.category.replace('_',' ').title() }}</span></td>
+      <td class="text-muted">{{ e.display_title if e.display_title is defined else (e.title or e.description or '—') }}</td>
+      <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(e.amount|float) }}</td>
+      <td>{{ e.status.replace('_',' ').title() if e.status else '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="6" class="text-right">Grand Total:</td>
+      <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(grand_total) }}</td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+
+{% endblock %}

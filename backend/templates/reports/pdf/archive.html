@@ -1,0 +1,83 @@
+{% extends "reports/pdf/_base.html" %}
+{% block title %}Archive Report{% endblock %}
+{% block report_title %}Archive Report — {{ tab.title() if tab else 'All' }}{% endblock %}
+{% block report_filters %}
+  Tab: <strong>{{ tab.title() if tab else 'Drivers' }}</strong>
+  {% if search %}&nbsp; Search: <strong>{{ search }}</strong>{% endif %}
+{% endblock %}
+
+{% block body %}
+
+<table class="summary-grid">
+  <tr>
+    <td><div class="label">Archived Drivers</div><div class="value">{{ driver_count }}</div></td>
+    <td><div class="label">Archived Vehicles</div><div class="value">{{ vehicle_count }}</div></td>
+    <td><div class="label">Archived Contracts</div><div class="value">{{ contract_count }}</div></td>
+    <td><div class="label">Viewing</div><div class="value" style="font-size:8pt;">{{ tab.title() if tab else '—' }}</div></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
+
+{% if tab == 'drivers' %}
+  <div class="section-heading">Archived Drivers</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Driver Name</th><th>Phone</th><th>Address</th><th>Date Registered</th><th>Date Archived</th></tr>
+    </thead>
+    <tbody>
+      {% for d in items %}
+      <tr>
+        <td class="fw-bold">{{ d.full_name }}</td>
+        <td class="text-muted">{{ d.phone or '—' }}</td>
+        <td class="text-muted">{{ (d.address or '—')[:60] }}{% if d.address and d.address|length > 60 %}…{% endif %}</td>
+        <td class="text-muted">{{ d.date_registered.strftime('%d %b %Y') if d.date_registered else '—' }}</td>
+        <td class="text-muted">{{ d.date_archived.strftime('%d %b %Y') if d.date_archived else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% elif tab == 'vehicles' %}
+  <div class="section-heading">Archived Vehicles</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Plate / Fleet No.</th><th>Make &amp; Model</th><th>Year</th><th>Purchase Cost</th><th>Date Archived</th></tr>
+    </thead>
+    <tbody>
+      {% for v in items %}
+      <tr>
+        <td class="fw-bold">{{ v.vehicle_number }}</td>
+        <td class="text-muted">{{ v.manufacturer or '' }} {{ v.model or '' }}</td>
+        <td class="text-center text-muted">{{ v.year or '—' }}</td>
+        <td>₦{{ "{:,.0f}".format(v.purchase_price|float) if v.purchase_price else '—' }}</td>
+        <td class="text-muted">{{ v.date_archived.strftime('%d %b %Y') if v.date_archived else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% elif tab == 'contracts' %}
+  <div class="section-heading">Archived Contracts</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>#</th><th>Driver</th><th>Vehicle</th><th>Weekly Amt</th><th>Total Paid</th><th>Outstanding</th><th>End Date</th><th>Archived</th></tr>
+    </thead>
+    <tbody>
+      {% for c in items %}
+      <tr>
+        <td class="fw-bold text-muted">#{{ c.id }}</td>
+        <td class="fw-bold">{{ c.driver.full_name if c.driver else '—' }}</td>
+        <td class="text-muted">{{ c.vehicle.vehicle_number if c.vehicle else '—' }}</td>
+        <td class="fw-bold">₦{{ "{:,.0f}".format(c.weekly_amount|float) }}</td>
+        <td class="text-success fw-bold">₦{{ "{:,.0f}".format(c.total_paid) }}</td>
+        <td class="text-danger fw-bold">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</td>
+        <td class="text-muted">{{ c.expected_end_date.strftime('%d %b %Y') if c.expected_end_date else '—' }}</td>
+        <td class="text-muted">{{ c.date_archived.strftime('%d %b %Y') if c.date_archived else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+{% endblock %}

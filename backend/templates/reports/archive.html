@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Archive Report{% endblock %}
+{% block page_title %}Reports{% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; padding-top: 0 !important; }
+  .page-content { padding: 8px !important; }
+  .thms-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+  .thms-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-none d-print-block text-center mb-4 pb-2" style="border-bottom:2px solid #1a2341;">
+  <div style="font-size:15pt;font-weight:700;color:#1a2341;">Transport Hire Management System</div>
+  <div style="font-size:12pt;font-weight:600;color:#333;margin-top:4px;">Archive Report — {{ tab.title() if tab else 'All' }}</div>
+  <div style="font-size:8pt;color:#666;margin-top:2px;">Generated: {{ now.strftime('%d %b %Y at %H:%M') }}</div>
+</div>
+
+<div class="page-header d-print-none">
+  <div>
+    <nav aria-label="breadcrumb"><ol class="breadcrumb mb-1 small">
+      <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Reports</a></li>
+      <li class="breadcrumb-item active">Archive Report</li>
+    </ol></nav>
+    <h1 class="page-header-title">Archive Report</h1>
+    <div class="page-header-sub">Archived drivers, vehicles and contracts — full history with export.</div>
+  </div>
+</div>
+
+{# Tab strip #}
+<div class="d-flex gap-2 mb-3 flex-wrap d-print-none">
+  <a href="?tab=drivers&q={{ search }}"
+     class="btn btn-sm {{ 'btn-primary' if tab == 'drivers' else 'btn-outline-secondary' }}">
+    <i class="bi bi-people me-1"></i>Drivers
+    <span class="badge {{ 'bg-white text-primary' if tab == 'drivers' else 'bg-secondary bg-opacity-25 text-secondary' }} ms-1">{{ driver_count }}</span>
+  </a>
+  <a href="?tab=vehicles&q={{ search }}"
+     class="btn btn-sm {{ 'btn-primary' if tab == 'vehicles' else 'btn-outline-secondary' }}">
+    <i class="bi bi-truck-front me-1"></i>Vehicles
+    <span class="badge {{ 'bg-white text-primary' if tab == 'vehicles' else 'bg-secondary bg-opacity-25 text-secondary' }} ms-1">{{ vehicle_count }}</span>
+  </a>
+  <a href="?tab=contracts&q={{ search }}"
+     class="btn btn-sm {{ 'btn-primary' if tab == 'contracts' else 'btn-outline-secondary' }}">
+    <i class="bi bi-file-earmark-text me-1"></i>Contracts
+    <span class="badge {{ 'bg-white text-primary' if tab == 'contracts' else 'bg-secondary bg-opacity-25 text-secondary' }} ms-1">{{ contract_count }}</span>
+  </a>
+</div>
+
+<div class="thms-card mb-3 d-print-none">
+  <div class="thms-card-body py-3">
+    <form method="GET" class="d-flex flex-wrap align-items-end gap-2">
+      <input type="hidden" name="tab" value="{{ tab }}">
+
+      <div class="flex-grow-1" style="min-width:200px;max-width:340px;">
+        <label class="thms-form-label small">Search</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search }}"
+                 class="form-control form-control-sm border-start-0 ps-0"
+                 placeholder="Name, plate or ID…" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="d-flex gap-1 flex-wrap">
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+        <button type="submit" name="format" value="pdf"   class="btn btn-sm btn-outline-danger"><i class="bi bi-filetype-pdf me-1"></i>PDF</button>
+        <button type="submit" name="format" value="excel" class="btn btn-sm btn-outline-success"><i class="bi bi-filetype-xlsx me-1"></i>Excel</button>
+        <button type="submit" name="format" value="csv"   class="btn btn-sm btn-outline-info"><i class="bi bi-filetype-csv me-1"></i>CSV</button>
+        {% if search %}<a href="?tab={{ tab }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x"></i>Clear</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="thms-card">
+  {% if tab == 'drivers' %}
+
+    {% if items %}
+    <div style="overflow-x:auto;">
+      <table class="thms-table" style="font-size:.83rem;">
+        <thead>
+          <tr><th>Driver Name</th><th>Phone</th><th>Address</th><th>Registered</th><th>Archived Date</th></tr>
+        </thead>
+        <tbody>
+          {% for d in items %}
+          <tr>
+            <td class="fw-600 small">{{ d.full_name }}</td>
+            <td class="small text-muted">{{ d.phone or '—' }}</td>
+            <td class="small text-muted">{{ (d.address or '—')[:50] }}{% if d.address and d.address|length > 50 %}…{% endif %}</td>
+            <td class="small text-muted no-wrap">{{ d.date_registered.strftime('%d %b %Y') if d.date_registered else '—' }}</td>
+            <td class="small text-muted no-wrap">{{ d.date_archived.strftime('%d %b %Y') if d.date_archived else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-people d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+      <p class="mb-0">No archived drivers{% if search %} matching "{{ search }}"{% endif %}.</p>
+    </div>
+    {% endif %}
+
+  {% elif tab == 'vehicles' %}
+
+    {% if items %}
+    <div style="overflow-x:auto;">
+      <table class="thms-table" style="font-size:.83rem;">
+        <thead>
+          <tr><th>Plate / Fleet No.</th><th>Make &amp; Model</th><th>Year</th><th>Purchase Cost</th><th>Archived Date</th></tr>
+        </thead>
+        <tbody>
+          {% for v in items %}
+          <tr>
+            <td class="fw-600 small">{{ v.vehicle_number }}</td>
+            <td class="small text-muted">{{ v.manufacturer or '' }} {{ v.model or '' }}</td>
+            <td class="small text-muted text-center">{{ v.year or '—' }}</td>
+            <td class="small no-wrap fw-600">₦{{ "{:,.0f}".format(v.purchase_price|float) if v.purchase_price else '—' }}</td>
+            <td class="small text-muted no-wrap">{{ v.date_archived.strftime('%d %b %Y') if v.date_archived else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-truck-front d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+      <p class="mb-0">No archived vehicles{% if search %} matching "{{ search }}"{% endif %}.</p>
+    </div>
+    {% endif %}
+
+  {% elif tab == 'contracts' %}
+
+    {% if items %}
+    <div style="overflow-x:auto;">
+      <table class="thms-table" style="font-size:.83rem;">
+        <thead>
+          <tr><th>#</th><th>Driver</th><th>Vehicle</th><th>Weekly Amt</th><th>Duration</th><th>Total Paid</th><th>Outstanding</th><th>End Date</th><th>Archived</th></tr>
+        </thead>
+        <tbody>
+          {% for c in items %}
+          <tr>
+            <td class="small text-primary fw-600">#{{ c.id }}</td>
+            <td class="small fw-600">{{ c.driver.full_name if c.driver else '—' }}</td>
+            <td class="small text-muted">{{ c.vehicle.vehicle_number if c.vehicle else '—' }}</td>
+            <td class="small fw-600 no-wrap">₦{{ "{:,.0f}".format(c.weekly_amount|float) }}</td>
+            <td class="small text-muted text-center">{{ c.years_agreed }}yr{{ 's' if c.years_agreed != 1 }}</td>
+            <td class="small text-success fw-600 no-wrap">₦{{ "{:,.0f}".format(c.total_paid) }}</td>
+            <td class="small text-danger fw-600 no-wrap">₦{{ "{:,.0f}".format(c.outstanding_balance) }}</td>
+            <td class="small text-muted no-wrap">{{ c.expected_end_date.strftime('%d %b %Y') if c.expected_end_date else '—' }}</td>
+            <td class="small text-muted no-wrap">{{ c.date_archived.strftime('%d %b %Y') if c.date_archived else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state py-5">
+      <i class="bi bi-file-earmark-text d-block mb-3" style="font-size:2.5rem;opacity:.2;"></i>
+      <p class="mb-0">No archived contracts{% if search %} matching "{{ search }}"{% endif %}.</p>
+    </div>
+    {% endif %}
+
+  {% endif %}
+
+  {% if pag and pag.pages > 1 %}
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top flex-wrap gap-2 d-print-none">
+    <div class="small text-muted">Showing {{ ((pag.page-1)*pag.per_page)+1 }}–{{ [pag.page*pag.per_page, pag.total]|min }} of {{ pag.total }}</div>
+    <nav><ul class="pagination pagination-sm mb-0">
+      <li class="page-item {{ 'disabled' if not pag.has_prev }}"><a class="page-link" href="?page={{ pag.prev_num }}&tab={{ tab }}&q={{ search }}">‹</a></li>
+      {% for pg in pag.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}
+        {% if pg %}<li class="page-item {{ 'active' if pg == pag.page }}"><a class="page-link" href="?page={{ pg }}&tab={{ tab }}&q={{ search }}">{{ pg }}</a></li>
+        {% else %}<li class="page-item disabled"><span class="page-link">…</span></li>{% endif %}
+      {% endfor %}
+      <li class="page-item {{ 'disabled' if not pag.has_next }}"><a class="page-link" href="?page={{ pag.next_num }}&tab={{ tab }}&q={{ search }}">›</a></li>
+    </ul></nav>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,11 +1,18 @@
 import os
+import secrets
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
 
+# Prefer an explicit SECRET_KEY, fall back to the platform-managed SESSION_SECRET,
+# and only as a last resort generate a random key for the life of this process
+# (this avoids a hardcoded, checked-in fallback that would compromise session
+# security if the app were ever deployed without an env var configured).
+_SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("SESSION_SECRET") or secrets.token_hex(32)
+
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "thms-dev-secret-change-in-production-2024")
+    SECRET_KEY = _SECRET_KEY
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL", f"sqlite:///{BASE_DIR / 'thms.db'}"
     )

@@ -105,15 +105,22 @@ def _run_migrations():
         "ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_number VARCHAR(30)",
         "ALTER TABLE payments ADD COLUMN IF NOT EXISTS week_from INTEGER",
         "ALTER TABLE payments ADD COLUMN IF NOT EXISTS week_to INTEGER",
+
+        # ── users ────────────────────────────────────────────────────────────
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(120)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255)",
     ]
 
     with db.engine.connect() as conn:
         for stmt in migrations:
             try:
                 conn.execute(text(stmt))
+                conn.commit()
             except Exception:
-                pass
-        conn.commit()
+                # Roll back so one failed/unsupported statement (e.g. on Postgres,
+                # which aborts the whole transaction on error) doesn't silently
+                # block every later migration in this loop.
+                conn.rollback()
 
 
 def _seed_defaults():

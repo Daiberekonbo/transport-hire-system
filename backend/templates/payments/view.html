@@ -12,7 +12,7 @@
     </a>
     <div>
       <h1 class="page-header-title mb-0">
-        {{ payment.receipt_number or f'Payment #{payment.id}' }}
+        {{ payment.receipt_number or ('Payment #' + payment.id|string) }}
       </h1>
       <div class="page-header-sub">
         {{ payment.driver.full_name }} · {{ contract.vehicle.vehicle_number }}

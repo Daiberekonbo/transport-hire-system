@@ -98,7 +98,8 @@
   </div>
   {% if vehicles %}
   <div style="overflow-x:auto;">
-    <table class="thms-table" style="font-size:.83rem;">
+    <div class="table-responsive">
+<table class="thms-table" style="font-size:.83rem;">
       <thead>
         <tr>
           <th>Vehicle (Plate)</th>
@@ -133,6 +134,7 @@
         </tr>
       </tfoot>
     </table>
+</div>
   </div>
   {% else %}
   <div class="empty-state py-4">
@@ -149,7 +151,8 @@
     <div class="fw-600">Manual Capital Adjustments</div>
   </div>
   <div style="overflow-x:auto;">
-    <table class="thms-table" style="font-size:.83rem;">
+    <div class="table-responsive">
+<table class="thms-table" style="font-size:.83rem;">
       <thead>
         <tr><th>Date</th><th>Type</th><th>Amount</th><th>Description</th></tr>
       </thead>
@@ -168,6 +171,7 @@
         {% endfor %}
       </tbody>
     </table>
+</div>
   </div>
 </div>
 {% endif %}

@@ -1,0 +1,9 @@
+{
+  "name": "Transport Hire Management System",
+  "short_name": "THMS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1b35",
+  "theme_color": "#0f1b35",
+  "icons": []
+}

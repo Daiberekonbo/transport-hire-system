@@ -11,8 +11,56 @@
 </div>
 
 <div class="row g-3">
-  <div class="col-12 col-md-6">
+  <div class="col-12 col-lg-6">
     <div class="thms-card">
+      <div class="thms-card-header">
+        <h6 class="thms-card-title"><i class="bi bi-person-badge-fill text-primary"></i> Owner Profile</h6>
+      </div>
+      <div class="thms-card-body">
+        <form method="POST" action="{{ url_for('settings.update_profile') }}" enctype="multipart/form-data" novalidate>
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="profile-photo-preview" id="profilePhotoPreview"
+                 title="{{ current_user.name }}">
+              {% if current_user.profile_photo %}
+                <img src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_photo) }}" alt="Profile photo">
+              {% else %}
+                <span>{{ current_user.name[0].upper() }}</span>
+              {% endif %}
+            </div>
+            <div>
+              <label class="btn btn-outline-secondary btn-sm mb-1" for="profilePhotoInput">
+                <i class="bi bi-camera-fill me-1"></i> Change Picture
+              </label>
+              <input type="file" id="profilePhotoInput" name="profile_photo" accept=".png,.jpg,.jpeg,.gif,.webp" class="d-none" />
+              <div class="form-text mb-0">PNG, JPG, GIF or WEBP.</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="thms-form-label">Display Name</label>
+            <input type="text" name="display_name" class="form-control"
+                   value="{{ current_user.display_name or '' }}"
+                   placeholder="e.g. Chinedu Okoro"
+                   title="The friendly name shown around the app instead of your username" />
+          </div>
+          <div class="mb-3">
+            <label class="thms-form-label">Username</label>
+            <input type="text" name="username" class="form-control"
+                   value="{{ current_user.username }}" required minlength="3" />
+          </div>
+          <div class="mb-4">
+            <label class="thms-form-label">Email</label>
+            <input type="email" name="email" class="form-control"
+                   value="{{ current_user.email or '' }}" placeholder="you@example.com" />
+          </div>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="thms-card mb-3">
       <div class="thms-card-header">
         <h6 class="thms-card-title"><i class="bi bi-shield-lock-fill text-primary"></i> Change Password</h6>
       </div>
@@ -20,7 +68,8 @@
         <form method="POST" action="{{ url_for('settings.change_password') }}">
           <div class="mb-3">
             <label class="thms-form-label">Current Password</label>
-            <input type="password" name="current_password" class="form-control" required />
+            <input type="password" name="current_password" class="form-control" required
+                   title="Required to verify it's really you" />
           </div>
           <div class="mb-3">
             <label class="thms-form-label">New Password</label>
@@ -34,16 +83,13 @@
         </form>
       </div>
     </div>
-  </div>
 
-  <div class="col-12 col-md-6">
     <div class="thms-card">
       <div class="thms-card-header">
-        <h6 class="thms-card-title"><i class="bi bi-person-circle text-secondary"></i> Account Info</h6>
+        <h6 class="thms-card-title"><i class="bi bi-info-circle-fill text-secondary"></i> Account Info</h6>
       </div>
       <div class="thms-card-body">
         <dl class="row small mb-0">
-          <dt class="col-4 text-muted">Username</dt><dd class="col-8 fw-600">{{ current_user.username }}</dd>
           <dt class="col-4 text-muted">Role</dt><dd class="col-8">{{ current_user.role | capitalize }}</dd>
           <dt class="col-4 text-muted">Last Login</dt>
           <dd class="col-8 text-muted">
@@ -56,4 +102,21 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function () {
+    const input = document.getElementById('profilePhotoInput');
+    const preview = document.getElementById('profilePhotoPreview');
+    if (!input || !preview) return;
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.innerHTML = '<img src="' + e.target.result + '" alt="Profile photo preview">';
+      };
+      reader.readAsDataURL(file);
+    });
+  })();
+</script>
 {% endblock %}

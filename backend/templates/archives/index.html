@@ -44,7 +44,8 @@
   {% if records and records.items %}
 
   {% if tab == 'drivers' %}
-  <table class="thms-table">
+  <div class="table-responsive">
+<table class="thms-table">
     <thead>
       <tr><th>Driver</th><th>Phone</th><th>Date Archived</th><th>Notes</th><th></th></tr>
     </thead>
@@ -66,9 +67,11 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
 
   {% elif tab == 'vehicles' %}
-  <table class="thms-table">
+  <div class="table-responsive">
+<table class="thms-table">
     <thead>
       <tr><th>Vehicle</th><th>Make / Model</th><th>Date Archived</th><th></th></tr>
     </thead>
@@ -89,9 +92,11 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
 
   {% elif tab == 'contracts' %}
-  <table class="thms-table">
+  <div class="table-responsive">
+<table class="thms-table">
     <thead>
       <tr><th>Contract</th><th>Driver</th><th>Vehicle</th><th>Date Archived</th></tr>
     </thead>
@@ -106,10 +111,12 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
   <div class="p-3 text-muted small">Archived contracts are final and cannot be restored from here.</div>
 
   {% elif tab == 'payments' %}
-  <table class="thms-table">
+  <div class="table-responsive">
+<table class="thms-table">
     <thead>
       <tr><th>Receipt</th><th>Driver</th><th>Amount</th><th>Date Voided</th></tr>
     </thead>
@@ -124,10 +131,12 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
   <div class="p-3 text-muted small">Voided payments are excluded from totals and cannot be restored — this preserves an accurate audit trail.</div>
 
   {% elif tab == 'expenses' %}
-  <table class="thms-table">
+  <div class="table-responsive">
+<table class="thms-table">
     <thead>
       <tr><th>Expenditure</th><th>Driver</th><th>Amount</th><th>Date Voided</th></tr>
     </thead>
@@ -142,6 +151,7 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
   <div class="p-3 text-muted small">Voided expenditures are excluded from contract balances and cannot be restored — this preserves an accurate audit trail.</div>
   {% endif %}
 

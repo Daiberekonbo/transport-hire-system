@@ -1,5 +1,5 @@
 const CACHE_NAME = "app-cache-v1";
-const URLS_TO_CACHE = ["/", "/manifest.json"];
+const URLS_TO_CACHE = ["/", "/static/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

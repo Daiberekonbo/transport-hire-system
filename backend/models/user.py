@@ -9,12 +9,19 @@ class User(UserMixin, db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    display_name = db.Column(db.String(120), nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default="owner")  # owner, developer
     is_active = db.Column(db.Boolean, default=True)
+    profile_photo = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, nullable=True)
+
+    @property
+    def name(self):
+        """Preferred display name, falling back to username."""
+        return self.display_name or self.username
 
     audit_logs = db.relationship("AuditLog", backref="user", lazy="dynamic")
     recorded_expenses = db.relationship(

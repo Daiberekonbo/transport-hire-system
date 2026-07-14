@@ -84,7 +84,8 @@
 
     {% if items %}
     <div style="overflow-x:auto;">
-      <table class="thms-table" style="font-size:.83rem;">
+      <div class="table-responsive">
+<table class="thms-table" style="font-size:.83rem;">
         <thead>
           <tr><th>Driver Name</th><th>Phone</th><th>Address</th><th>Registered</th><th>Archived Date</th></tr>
         </thead>
@@ -100,6 +101,7 @@
           {% endfor %}
         </tbody>
       </table>
+</div>
     </div>
     {% else %}
     <div class="empty-state py-5">
@@ -112,7 +114,8 @@
 
     {% if items %}
     <div style="overflow-x:auto;">
-      <table class="thms-table" style="font-size:.83rem;">
+      <div class="table-responsive">
+<table class="thms-table" style="font-size:.83rem;">
         <thead>
           <tr><th>Plate / Fleet No.</th><th>Make &amp; Model</th><th>Year</th><th>Purchase Cost</th><th>Archived Date</th></tr>
         </thead>
@@ -128,6 +131,7 @@
           {% endfor %}
         </tbody>
       </table>
+</div>
     </div>
     {% else %}
     <div class="empty-state py-5">
@@ -140,7 +144,8 @@
 
     {% if items %}
     <div style="overflow-x:auto;">
-      <table class="thms-table" style="font-size:.83rem;">
+      <div class="table-responsive">
+<table class="thms-table" style="font-size:.83rem;">
         <thead>
           <tr><th>#</th><th>Driver</th><th>Vehicle</th><th>Weekly Amt</th><th>Duration</th><th>Total Paid</th><th>Outstanding</th><th>End Date</th><th>Archived</th></tr>
         </thead>
@@ -160,6 +165,7 @@
           {% endfor %}
         </tbody>
       </table>
+</div>
     </div>
     {% else %}
     <div class="empty-state py-5">

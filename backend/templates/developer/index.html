@@ -29,7 +29,8 @@
   </div>
   {% if logs %}
   <div style="overflow-x:auto;">
-    <table class="thms-table">
+    <div class="table-responsive">
+<table class="thms-table">
       <thead><tr><th>ID</th><th>User</th><th>Action</th><th>Entity</th><th>Description</th><th>Date</th></tr></thead>
       <tbody>
         {% for log in logs %}
@@ -44,6 +45,7 @@
         {% endfor %}
       </tbody>
     </table>
+</div>
   </div>
   {% else %}
   <div class="empty-state"><i class="bi bi-journal d-block"></i><p>No audit log entries yet.</p></div>

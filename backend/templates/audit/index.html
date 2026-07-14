@@ -78,7 +78,8 @@
 
   {% if logs.items %}
   <div style="overflow-x:auto;">
-    <table class="thms-table" style="font-size:.84rem;">
+    <div class="table-responsive">
+<table class="thms-table" style="font-size:.84rem;">
       <thead>
         <tr>
           <th>Date &amp; Time</th>
@@ -112,6 +113,7 @@
         {% endfor %}
       </tbody>
     </table>
+</div>
   </div>
 
   {# Pagination #}

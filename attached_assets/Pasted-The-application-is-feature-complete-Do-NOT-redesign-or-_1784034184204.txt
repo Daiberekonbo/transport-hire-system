@@ -1,0 +1,79 @@
+The application is feature-complete. Do NOT redesign or rebuild any existing module.
+
+Your task is to perform a full production-readiness pass.
+
+PART 1 - Complete End-to-End Testing
+
+Test every workflow thoroughly:
+- Login/logout
+- Dashboard
+- Drivers
+- Vehicles
+- Contracts
+- Payments
+- Capital Management
+- Extra Expenditure
+- Reports
+- Audit Log
+- Archives
+
+Create, edit, suspend, archive, restore and delete records where appropriate.
+
+Verify:
+- Statistics update correctly.
+- Outstanding balance calculations remain correct.
+- Capital calculations remain correct.
+- Reports generate correct CSV, Excel and PDF files.
+- No broken links.
+- No console errors.
+- No server errors.
+- No duplicate records.
+- Proper validation on all forms.
+- Flash messages appear correctly.
+
+Fix every issue discovered.
+
+------------------------------------
+
+PART 2 - Professional UI Polish
+
+Without redesigning the application, improve the user experience by adding:
+
+✓ Loading spinners during form submissions and exports
+✓ Confirmation dialogs before destructive actions
+✓ Better success/error notifications
+✓ Better empty-state illustrations/messages
+✓ Search term highlighting
+✓ Improved pagination where necessary
+✓ Better responsive layout for tablets and phones
+✓ Consistent spacing, buttons and card layouts
+✓ Disable submit buttons while requests are processing
+✓ Better validation messages
+✓ Tooltips where helpful
+
+------------------------------------
+
+PART 3 - Account Management
+
+Add an Owner Profile page.
+
+Owner should be able to:
+- Change username
+- Change display name
+- Change email
+- Change password
+- Upload/change profile picture
+- Update personal information
+
+Password change must require the current password.
+
+------------------------------------
+
+PART 4 - Final Verification
+
+After all improvements:
+
+- Test the entire application again.
+- Verify every module still works.
+- Ensure no existing functionality was broken.
+- Provide a final checklist of everything verified.

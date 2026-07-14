@@ -108,7 +108,8 @@
 <div class="thms-card">
   {% if items %}
   <div style="overflow-x:auto;">
-    <table class="thms-table" style="font-size:.83rem;">
+    <div class="table-responsive">
+<table class="thms-table" style="font-size:.83rem;">
       <thead>
         <tr>
           <th>Ref #</th>
@@ -147,6 +148,7 @@
         </tr>
       </tfoot>
     </table>
+</div>
   </div>
 
   {% if pag and pag.pages > 1 %}

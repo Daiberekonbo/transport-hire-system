@@ -119,6 +119,83 @@ document.querySelectorAll("[data-confirm]").forEach((el) => {
   });
 });
 
+// ---- Tooltips: auto-enable Bootstrap tooltips on any titled element ----
+(function () {
+  document.querySelectorAll("[title]:not([data-bs-toggle])").forEach((el) => {
+    el.setAttribute("data-bs-toggle", "tooltip");
+    el.setAttribute("data-bs-placement", el.dataset.bsPlacement || "top");
+  });
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+    try { bootstrap.Tooltip.getOrCreateInstance(el); } catch (_) {}
+  });
+})();
+
+// ---- Loading spinner + disable submit button while a form is processing ----
+(function () {
+  document.querySelectorAll("form").forEach((form) => {
+    if (form.dataset.noLoading !== undefined) return;
+    if ((form.method || "get").toLowerCase() !== "post") return;
+
+    form.addEventListener("submit", (e) => {
+      // Skip if another handler (e.g. an inline confirm()) already cancelled it.
+      if (e.defaultPrevented) return;
+
+      form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((btn) => {
+        if (btn.disabled) return;
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.setAttribute("aria-busy", "true");
+        const label = btn.dataset.loadingText || "Please wait…";
+        btn.innerHTML =
+          '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' +
+          label;
+      });
+    });
+  });
+})();
+
+// ---- Export buttons: brief spinner feedback (download happens in background) ----
+(function () {
+  document.querySelectorAll('a[href*="format=pdf"], a[href*="format=xlsx"], a[href*="format=csv"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      if (link.dataset.exporting) return;
+      link.dataset.exporting = "1";
+      const icon = link.querySelector("i");
+      const iconClass = icon ? icon.className : null;
+      if (icon) icon.className = "spinner-border spinner-border-sm";
+      setTimeout(() => {
+        if (icon && iconClass) icon.className = iconClass;
+        delete link.dataset.exporting;
+      }, 1800);
+    });
+  });
+})();
+
+// ---- Search term highlighting ----
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const term = (params.get("q") || "").trim();
+  if (!term || term.length < 2) return;
+
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp("(" + escaped + ")", "ig");
+
+  document.querySelectorAll(".thms-table tbody td").forEach((cell) => {
+    if (cell.querySelector("a, form, button, input, select")) return; // don't touch interactive cells
+    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      if (pattern.test(node.nodeValue)) textNodes.push(node);
+    }
+    textNodes.forEach((textNode) => {
+      const span = document.createElement("span");
+      span.innerHTML = textNode.nodeValue.replace(pattern, "<mark>$1</mark>");
+      textNode.replaceWith(span);
+    });
+  });
+})();
+
 // ---- Service Worker (PWA) ----
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

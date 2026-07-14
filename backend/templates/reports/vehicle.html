@@ -92,7 +92,8 @@
 <div class="thms-card">
   {% if rows %}
   <div style="overflow-x:auto;">
-    <table class="thms-table" style="font-size:.83rem;">
+    <div class="table-responsive">
+<table class="thms-table" style="font-size:.83rem;">
       <thead>
         <tr>
           <th>Plate / Fleet No.</th>
@@ -135,6 +136,7 @@
         {% endfor %}
       </tbody>
     </table>
+</div>
   </div>
 
   {% if pag and pag.pages > 1 %}

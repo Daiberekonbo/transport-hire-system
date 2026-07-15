@@ -97,53 +97,52 @@ def create_app(config_name="default"):
 
 
 def _run_migrations():
-    """
-    Safe, additive schema migrations — run on every startup.
-    Every ALTER TABLE uses IF NOT EXISTS so it is idempotent.
-    """
-    from sqlalchemy import text
+    from sqlalchemy import inspect, text
 
-    migrations = [
-        # ── drivers ──────────────────────────────────────────────────────────
-        "ALTER TABLE drivers ADD COLUMN IF NOT EXISTS license_number VARCHAR(50)",
+    inspector = inspect(db.engine)
 
-        # ── vehicles ─────────────────────────────────────────────────────────
-        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS color VARCHAR(50)",
-        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS current_mileage INTEGER",
-        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS insurance_expiry DATE",
-        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS road_worthiness_expiry DATE",
-        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS date_registered TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()",
-        "ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS date_archived TIMESTAMP WITHOUT TIME ZONE",
-
-        # ── contracts ────────────────────────────────────────────────────────
-        "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS purchase_date DATE",
-        "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS delivery_date DATE",
-        "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS date_completed TIMESTAMP WITHOUT TIME ZONE",
-        "ALTER TABLE contracts ADD COLUMN IF NOT EXISTS date_archived TIMESTAMP WITHOUT TIME ZONE",
-
-        # ── expenses ─────────────────────────────────────────────────────────
-        "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS contract_id INTEGER REFERENCES contracts(id)",
-
-        # ── payments ─────────────────────────────────────────────────────────
-        "ALTER TABLE payments ADD COLUMN IF NOT EXISTS receipt_number VARCHAR(30)",
-        "ALTER TABLE payments ADD COLUMN IF NOT EXISTS week_from INTEGER",
-        "ALTER TABLE payments ADD COLUMN IF NOT EXISTS week_to INTEGER",
-
-        # ── users ────────────────────────────────────────────────────────────
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(120)",
-        "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255)",
-    ]
+    migrations = {
+        "drivers": [
+            ("license_number", "ALTER TABLE drivers ADD COLUMN license_number VARCHAR(50)"),
+        ],
+        "vehicles": [
+            ("color", "ALTER TABLE vehicles ADD COLUMN color VARCHAR(50)"),
+            ("current_mileage", "ALTER TABLE vehicles ADD COLUMN current_mileage INTEGER"),
+            ("insurance_expiry", "ALTER TABLE vehicles ADD COLUMN insurance_expiry DATE"),
+            ("road_worthiness_expiry", "ALTER TABLE vehicles ADD COLUMN road_worthiness_expiry DATE"),
+            ("date_registered", "ALTER TABLE vehicles ADD COLUMN date_registered TIMESTAMP"),
+            ("date_archived", "ALTER TABLE vehicles ADD COLUMN date_archived TIMESTAMP"),
+        ],
+        "contracts": [
+            ("purchase_date", "ALTER TABLE contracts ADD COLUMN purchase_date DATE"),
+            ("delivery_date", "ALTER TABLE contracts ADD COLUMN delivery_date DATE"),
+            ("date_completed", "ALTER TABLE contracts ADD COLUMN date_completed TIMESTAMP"),
+            ("date_archived", "ALTER TABLE contracts ADD COLUMN date_archived TIMESTAMP"),
+        ],
+        "expenses": [
+            ("contract_id", "ALTER TABLE expenses ADD COLUMN contract_id INTEGER REFERENCES contracts(id)"),
+        ],
+        "payments": [
+            ("receipt_number", "ALTER TABLE payments ADD COLUMN receipt_number VARCHAR(30)"),
+            ("week_from", "ALTER TABLE payments ADD COLUMN week_from INTEGER"),
+            ("week_to", "ALTER TABLE payments ADD COLUMN week_to INTEGER"),
+        ],
+        "users": [
+            ("display_name", "ALTER TABLE users ADD COLUMN display_name VARCHAR(120)"),
+            ("profile_photo", "ALTER TABLE users ADD COLUMN profile_photo VARCHAR(255)"),
+        ],
+    }
 
     with db.engine.connect() as conn:
-        for stmt in migrations:
-            try:
-                conn.execute(text(stmt))
-                conn.commit()
-            except Exception:
-                # Roll back so one failed/unsupported statement (e.g. on Postgres,
-                # which aborts the whole transaction on error) doesn't silently
-                # block every later migration in this loop.
-                conn.rollback()
+        for table_name, columns in migrations.items():
+            if not inspector.has_table(table_name):
+                continue
+
+            existing_columns = {col["name"] for col in inspector.get_columns(table_name)}
+            for column_name, sql in columns:
+                if column_name not in existing_columns:
+                    conn.execute(text(sql))
+        conn.commit()
 
 
 def _seed_defaults():

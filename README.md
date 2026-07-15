@@ -77,11 +77,11 @@ The app runs on `http://0.0.0.0:5000`.
 
 ## Coming Next
 
-- [ ] Hire-purchase contract creation workflow
-- [ ] PDF/Excel/CSV report exports
-- [ ] Loan management (extra expenditure)
-- [ ] Capital management module
+- [x] Hire-purchase contract creation workflow
+- [x] PDF/Excel/CSV report exports
+- [x] Loan management (extra expenditure)
+- [x] Capital management module
 - [ ] Driver photo & document uploads
-- [ ] Automatic weekly payment calculations
-- [ ] Missed week detection & alerts
-- [ ] Backup & restore
+- [x] Automatic weekly payment calculations
+- [x] Missed week detection & alerts
+- [x] Backup & restore

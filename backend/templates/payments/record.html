@@ -82,7 +82,7 @@
     </div>
 
     {# ── Contract status panel (shown after selection) ─────────────────── #}
-    <div class="thms-card mb-3" id="contractStatus" style="display:none;">
+    <div class="thms-card mb-3 d-none" id="contractStatus">
       <div class="thms-card-header">
         <h6 class="thms-card-title">
           <i class="bi bi-activity text-success"></i>
@@ -137,7 +137,7 @@
         <div class="row g-3">
 
           <div class="col-12 col-md-5">
-            <label class="thms-form-label">
+            <label class="thms-form-label" for="amountInput">
               Amount (₦) <span class="text-danger">*</span>
             </label>
             <div class="input-group">
@@ -161,20 +161,20 @@
           </div>
 
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Payment Date <span class="text-danger">*</span></label>
-            <input type="date" name="payment_date" class="form-control"
+            <label class="thms-form-label" for="paymentDate">Payment Date <span class="text-danger">*</span></label>
+            <input type="date" name="payment_date" id="paymentDate" class="form-control"
                    value="{{ form.get('payment_date', today.strftime('%Y-%m-%d')) }}" required />
           </div>
 
           <div class="col-12 col-md-3">
-            <label class="thms-form-label">Time</label>
-            <input type="time" name="payment_time" class="form-control"
+            <label class="thms-form-label" for="paymentTime">Time</label>
+            <input type="time" name="payment_time" id="paymentTime" class="form-control"
                    value="{{ form.get('payment_time', '') }}" />
             <div class="form-text">Optional</div>
           </div>
 
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Payment Method <span class="text-danger">*</span></label>
+            <label class="thms-form-label" for="methodSelect">Payment Method <span class="text-danger">*</span></label>
             <select name="payment_method" class="form-select" id="methodSelect">
               {% for val, label in [('cash','Cash'),('transfer','Bank Transfer'),('pos','POS Terminal')] %}
               <option value="{{ val }}"
@@ -185,10 +185,9 @@
             </select>
           </div>
 
-          <div class="col-12 col-md-4" id="bankField"
-               style="{{ '' if form.get('payment_method') in ('transfer','pos') else 'display:none;' }}">
-            <label class="thms-form-label">Bank Name</label>
-            <input type="text" name="bank_name" class="form-control"
+          <div class="col-12 col-md-4 {{ '' if form.get('payment_method') in ('transfer','pos') else 'd-none' }}" id="bankField">
+            <label class="thms-form-label" for="bankNameInput">Bank Name</label>
+            <input type="text" id="bankNameInput" name="bank_name" class="form-control"
                    value="{{ form.get('bank_name','') }}"
                    list="bankList" placeholder="e.g. GTBank" />
             <datalist id="bankList">
@@ -198,37 +197,36 @@
             </datalist>
           </div>
 
-          <div class="col-12 col-md-4" id="posField"
-               style="{{ '' if form.get('payment_method') == 'pos' else 'display:none;' }}">
-            <label class="thms-form-label">POS Terminal ID</label>
-            <input type="text" name="pos_terminal" class="form-control"
+          <div class="col-12 col-md-4 {{ '' if form.get('payment_method') == 'pos' else 'd-none' }}" id="posField">
+            <label class="thms-form-label" for="posTerminalInput">POS Terminal ID</label>
+            <input type="text" id="posTerminalInput" name="pos_terminal" class="form-control"
                    value="{{ form.get('pos_terminal','') }}" placeholder="Optional" />
           </div>
 
           <div class="col-12 col-md-6">
-            <label class="thms-form-label">Sender (Payer)</label>
-            <input type="text" name="sender" class="form-control"
+            <label class="thms-form-label" for="senderInput">Sender (Payer)</label>
+            <input type="text" name="sender" id="senderInput" class="form-control"
                    value="{{ form.get('sender','') }}"
-                   placeholder="Name of person who paid" id="senderInput" />
+                   placeholder="Name of person who paid" />
           </div>
 
           <div class="col-12 col-md-6">
-            <label class="thms-form-label">Receiver (Collector)</label>
-            <input type="text" name="receiver" class="form-control"
+            <label class="thms-form-label" for="receiverInput">Receiver (Collector)</label>
+            <input type="text" name="receiver" id="receiverInput" class="form-control"
                    value="{{ form.get('receiver','') }}"
                    placeholder="Name of person who collected" />
           </div>
 
           <div class="col-12 col-md-6">
-            <label class="thms-form-label">External Reference</label>
-            <input type="text" name="reference" class="form-control"
+            <label class="thms-form-label" for="referenceInput">External Reference</label>
+            <input type="text" id="referenceInput" name="reference" class="form-control"
                    value="{{ form.get('reference','') }}"
                    placeholder="Bank ref, POS receipt, etc." />
           </div>
 
           <div class="col-12">
-            <label class="thms-form-label">Notes</label>
-            <textarea name="notes" class="form-control" rows="2"
+            <label class="thms-form-label" for="paymentNotesInput">Notes</label>
+            <textarea id="paymentNotesInput" name="notes" class="form-control" rows="2"
                       placeholder="Any additional notes…">{{ form.get('notes','') }}</textarea>
           </div>
 
@@ -242,7 +240,7 @@
   <div class="col-12 col-xl-4">
 
     {# Submit card — sticky #}
-    <div class="thms-card" style="position:sticky;top:76px;">
+<div class="thms-card sticky-top">
       <div class="thms-card-body">
 
         {# Selected contract quick summary #}

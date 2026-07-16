@@ -44,14 +44,14 @@
           <div class="row g-3">
 
             <div class="col-12">
-              <label class="form-label fw-600">Expenditure Title <span class="text-danger">*</span></label>
-              <input type="text" name="title" class="form-control"
+              <label class="form-label fw-600" for="expenseTitleInput">Expenditure Title <span class="text-danger">*</span></label>
+              <input type="text" id="expenseTitleInput" name="title" class="form-control"
                      value="{{ expense.title or '' }}" required>
             </div>
 
             <div class="col-12 col-sm-6">
-              <label class="form-label fw-600">Category</label>
-              <select name="category" class="form-select">
+              <label class="form-label fw-600" for="expenseCategorySelect">Category</label>
+              <select id="expenseCategorySelect" name="category" class="form-select">
                 {% for key, label in categories.items() %}
                 <option value="{{ key }}" {{ 'selected' if expense.category == key }}>{{ label }}</option>
                 {% endfor %}
@@ -59,41 +59,41 @@
             </div>
 
             <div class="col-12 col-sm-6">
-              <label class="form-label fw-600">Amount (₦) <span class="text-danger">*</span></label>
-              <input type="text" name="amount" class="form-control fw-700"
+              <label class="form-label fw-600" for="expenseAmountInput">Amount (₦) <span class="text-danger">*</span></label>
+              <input type="text" id="expenseAmountInput" name="amount" class="form-control fw-700"
                      value="{{ "{:,.0f}".format(expense.amount | float) }}" required>
             </div>
 
             <div class="col-12 col-sm-6">
-              <label class="form-label fw-600">Date</label>
-              <input type="date" name="expense_date" class="form-control"
+              <label class="form-label fw-600" for="expenseDate">Date</label>
+              <input type="date" id="expenseDate" name="expense_date" class="form-control"
                      value="{{ expense.expense_date.strftime('%Y-%m-%d') if expense.expense_date else '' }}">
             </div>
 
             <div class="col-12 col-sm-6">
-              <label class="form-label fw-600">Time</label>
-              <input type="time" name="expense_time" class="form-control"
+              <label class="form-label fw-600" for="expenseTime">Time</label>
+              <input type="time" id="expenseTime" name="expense_time" class="form-control"
                      value="{{ expense.expense_time.strftime('%H:%M') if expense.expense_time else '' }}">
             </div>
 
             <div class="col-12 col-sm-6">
-              <label class="form-label fw-600">Approved By</label>
-              <input type="text" name="approved_by" class="form-control"
+              <label class="form-label fw-600" for="approvedByInput">Approved By</label>
+              <input type="text" id="approvedByInput" name="approved_by" class="form-control"
                      value="{{ expense.approved_by or '' }}">
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-600">Description / Reason</label>
-              <textarea name="description" class="form-control" rows="4">{{ expense.description or expense.reason or '' }}</textarea>
+              <label class="form-label fw-600" for="expenseDescriptionInput">Description / Reason</label>
+              <textarea id="expenseDescriptionInput" name="description" class="form-control" rows="4">{{ expense.description or expense.reason or '' }}</textarea>
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-600">Supporting Notes</label>
-              <textarea name="notes" class="form-control" rows="2">{{ expense.notes or '' }}</textarea>
+              <label class="form-label fw-600" for="expenseNotesInput">Supporting Notes</label>
+              <textarea id="expenseNotesInput" name="notes" class="form-control" rows="2">{{ expense.notes or '' }}</textarea>
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-600">
+              <label class="form-label fw-600" for="receiptFileInput">
                 <i class="bi bi-paperclip me-1 text-secondary"></i> Replace Attached Document
               </label>
               {% if expense.receipt_file %}
@@ -103,7 +103,7 @@
                 — uploading a new file will replace it.
               </div>
               {% endif %}
-              <input type="file" name="receipt_file" class="form-control"
+              <input type="file" id="receiptFileInput" name="receipt_file" class="form-control"
                      accept=".pdf,.png,.jpg,.jpeg,.gif,.webp">
             </div>
 

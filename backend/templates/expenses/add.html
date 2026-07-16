@@ -137,8 +137,8 @@
 
           {# Title #}
           <div class="col-12">
-            <label class="form-label fw-600">Expenditure Title <span class="text-danger">*</span></label>
-            <input type="text" name="title" class="form-control"
+            <label class="form-label fw-600" for="titleInput">Expenditure Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" id="titleInput" class="form-control"
                    placeholder="e.g. Engine Replacement, Tyre Blowout, Emergency Loan"
                    value="{{ form.get('title','') }}" required>
             <div class="form-text">A clear, specific title that will make sense three years from now.</div>
@@ -146,8 +146,8 @@
 
           {# Category #}
           <div class="col-12 col-sm-6">
-            <label class="form-label fw-600">Category <span class="text-danger">*</span></label>
-            <select name="category" class="form-select" required>
+            <label class="form-label fw-600" for="categorySelect">Category <span class="text-danger">*</span></label>
+            <select name="category" id="categorySelect" class="form-select" required>
               {% for key, label in categories.items() %}
               <option value="{{ key }}" {{ 'selected' if form.get('category','') == key or (not form.get('category') and key == 'other') }}>
                 {{ label }}
@@ -158,7 +158,7 @@
 
           {# Amount #}
           <div class="col-12 col-sm-6">
-            <label class="form-label fw-600">Amount (₦) <span class="text-danger">*</span></label>
+            <label class="form-label fw-600" for="amountInput">Amount (₦) <span class="text-danger">*</span></label>
             <input type="text" name="amount" id="amountInput" class="form-control fw-700"
                    inputmode="numeric" placeholder="0"
                    value="{{ form.get('amount','') }}" required
@@ -167,36 +167,36 @@
 
           {# Date + Time #}
           <div class="col-12 col-sm-6">
-            <label class="form-label fw-600">Date <span class="text-danger">*</span></label>
-            <input type="date" name="expense_date" class="form-control"
+            <label class="form-label fw-600" for="expenseDate">Date <span class="text-danger">*</span></label>
+            <input type="date" name="expense_date" id="expenseDate" class="form-control"
                    value="{{ form.get('expense_date', today.strftime('%Y-%m-%d')) }}" required>
           </div>
           <div class="col-12 col-sm-6">
-            <label class="form-label fw-600">Time</label>
-            <input type="time" name="expense_time" class="form-control"
+            <label class="form-label fw-600" for="expenseTime">Time</label>
+            <input type="time" name="expense_time" id="expenseTime" class="form-control"
                    value="{{ form.get('expense_time','') }}">
           </div>
 
           {# Approved by #}
           <div class="col-12 col-sm-6">
-            <label class="form-label fw-600">Approved By <span class="text-danger">*</span></label>
-            <input type="text" name="approved_by" class="form-control"
+            <label class="form-label fw-600" for="approvedByInput">Approved By <span class="text-danger">*</span></label>
+            <input type="text" name="approved_by" id="approvedByInput" class="form-control"
                    placeholder="Name of person who authorised this"
                    value="{{ form.get('approved_by','') }}" required>
           </div>
 
           {# Entered by (auto-filled, read-only display) #}
           <div class="col-12 col-sm-6">
-            <label class="form-label fw-600">Entered By</label>
-            <input type="text" class="form-control bg-light" readonly
+            <label class="form-label fw-600" for="enteredByInput">Entered By</label>
+            <input type="text" id="enteredByInput" class="form-control bg-light" readonly
                    value="{{ current_user.username }}">
             <div class="form-text">Automatically recorded.</div>
           </div>
 
           {# Description #}
           <div class="col-12">
-            <label class="form-label fw-600">Description / Reason</label>
-            <textarea name="description" class="form-control" rows="3"
+            <label class="form-label fw-600" for="descriptionInput">Description / Reason</label>
+            <textarea name="description" id="descriptionInput" class="form-control" rows="3"
                       placeholder="Detailed description: what happened, what was done, why this expense was necessary…">{{ form.get('description','') }}</textarea>
             <div class="form-text">
               <i class="bi bi-lightbulb text-warning"></i>
@@ -207,17 +207,17 @@
 
           {# Supporting notes #}
           <div class="col-12">
-            <label class="form-label fw-600">Supporting Notes</label>
-            <textarea name="notes" class="form-control" rows="2"
+            <label class="form-label fw-600" for="notesInput">Supporting Notes</label>
+            <textarea name="notes" id="notesInput" class="form-control" rows="2"
                       placeholder="Any additional internal notes (optional)">{{ form.get('notes','') }}</textarea>
           </div>
 
           {# Receipt upload #}
           <div class="col-12">
-            <label class="form-label fw-600">
+            <label class="form-label fw-600" for="receiptFileInput">
               <i class="bi bi-paperclip me-1 text-secondary"></i> Attach Receipt / Document
             </label>
-            <input type="file" name="receipt_file" class="form-control"
+            <input type="file" id="receiptFileInput" name="receipt_file" class="form-control"
                    accept=".pdf,.png,.jpg,.jpeg,.gif,.webp">
             <div class="form-text">PDF, PNG, JPG, JPEG (max recommended 5 MB). Stored securely.</div>
           </div>

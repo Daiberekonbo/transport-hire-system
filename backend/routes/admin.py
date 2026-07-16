@@ -212,6 +212,17 @@ def create_user():
     return render_template("admin/user_form.html")
 
 
+def _active_owner_count() -> int:
+    return User.active_owner_count()
+
+
+def _prevent_last_owner_change(user: User, action_desc: str):
+    if user.role == "owner" and user.is_active and _active_owner_count() <= 1:
+        flash(f"Cannot {action_desc}: this is the only active Owner account.", "danger")
+        return False
+    return True
+
+
 @admin_bp.route("/users/<int:user_id>/toggle", methods=["POST"])
 @login_required
 @owner_required
@@ -221,9 +232,15 @@ def toggle_user(user_id):
         flash("You cannot deactivate your own account.", "danger")
         return redirect(url_for("admin.index") + "#users")
 
+    if not user.is_active and user.role == "owner":
+        # Activating an owner is always allowed.
+        pass
+    elif user.role == "owner" and not _prevent_last_owner_change(user, "deactivate this Owner account"):
+        return redirect(url_for("admin.index") + "#users")
+
     user.is_active = not user.is_active
     action = "REACTIVATE_USER" if user.is_active else "DEACTIVATE_USER"
-    state  = "activated" if user.is_active else "deactivated"
+    state = "activated" if user.is_active else "deactivated"
     _log(action, entity_id=user.id,
          description=f"User '{user.username}' {state} by {current_user.username}")
     db.session.commit()
@@ -266,12 +283,10 @@ def change_role(user_id):
         return redirect(url_for("admin.index") + "#users")
 
     if user.role == "owner" and new_role != "owner":
-        owner_count = User.query.filter_by(role="owner", is_active=True).count()
-        if owner_count <= 1:
-            flash("Cannot change role: this is the only active Owner account.", "danger")
+        if not _prevent_last_owner_change(user, "change the role of this Owner account"):
             return redirect(url_for("admin.index") + "#users")
 
-    old_role  = user.role
+    old_role = user.role
     user.role = new_role
     _log("CHANGE_ROLE", entity_id=user.id,
          description=f"'{user.username}' role changed {old_role}→{new_role} by {current_user.username}")

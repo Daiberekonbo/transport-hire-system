@@ -58,6 +58,23 @@ pip install -r requirements.txt
 python run.py
 ```
 
+### Production deployment
+
+For production installs, THMS requires a shared PostgreSQL database. Set one of the following before launching THMS:
+
+- `DATABASE_URL` (preferred), for example:
+  `postgresql+psycopg2://user:password@db-host:5432/thms`
+- or the equivalent parts:
+  `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+
+On Windows, you can set these as system environment variables so every installed THMS instance uses the same live database.
+
+On Windows, THMS uses a system tray icon for a desktop-style experience. If you install the dependencies from `requirements.txt`, the tray menu will provide:
+
+- `Open THMS`
+- `Restart THMS`
+- `Exit THMS`
+
 The app runs on `http://0.0.0.0:5000`.
 
 ## Modules Built

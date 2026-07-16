@@ -33,7 +33,7 @@
         <div class="row g-3">
 
           <div class="col-12 col-md-6">
-            <label class="thms-form-label">Driver <span class="text-danger">*</span></label>
+            <label class="thms-form-label" for="driverSelect">Driver <span class="text-danger">*</span></label>
             <select name="driver_id" class="form-select" required id="driverSelect">
               <option value="">— Select driver —</option>
               {% for d in drivers %}
@@ -53,8 +53,8 @@
           </div>
 
           <div class="col-12 col-md-6">
-            <label class="thms-form-label">Vehicle <span class="text-danger">*</span></label>
-            <select name="vehicle_id" class="form-select" required>
+            <label class="thms-form-label" for="vehicleSelect">Vehicle <span class="text-danger">*</span></label>
+            <select name="vehicle_id" class="form-select" required id="vehicleSelect">
               <option value="">— Select vehicle —</option>
               {% for v in vehicles %}
               <option value="{{ v.id }}"
@@ -68,8 +68,7 @@
           </div>
 
           {# Override checkbox — hidden until needed, or visible when show_override=True #}
-          <div class="col-12" id="overrideRow"
-               style="{{ 'display:block' if show_override else 'display:none' }}">
+          <div class="col-12 {{ 'd-block' if show_override else 'd-none' }}" id="overrideRow">
             <div class="alert alert-warning d-flex align-items-start gap-2 mb-0">
               <i class="bi bi-exclamation-triangle-fill mt-1"></i>
               <div>
@@ -98,19 +97,19 @@
       <div class="thms-card-body">
         <div class="row g-3">
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Purchase Date</label>
-            <input type="date" name="purchase_date" class="form-control"
+            <label class="thms-form-label" for="purchaseDate">Purchase Date</label>
+            <input type="date" name="purchase_date" class="form-control" id="purchaseDate"
                    value="{{ form.get('purchase_date', '') }}" />
             <div class="form-text">When the vehicle was purchased.</div>
           </div>
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Delivery Date</label>
-            <input type="date" name="delivery_date" class="form-control"
+            <label class="thms-form-label" for="deliveryDate">Delivery Date</label>
+            <input type="date" name="delivery_date" class="form-control" id="deliveryDate"
                    value="{{ form.get('delivery_date', '') }}" />
             <div class="form-text">When the vehicle was handed to the driver.</div>
           </div>
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Contract Start Date <span class="text-danger">*</span></label>
+            <label class="thms-form-label" for="startDate">Contract Start Date <span class="text-danger">*</span></label>
             <input type="date" name="start_date" class="form-control" id="startDate"
                    value="{{ form.get('start_date', today.strftime('%Y-%m-%d')) }}"
                    required />
@@ -128,7 +127,7 @@
       <div class="thms-card-body">
         <div class="row g-3">
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Cost of Vehicle (₦)</label>
+            <label class="thms-form-label" for="vehicleCost">Cost of Vehicle (₦)</label>
             <div class="input-group">
               <span class="input-group-text">₦</span>
               <input type="text" name="vehicle_cost" class="form-control calc-input"
@@ -138,7 +137,7 @@
             </div>
           </div>
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Initial Servicing Cost (₦)</label>
+            <label class="thms-form-label" for="serviceCosts">Initial Servicing Cost (₦)</label>
             <div class="input-group">
               <span class="input-group-text">₦</span>
               <input type="text" name="service_costs" class="form-control calc-input"
@@ -148,7 +147,7 @@
             </div>
           </div>
           <div class="col-12 col-md-4">
-            <label class="thms-form-label">Additional Startup Expenses (₦)</label>
+            <label class="thms-form-label" for="extraExpenses">Additional Startup Expenses (₦)</label>
             <div class="input-group">
               <span class="input-group-text">₦</span>
               <input type="text" name="extra_expenses" class="form-control calc-input"
@@ -159,9 +158,9 @@
             <div class="form-text">Registration, inspection, insurance, etc.</div>
           </div>
           <div class="col-12 col-md-6">
-            <label class="thms-form-label">
+            <label class="thms-form-label" for="capital">
               Total Capital (₦)
-              <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1" style="font-size:.65rem;">
+              <span class="badge bg-secondary bg-opacity-25 text-secondary ms-1 small">
                 auto-calculated · editable
               </span>
             </label>
@@ -186,7 +185,7 @@
       <div class="thms-card-body">
         <div class="row g-3">
           <div class="col-12 col-md-5">
-            <label class="thms-form-label">Total Amount Driver Will Pay (₦) <span class="text-danger">*</span></label>
+            <label class="thms-form-label" for="totalPayable">Total Amount Driver Will Pay (₦) <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text">₦</span>
               <input type="text" name="total_payable" class="form-control calc-input"
@@ -197,7 +196,7 @@
             <div class="form-text">This is what the driver agrees to pay in full.</div>
           </div>
           <div class="col-12 col-md-3">
-            <label class="thms-form-label">Number of Years <span class="text-danger">*</span></label>
+            <label class="thms-form-label" for="yearsAgreed">Number of Years <span class="text-danger">*</span></label>
             <select name="years_agreed" class="form-select calc-input" id="yearsAgreed">
               {% for y in range(1, 11) %}
               <option value="{{ y }}"
@@ -209,7 +208,7 @@
           </div>
           <div class="col-12 col-md-4">
             {# Auto-calculated display — read-only summary #}
-            <div class="thms-card bg-opacity-50 h-100" style="background:var(--bg-secondary,#f8fafc);">
+            <div class="thms-card bg-secondary bg-opacity-10 h-100">
               <div class="thms-card-body py-2 px-3 small">
                 <div class="d-flex justify-content-between mb-1">
                   <span class="text-muted">Total weeks</span>
@@ -240,12 +239,13 @@
         <h6 class="thms-card-title"><i class="bi bi-sticky-fill text-warning"></i> Notes</h6>
       </div>
       <div class="thms-card-body">
-        <textarea name="notes" class="form-control" rows="6"
+        <label class="form-label visually-hidden" for="contractNotes">Notes</label>
+        <textarea id="contractNotes" name="notes" class="form-control" rows="6"
                   placeholder="Any additional notes about this agreement…">{{ form.get('notes', '') }}</textarea>
       </div>
     </div>
 
-    <div class="thms-card" style="position:sticky;top:76px;">
+    <div class="thms-card sticky-top">
       <div class="thms-card-body d-grid gap-2">
         <button type="submit" class="btn btn-primary">
           <i class="bi bi-file-earmark-check-fill me-2"></i>Create Contract

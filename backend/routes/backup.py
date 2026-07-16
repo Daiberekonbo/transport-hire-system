@@ -78,17 +78,27 @@ def _backup_dir() -> Path:
     return d
 
 
+def _is_postgres_uri(uri: str) -> bool:
+    return bool(uri) and (uri.startswith("postgres://") or uri.startswith("postgresql://") or uri.startswith("postgresql+psycopg2://"))
+
+
+def _pg_connection_string(uri: str) -> str:
+    if uri.startswith("postgresql+psycopg2://"):
+        return uri.replace("postgresql+psycopg2://", "postgresql://", 1)
+    return uri
+
+
 def _db_info() -> dict:
     """
-    Return {'type': 'sqlite'|'postgres'|'unknown', 'path': ..., 'uri': ...}.
+    Return {'type': 'sqlite'|'postgres'|'unknown', 'path': ..., 'uri': ..., 'pg_uri': ...}.
     """
     uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
     if uri.startswith("sqlite:///"):
         raw = uri[len("sqlite:///"):]
         p = Path(raw) if raw.startswith("/") else Path(current_app.root_path).parent / raw
         return {"type": "sqlite", "path": p, "uri": uri}
-    if "postgres" in uri or "postgresql" in uri:
-        return {"type": "postgres", "path": None, "uri": uri}
+    if _is_postgres_uri(uri):
+        return {"type": "postgres", "path": None, "uri": uri, "pg_uri": _pg_connection_string(uri)}
     return {"type": "unknown", "path": None, "uri": uri}
 
 
@@ -318,7 +328,8 @@ def create():
 
     elif info["type"] == "postgres":
         dst = _backup_dir() / _new_backup_filename("sql")
-        ok, err = _postgres_backup(info["uri"], dst)
+        pg_uri = info.get("pg_uri", info["uri"])
+        ok, err = _postgres_backup(pg_uri, dst)
         if not ok:
             flash(f"Postgres backup failed: {err}", "danger")
             return redirect(url_for("backup.index"))
@@ -448,7 +459,8 @@ def restore():
             tmp_path.unlink(missing_ok=True)
             return redirect(url_for("backup.index"))
     else:
-        ok, err = _postgres_restore(info["uri"], tmp_path)
+        pg_uri = info.get("pg_uri", info["uri"])
+        ok, err = _postgres_restore(pg_uri, tmp_path)
         if not ok:
             flash(
                 f"Restore failed: {err}. "

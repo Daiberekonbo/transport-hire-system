@@ -36,27 +36,27 @@
           <div class="row g-3">
 
             <div class="col-12 col-md-6">
-              <label class="thms-form-label">Plate / Fleet Number <span class="text-danger">*</span></label>
-              <input type="text" name="vehicle_number" class="form-control"
+              <label class="thms-form-label" for="vehicleNumberInput">Plate / Fleet Number <span class="text-danger">*</span></label>
+              <input type="text" id="vehicleNumberInput" name="vehicle_number" class="form-control"
                      value="{{ form.get('vehicle_number', vehicle.vehicle_number) }}"
                      required />
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="thms-form-label">Registration Number (FRSC)</label>
-              <input type="text" name="reg_number" class="form-control"
+              <label class="thms-form-label" for="regNumberInput">Registration Number (FRSC)</label>
+              <input type="text" id="regNumberInput" name="reg_number" class="form-control"
                      value="{{ form.get('reg_number', vehicle.reg_number or '') }}" />
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="thms-form-label">Engine Number</label>
-              <input type="text" name="engine_number" class="form-control"
+              <label class="thms-form-label" for="engineNumberInput">Engine Number</label>
+              <input type="text" id="engineNumberInput" name="engine_number" class="form-control"
                      value="{{ form.get('engine_number', vehicle.engine_number or '') }}" />
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="thms-form-label">Chassis Number</label>
-              <input type="text" name="chassis_number" class="form-control"
+              <label class="thms-form-label" for="chassisNumberInput">Chassis Number</label>
+              <input type="text" id="chassisNumberInput" name="chassis_number" class="form-control"
                      value="{{ form.get('chassis_number', vehicle.chassis_number or '') }}" />
             </div>
 
@@ -75,8 +75,8 @@
           <div class="row g-3">
 
             <div class="col-12 col-md-5">
-              <label class="thms-form-label">Make (Manufacturer)</label>
-              <input type="text" name="manufacturer" class="form-control"
+              <label class="thms-form-label" for="manufacturerInput">Make (Manufacturer)</label>
+              <input type="text" id="manufacturerInput" name="manufacturer" class="form-control"
                      value="{{ form.get('manufacturer', vehicle.manufacturer or '') }}"
                      list="makes-list"
                      placeholder="e.g. Toyota, Nissan" />
@@ -89,29 +89,29 @@
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Model</label>
-              <input type="text" name="model" class="form-control"
+              <label class="thms-form-label" for="modelInput">Model</label>
+              <input type="text" id="modelInput" name="model" class="form-control"
                      value="{{ form.get('model', vehicle.model or '') }}"
                      placeholder="e.g. Hiace, Corolla" />
             </div>
 
             <div class="col-12 col-md-3">
-              <label class="thms-form-label">Year</label>
-              <input type="number" name="year" class="form-control"
+              <label class="thms-form-label" for="yearInput">Year</label>
+              <input type="number" id="yearInput" name="year" class="form-control"
                      value="{{ form.get('year', vehicle.year or '') }}"
                      min="1990" max="2035" />
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Colour</label>
-              <input type="text" name="color" class="form-control"
+              <label class="thms-form-label" for="colorInput">Colour</label>
+              <input type="text" id="colorInput" name="color" class="form-control"
                      value="{{ form.get('color', vehicle.color or '') }}"
                      placeholder="e.g. White, Silver" />
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Status</label>
-              <select name="status" class="form-select">
+              <label class="thms-form-label" for="vehicleStatusSelect">Status</label>
+              <select id="vehicleStatusSelect" name="status" class="form-select">
                 {% for val, label in [
                   ('available',   'Available'),
                   ('assigned',    'Assigned'),
@@ -149,23 +149,23 @@
           <div class="row g-3">
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Purchase Price (₦)</label>
+              <label class="thms-form-label" for="purchasePriceInput">Purchase Price (₦)</label>
               <div class="input-group">
                 <span class="input-group-text">₦</span>
-                <input type="text" name="purchase_price" class="form-control"
+                <input type="text" id="purchasePriceInput" name="purchase_price" class="form-control"
                        value="{{ form.get('purchase_price', vehicle.purchase_price or '') }}" />
               </div>
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Purchase Date</label>
-              <input type="date" name="purchase_date" class="form-control"
+              <label class="thms-form-label" for="vehiclePurchaseDate">Purchase Date</label>
+              <input type="date" id="vehiclePurchaseDate" name="purchase_date" class="form-control"
                      value="{{ form.get('purchase_date', vehicle.purchase_date.strftime('%Y-%m-%d') if vehicle.purchase_date else '') }}" />
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Delivery Date</label>
-              <input type="date" name="delivery_date" class="form-control"
+              <label class="thms-form-label" for="vehicleDeliveryDate">Delivery Date</label>
+              <input type="date" id="vehicleDeliveryDate" name="delivery_date" class="form-control"
                      value="{{ form.get('delivery_date', vehicle.delivery_date.strftime('%Y-%m-%d') if vehicle.delivery_date else '') }}" />
             </div>
 
@@ -184,21 +184,21 @@
           <div class="row g-3">
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Current Mileage (km)</label>
-              <input type="number" name="current_mileage" class="form-control"
+              <label class="thms-form-label" for="currentMileageInput">Current Mileage (km)</label>
+              <input type="number" id="currentMileageInput" name="current_mileage" class="form-control"
                      value="{{ form.get('current_mileage', vehicle.current_mileage or '') }}"
                      min="0" />
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Insurance Expiry</label>
-              <input type="date" name="insurance_expiry" class="form-control"
+              <label class="thms-form-label" for="insuranceExpiryInput">Insurance Expiry</label>
+              <input type="date" id="insuranceExpiryInput" name="insurance_expiry" class="form-control"
                      value="{{ form.get('insurance_expiry', vehicle.insurance_expiry.strftime('%Y-%m-%d') if vehicle.insurance_expiry else '') }}" />
             </div>
 
             <div class="col-12 col-md-4">
-              <label class="thms-form-label">Road Worthiness Expiry</label>
-              <input type="date" name="road_worthiness_expiry" class="form-control"
+              <label class="thms-form-label" for="roadWorthinessExpiryInput">Road Worthiness Expiry</label>
+              <input type="date" id="roadWorthinessExpiryInput" name="road_worthiness_expiry" class="form-control"
                      value="{{ form.get('road_worthiness_expiry', vehicle.road_worthiness_expiry.strftime('%Y-%m-%d') if vehicle.road_worthiness_expiry else '') }}" />
             </div>
 
@@ -222,7 +222,7 @@
         </div>
       </div>
 
-      <div class="thms-card" style="position:sticky;top:76px;">
+      <div class="thms-card sticky-top">
         <div class="thms-card-body d-grid gap-2">
           <button type="submit" class="btn btn-primary">
             <i class="bi bi-floppy-fill me-2"></i>Save Changes

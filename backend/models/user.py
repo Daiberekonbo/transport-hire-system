@@ -39,5 +39,17 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    @property
+    def is_owner(self):
+        return self.role == "owner"
+
+    @property
+    def is_developer(self):
+        return self.role == "developer"
+
+    @classmethod
+    def active_owner_count(cls):
+        return cls.query.filter_by(role="owner", is_active=True).count()
+
     def __repr__(self):
         return f"<User {self.username}>"

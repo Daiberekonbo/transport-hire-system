@@ -73,4 +73,7 @@ typing_extensions
 Werkzeug
 WTForms
 openpyxl
+pystray
+Pillow
+python-dotenv
 xhtml2pdf
